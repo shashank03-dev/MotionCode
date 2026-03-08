@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MotionCode
 
-## Getting Started
+**The Advanced Motion Intelligence Platform.**
 
-First, run the development server:
+MotionCode is a sophisticated tool designed to bridge the gap between video inspiration and production-ready code. By leveraging AI and advanced frame extraction, MotionCode analyzes animations and transitions from videos to generate clean, high-performance GSAP and Framer Motion code.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+![MotionCode Hero](https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000&auto=format&fit=crop)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## ✨ Features
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Video-to-Code Analysis**: Upload any video and extract animation patterns automatically.
+- **GSAP & Framer Motion Output**: Get production-ready code snippets instantly.
+- **Puter.js Integration**: Powered by Puter.js for robust, client-side intelligence.
+- **Frame Extraction**: High-precision frame extraction using FFmpeg for deep analysis.
+- **Modern UI**: Dark-themed, glassmorphic interface with smooth GSAP animations.
+- **Code Preview**: Interactive Monaco editor for immediate code inspection and editing.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🚀 Getting Started
 
-## Learn More
+### Prerequisites
 
-To learn more about Next.js, take a look at the following resources:
+- Node.js 18.x or later
+- NPM, PNPM, or Yarn
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Installation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **Clone the repository:**
 
-## Deploy on Vercel
+   ```bash
+   git clone https://github.com/shashank03-dev/MotionCode.git
+   cd MotionCode
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+2. **Install dependencies:**
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+   ```bash
+   npm install
+   ```
+
+3. **Set up Environment Variables:**
+   Create a `.env.local` file based on `.env.local.example` (if required).
+
+4. **Run the development server:**
+
+   ```bash
+   npm run dev
+   ```
+
+5. **Open the application:**
+   Navigate to [http://localhost:3000](http://localhost:3000) to see the platform in action.
+
+## 🛠️ Built With
+
+- **Next.js 14** - React Framework
+- **GSAP** - Animation Library
+- **Framer Motion** - Production-ready motion for React
+- **Puter.js** - Cloud Computing & AI
+- **FFmpeg.wasm** - Video processing in the browser
+- **Tailwind CSS** - Styling
+- **Monaco Editor** - Code editing experience
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+Crafted with ❤️ by [tige](https://github.com/shashank03-dev)
