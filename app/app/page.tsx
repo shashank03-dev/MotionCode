@@ -1,4 +1,6 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
@@ -33,19 +35,138 @@ const intentColors: Record<string, string> = {
   loop: "#10b981",
 };
 
+const ANIMATION_PROMPT = (frameCount: number) => `
+You are a world-class frontend animation engineer.
+I am giving you ${frameCount} sequential frames from a UI animation.
+
+Carefully analyze:
+- Transforms: translateX/Y, scale, rotate, skew
+- Opacity and color transitions  
+- Border-radius morphing
+- Easing curves and timing
+- Animation intent and element type
+
+Respond ONLY with valid JSON (no markdown, no backticks):
+{
+  "intent": "morph",
+  "element": "button",
+  "duration_ms": 400,
+  "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+  "description": "description of what this animation does",
+  "performance_score": 92,
+  "gpu_accelerated": true,
+  "accessibility_note": "Add prefers-reduced-motion fallback",
+  "css": "/* complete production CSS keyframe code */",
+  "gsap": "// complete GSAP code",
+  "framer_motion": "// complete Framer Motion code",
+  "react_spring": "// complete React Spring code"
+}
+Keep each code block concise but complete. 
+Max 30 lines per framework output.`
+
+// ── FREE: Puter.js ──────────────────────────────
+async function analyzeWithPuter(frames: string[]): Promise<any> {
+  const imageMessages = frames.map((b64) => ({
+    type: "image",
+    source: {
+      type: "base64",
+      media_type: "image/jpeg",
+      data: b64
+    }
+  }))
+
+  const response = await (window as any).puter.ai.chat(
+    [
+      ...imageMessages,
+      { type: "text", text: ANIMATION_PROMPT(frames.length) }
+    ],
+    { model: "claude-sonnet-4-6" }
+  )
+
+  const text = response?.message?.content
+    ?.filter((c: any) => c.type === "text")
+    ?.map((c: any) => c.text)
+    ?.join("") ?? ""
+
+  return JSON.parse(text.replace(/```json|```/g, "").trim())
+}
+
+// ── PRO: Gemini API ─────────────────────────────
+async function analyzeWithGemini(frames: string[]): Promise<any> {
+  const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY
+
+  const imageParts = frames.map((b64) => ({
+    inline_data: { mime_type: "image/jpeg", data: b64 }
+  }))
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: ANIMATION_PROMPT(frames.length) },
+            ...imageParts
+          ]
+        }],
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 8192,
+        }
+      })
+    }
+  )
+
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.error?.message || "Gemini error")
+
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? ""
+  
+  // Extract JSON more aggressively
+  let clean = text
+  
+  // Try to find JSON block between first { and last }
+  const firstBrace = clean.indexOf('{')
+  const lastBrace = clean.lastIndexOf('}')
+  
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    clean = clean.slice(firstBrace, lastBrace + 1)
+  } else {
+    // Fallback: strip markdown fences
+    clean = clean.replace(/```json|```/g, "").trim()
+  }
+  
+  const parsed = JSON.parse(clean)
+  return parsed
+}
+
 export default function AnimationConverter() {
   const [file, setFile] = useState<File | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [frameCount, setFrameCount] = useState<number>(8);
   const [frames, setFrames] = useState<string[]>([]);
   const [frameThumbs, setFrameThumbs] = useState<string[]>([]);
+  // Hardcoded for now — will connect to Razorpay/Supabase later
+  // Change to 'pro' to test pro flow locally
+  // TODO: Replace with real plan from Supabase profile
+  // when Razorpay + auth is integrated:
+  // const { plan } = useUser()  ← will replace this line
+  const [userPlan, setUserPlan] = useState<'free' | 'pro'>('free')
+
   const [loading, setLoading] = useState<boolean>(false);
+  const [statusMessage, setStatusMessage] = useState<string>("");
   const [stage, setStage] = useState<"idle" | "extracting" | "analyzing" | "done" | "error">("idle");
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>("CSS");
   const [copied, setCopied] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [flashError, setFlashError] = useState<boolean>(false);
   const [dragActive, setDragActive] = useState<boolean>(false);
+  const [showToast, setShowToast] = useState<boolean>(false);
+  const [hoveredScore, setHoveredScore] = useState<string | null>(null);
 
   const [activeStep, setActiveStep] = useState<number>(0);
   const [scannerIndex, setScannerIndex] = useState<number>(0);
@@ -54,7 +175,7 @@ export default function AnimationConverter() {
   const stepTimerRef = useRef<NodeJS.Timeout | null>(null);
   const scannerTimerRef = useRef<NodeJS.Timeout | null>(null);
   const statusTimerRef = useRef<NodeJS.Timeout | null>(null);
-
+  
   const stepsList = [
     `Extracting ${frames.length || 8} frames from video...`,
     "Sending frames to AI vision model...",
@@ -75,6 +196,62 @@ export default function AnimationConverter() {
     "Detecting transform paths...",
     "Almost there..."
   ];
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + Enter -> Analyze
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        if (!loading && frames.length > 0 && stage !== "extracting") {
+          handleAnalyze();
+        }
+      }
+      // Cmd/Ctrl + K -> Upload
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        fileInputRef.current?.click();
+      }
+      // 1-4 Switch tabs
+      if (['1', '2', '3', '4'].includes(e.key) && result) {
+        const tabs: TabType[] = ["CSS", "GSAP", "Framer Motion", "React Spring"];
+        setActiveTab(tabs[parseInt(e.key) - 1]);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [loading, frames, stage, result]);
+
+  // Remember last tab
+  useEffect(() => {
+    const savedTab = localStorage.getItem('motioncode_tab') as TabType;
+    if (savedTab && ["CSS", "GSAP", "Framer Motion", "React Spring"].includes(savedTab)) {
+      setActiveTab(savedTab);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab) {
+      localStorage.setItem('motioncode_tab', activeTab);
+    }
+  }, [activeTab]);
+
+  // Dynamic Header Title
+  useEffect(() => {
+    if (stage === "done" && result) {
+      document.title = `${result.intent} · ${result.element} — MotionCode`;
+    } else {
+      document.title = 'MotionCode — Turn Animations Into Production Code';
+    }
+  }, [stage, result]);
+
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => setShowToast(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showToast]);
 
   useEffect(() => {
     if (stage === "analyzing") {
@@ -127,10 +304,14 @@ export default function AnimationConverter() {
     const isGif = selectedFile.type === "image/gif";
     
     if (!isVideo && !isGif) {
-      setStage("error");
-      setError("Please upload an MP4, WebM, MOV, or GIF file.");
+      setFlashError(true);
+      setValidationError("Unsupported format. Use MP4, WebM, MOV, or GIF.");
+      setTimeout(() => {
+        setFlashError(false);
+      }, 1500);
       return;
     }
+    setValidationError(null);
 
     setFile(selectedFile);
     if (fileUrl) URL.revokeObjectURL(fileUrl);
@@ -174,6 +355,16 @@ export default function AnimationConverter() {
     }
   };
 
+  const handleReset = () => {
+    handleRemoveFile();
+    setStage("idle");
+    setResult(null);
+    setError(null);
+    setValidationError(null);
+    setFrames([]);
+    setFrameThumbs([]);
+  };
+
   const updateFrameCount = (count: number) => {
     setFrameCount(count);
     if (file) {
@@ -200,84 +391,38 @@ export default function AnimationConverter() {
   };
 
   const handleAnalyze = async () => {
-    if (!frames.length) return
+    if (!frames.length || loading) return
     setLoading(true)
     setStage("analyzing")
     setResult(null)
     setError(null)
-
+  
     try {
-      // Build the message with frames as images
-      // Puter.js supports passing images via base64
-      const imageMessages = frames.map((b64) => ({
-        type: "image",
-        source: {
-          type: "base64",
-          media_type: "image/jpeg",
-          data: b64
-        }
-      }))
-
-      const prompt = `You are a world-class frontend animation engineer.
-I am giving you ${frames.length} sequential frames extracted from a UI animation video.
-
-Carefully analyze the motion: transforms (translateX/Y, scale, rotate), 
-opacity changes, color transitions, border-radius morphing, easing curves,
-total duration, and the animation's intent.
-
-Respond ONLY with a single valid JSON object. No markdown. No backticks. Just JSON:
-{
-  "intent": "morph",
-  "element": "button",
-  "duration_ms": 400,
-  "delay_ms": 0,
-  "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
-  "loops": false,
-  "description": "A button morphs into a loading spinner",
-  "keyframes_detected": 8,
-  "performance_score": 92,
-  "gpu_accelerated": true,
-  "accessibility_note": "Add prefers-reduced-motion fallback",
-  "css": "/* Complete production CSS keyframe code */",
-  "gsap": "// Complete GSAP code",
-  "framer_motion": "// Complete Framer Motion code",
-  "react_spring": "// Complete React Spring code"
-}`
-
-      // Call Puter.js Claude API — no API key needed
-      const response = await window.puter.ai.chat(
-        [
-          {
-            role: "user",
-            content: [
-              ...imageMessages,
-              { type: "text", text: prompt }
-            ]
-          }
-        ],
-        { model: "claude-sonnet-4-6" }
-      )
-
-      // Parse response
-      const text = response?.message?.content
-        ?.filter((c: { type: string; text?: string }) => c.type === "text")
-        ?.map((c: { type: string; text?: string }) => c.text)
-        ?.join("") ?? ""
-
-      const clean = text.replace(/```json|```/g, "").trim()
-      const parsed = JSON.parse(clean)
-
+      let parsed: any
+  
+      if (userPlan === 'pro') {
+        // Pro: silent, fast, no popup
+        setStatusMessage("Sending to Gemini Vision...")
+        parsed = await analyzeWithGemini(frames)
+      } else {
+        // Free: Puter handles auth + billing
+        setStatusMessage("Sending to Puter.js...")
+        parsed = await analyzeWithPuter(frames)
+      }
+  
       setResult(parsed)
-      setActiveTab("CSS")
+      setActiveTab(
+        (localStorage.getItem('motioncode_tab') as any) || 'CSS'
+      )
       setStage("done")
-
-    } catch (err: unknown) {
-      console.error("Puter analyze error:", err)
-      const errorMessage = err instanceof Error ? err.message : String(err)
-      setError(errorMessage || "Analysis failed. Try again.")
+      setShowToast(true)
+  
+    } catch (err: any) {
+      console.error("Analysis error:", err)
+      setError(err?.message || "Analysis failed. Try again.")
       setStage("error")
     }
-
+  
     setLoading(false)
   }
 
@@ -307,6 +452,25 @@ Respond ONLY with a single valid JSON object. No markdown. No backticks. Just JS
     navigator.clipboard.writeText(code);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownload = () => {
+    const code = getCodeContent();
+    const extensions: Record<TabType, string> = {
+      "CSS": "animation.css",
+      "GSAP": "animation.gsap.js",
+      "Framer Motion": "AnimatedComponent.tsx",
+      "React Spring": "AnimatedComponent.tsx"
+    };
+    const blob = new Blob([code], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = extensions[activeTab];
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const highlightCode = (code: string) => {
@@ -359,28 +523,45 @@ Respond ONLY with a single valid JSON object. No markdown. No backticks. Just JS
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.15; } }
         @keyframes progress { 0% { width: 0%; } 100% { width: 100%; } }
         @keyframes fadeSlideIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateY(8px) } }
         .copy-btn:hover {
           box-shadow: 0 0 12px #00ff8860;
           border-color: #00ff88 !important;
           color: #00ff88 !important;
         }
+
+        @media (max-width: 768px) {
+          #main-area { flex-direction: column !important; }
+          #left-panel { width: 100% !important; height: auto !important; min-height: 0 !important; }
+          #right-panel { width: 100% !important; flex: 1 !important; min-height: 60vh !important; }
+          #video-preview { max-height: 140px !important; }
+          #frame-strip-container { overflow-x: scroll !important; flex-wrap: nowrap !important; }
+          #navbar { padding: 0 16px !important; }
+        }
       `}} />
 
       {/* NAVBAR */}
-      <nav style={{ 
+      <nav id="navbar" style={{ 
         height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
         padding: '0 24px', borderBottom: '1px solid #1a1a1a', backgroundColor: '#080808',
         flexShrink: 0
       }}>
         <Link href="/" style={{ fontFamily: 'Space Mono, monospace', fontSize: 14, color: '#e2e8f0', textDecoration: 'none', fontWeight: 'bold' }}>⟨/⟩ MotionCode</Link>
-        <Link href="/" style={{ fontFamily: 'Space Mono, monospace', fontSize: 13, color: '#3a3a4a', textDecoration: 'none' }}>← Back to home</Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          {userPlan === 'free' ? (
+            <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, border: '1px solid #3a3a4a', padding: '2px 8px', color: '#3a3a4a', letterSpacing: 2 }}>FREE</div>
+          ) : (
+            <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, border: '1px solid #00ff88', padding: '2px 8px', color: '#00ff88', letterSpacing: 2 }}>PRO ⚡</div>
+          )}
+          <Link href="/" style={{ fontFamily: 'Space Mono, monospace', fontSize: 13, color: '#3a3a4a', textDecoration: 'none' }}>← Back to home</Link>
+        </div>
       </nav>
 
       {/* MAIN AREA */}
-      <main style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <main id="main-area" style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         
         {/* LEFT PANEL */}
-        <div style={{ 
+        <div id="left-panel" style={{ 
           width: 400, flexShrink: 0, borderRight: '1px solid #1a1a1a', 
           backgroundColor: '#0a0a0a', display: 'flex', flexDirection: 'column',
           overflowY: 'auto'
@@ -399,8 +580,8 @@ Respond ONLY with a single valid JSON object. No markdown. No backticks. Just JS
             style={{ 
               margin: 20, padding: '36px 20px', display: 'flex', flexDirection: 'column', 
               alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-              border: `1.5px dashed ${dragActive ? '#00ff88' : file ? '#00ff8840' : '#1a1a1a'}`, 
-              backgroundColor: dragActive ? '#00ff8808' : 'transparent',
+              border: `1.5px dashed ${flashError ? '#ef4444' : dragActive ? '#00ff88' : file ? '#00ff8840' : '#1a1a1a'}`, 
+              backgroundColor: flashError ? '#ef444408' : dragActive ? '#00ff8808' : 'transparent',
               transition: 'all 0.2s ease'
             }}
           >
@@ -456,13 +637,22 @@ Respond ONLY with a single valid JSON object. No markdown. No backticks. Just JS
             )}
           </div>
 
+          {validationError && (
+            <div style={{ 
+              fontFamily: 'Space Mono, monospace', fontSize: 11, color: '#ef4444', 
+              textAlign: 'center', marginBottom: 16
+            }}>
+              {validationError}
+            </div>
+          )}
+
           {/* VIDEO PREVIEW */}
           {fileUrl && (
             <div style={{ margin: '0 20px', border: '1px solid #1a1a1a', backgroundColor: '#000', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               {file?.type?.startsWith('video/') ? (
-                <video src={fileUrl} controls muted loop style={{ maxHeight: 200, width: '100%', objectFit: 'contain' }} />
+                <video id="video-preview" src={fileUrl} controls muted loop style={{ maxHeight: 200, width: '100%', objectFit: 'contain' }} />
               ) : (
-                <img src={fileUrl} alt="preview" style={{ maxHeight: 200, width: '100%', objectFit: 'contain' }} />
+                <img id="video-preview" src={fileUrl} alt="preview" style={{ maxHeight: 200, width: '100%', objectFit: 'contain' }} />
               )}
             </div>
           )}
@@ -471,9 +661,9 @@ Respond ONLY with a single valid JSON object. No markdown. No backticks. Just JS
           {frameThumbs.length > 0 && (
             <div style={{ padding: '16px 20px', borderTop: '1px solid #1a1a1a', marginTop: 20 }}>
               <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, letterSpacing: 2, color: '#3a3a4a', marginBottom: 10 }}>EXTRACTED FRAMES ({frames.length})</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              <div id="frame-strip-container" style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {frameThumbs.map((thumb, i) => (
-                  <img key={i} src={thumb} alt={`Frame ${i}`} style={{ width: 54, height: 38, objectFit: 'cover', border: '1px solid #1a1a1a' }} />
+                  <img key={i} src={thumb} alt={`Frame ${i}`} style={{ width: 54, height: 38, objectFit: 'cover', border: '1px solid #1a1a1a', flexShrink: 0 }} />
                 ))}
               </div>
             </div>
@@ -512,49 +702,51 @@ Respond ONLY with a single valid JSON object. No markdown. No backticks. Just JS
 
           {/* PUTER LOGO NOTICE */}
           <div style={{
-            border: '1px solid #1a1a1a', padding: '10px 14px', 
+            border: `1px solid ${userPlan === 'free' ? '#1a1a1a' : '#00ff88'}`, padding: '10px 14px', 
             background: '#0a0a0a', margin: '0 20px 20px'
           }}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-              <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 11, color: '#3a3a4a' }}>ℹ</span>
+              <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 11, color: userPlan === 'free' ? '#3a3a4a' : '#00ff88' }}>
+                {userPlan === 'free' ? 'ℹ' : '⚡'}
+              </span>
               <div style={{ 
-                fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#3a3a4a', 
+                fontFamily: 'Space Mono, monospace', fontSize: 10, color: userPlan === 'free' ? '#3a3a4a' : '#00ff88', 
                 lineHeight: 1.6 
               }}>
-                Powered by Puter.js — users sign in with a free Puter account 
-                to run analysis. No API key required.{" "}
-                <a 
-                  href="https://developer.puter.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  style={{ color: '#3a3a4a', textDecoration: 'none', transition: 'color 0.2s' }}
-                  onMouseOver={(e) => e.currentTarget.style.color = '#00ff88'}
-                  onMouseOut={(e) => e.currentTarget.style.color = '#3a3a4a'}
-                >
-                  Learn more ↗
-                </a>
+                {userPlan === 'free' ? (
+                  <>Powered by Puter.js — a free Puter account is<br/>required to run analysis.</>
+                ) : (
+                  <>Pro — Powered by Gemini Vision.<br/>No sign-in required.</>
+                )}
               </div>
             </div>
           </div>
 
           {/* ANALYZE BUTTON */}
-          <button
-            onClick={handleAnalyze}
-            disabled={!file || frames.length === 0 || loading || stage === "extracting"}
-            style={{
-              margin: '0 20px 20px 20px', padding: 14, cursor: (!file || frames.length === 0 || loading || stage === "extracting") ? 'not-allowed' : 'pointer',
-              border: loading ? '1px solid #00ff88' : 'none',
-              backgroundColor: (!file || frames.length === 0 || stage === "extracting") ? '#1a1a1a' : loading ? 'transparent' : '#00ff88',
-              color: (!file || frames.length === 0 || stage === "extracting") ? '#3a3a4a' : loading ? '#00ff88' : '#080808',
-              fontFamily: 'Space Mono, monospace', fontSize: 13, fontWeight: 'bold', transition: 'all 0.2s'
-            }}
-          >
-            {loading ? "Analyzing..." : stage === "extracting" ? "Extracting..." : "Analyze"}
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {!file && (
+              <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 10, color: '#3a3a4a', textAlign: 'center', marginBottom: 8 }}>
+                ↑ Upload a file to enable analysis
+              </div>
+            )}
+            <button
+              onClick={handleAnalyze}
+              disabled={!file || frames.length === 0 || loading || stage === "extracting"}
+              style={{
+                margin: '0 20px 20px 20px', padding: 14, cursor: (!file || frames.length === 0 || loading || stage === "extracting") ? 'not-allowed' : 'pointer',
+                border: loading ? '1px solid #00ff88' : 'none',
+                backgroundColor: (!file || frames.length === 0 || stage === "extracting") ? '#1a1a1a' : loading ? 'transparent' : '#00ff88',
+                color: (!file || frames.length === 0 || stage === "extracting") ? '#3a3a4a' : loading ? '#00ff88' : '#080808',
+                fontFamily: 'Space Mono, monospace', fontSize: 13, fontWeight: 'bold', transition: 'all 0.2s'
+              }}
+            >
+              {loading ? "Analyzing..." : stage === "extracting" ? "Extracting..." : "Analyze"}
+            </button>
+          </div>
         </div>
 
         {/* RIGHT PANEL */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#080808', overflow: 'hidden', position: 'relative' }}>
+        <div id="right-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#080808', overflow: 'hidden', position: 'relative' }}>
           
           {/* TOP PROGRESS BAR */}
           <div style={{
@@ -619,12 +811,22 @@ Respond ONLY with a single valid JSON object. No markdown. No backticks. Just JS
                 </div>
               </div>
             ) : (
-            /* EMPTY STATE */
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 48, color: '#1a1a1a' }}>◈</div>
-              <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 13, color: '#3a3a4a', marginTop: 16 }}>Upload an animation and click Analyze</div>
-              <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 11, color: '#1a1a1a', marginTop: 8 }}>CSS · GSAP · Framer Motion · React Spring</div>
-            </div>
+              /* EMPTY STATE */
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 60px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  {[
+                    "Drop a video or GIF on the left panel",
+                    "Choose frame count (8 recommended for accuracy)",
+                    "Click Analyze and sign in with free Puter account",
+                    "Get production code in CSS, GSAP, Framer Motion, React Spring"
+                  ].map((text, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 20 }}>
+                      <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 12, color: '#00ff88' }}>0{i+1}</span>
+                      <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 12, color: '#3a3a4a', lineHeight: 2.2 }}>{text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )
           ) : (
             /* RESULT STATE */
@@ -646,8 +848,22 @@ Respond ONLY with a single valid JSON object. No markdown. No backticks. Just JS
                   <div style={{ fontFamily: 'Space Mono, monospace', color: '#1a1a1a' }}>·</div>
                   <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 11, color: '#3a3a4a' }}>{result.easing}</div>
                 </div>
-                <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#3a3a4a', maxWidth: 300, textAlign: 'right' }}>
-                  {result.description}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#3a3a4a', maxWidth: 200, textAlign: 'right' }}>
+                    {result.description}
+                  </div>
+                  <button
+                    onClick={handleReset}
+                    style={{
+                      fontFamily: 'Space Mono, monospace', fontSize: 10, color: '#3a3a4a',
+                      border: '1px solid #1a1a1a', padding: '4px 12px', backgroundColor: 'transparent',
+                      cursor: 'pointer', transition: 'all 0.2s'
+                    }}
+                    onMouseOver={(e) => { e.currentTarget.style.color = '#e2e8f0'; e.currentTarget.style.borderColor = '#3a3a4a'; }}
+                    onMouseOut={(e) => { e.currentTarget.style.color = '#3a3a4a'; e.currentTarget.style.borderColor = '#1a1a1a'; }}
+                  >
+                    New Analysis ↺
+                  </button>
                 </div>
               </div>
 
@@ -672,17 +888,30 @@ Respond ONLY with a single valid JSON object. No markdown. No backticks. Just JS
 
               {/* CODE OUTPUT AREA */}
               <div style={{ flex: 1, overflow: 'auto', position: 'relative', backgroundColor: '#050505', padding: 24 }}>
-                <button
-                  className="copy-btn"
-                  onClick={handleCopy}
-                  style={{
-                    position: 'absolute', top: 16, right: 16, fontFamily: 'Space Mono, monospace', fontSize: 10,
-                    color: copied ? '#47bbedff' : '#fcfcffff', border: '1px solid #1a1a1a', padding: '5px 12px',
-                    backgroundColor: 'transparent', cursor: 'pointer', transition: 'all 0.2s'
-                  }}
-                >
-                  {copied ? "✓ Copied" : "Copy Code"}
-                </button>
+                <div style={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 8 }}>
+                  <button
+                    className="copy-btn"
+                    onClick={handleDownload}
+                    style={{
+                      fontFamily: 'Space Mono, monospace', fontSize: 10,
+                      color: '#fcfcffff', border: '1px solid #1a1a1a', padding: '5px 12px',
+                      backgroundColor: 'transparent', cursor: 'pointer', transition: 'all 0.2s'
+                    }}
+                  >
+                    Download
+                  </button>
+                  <button
+                    className="copy-btn"
+                    onClick={handleCopy}
+                    style={{
+                      fontFamily: 'Space Mono, monospace', fontSize: 10,
+                      color: copied ? '#47bbedff' : '#fcfcffff', border: '1px solid #1a1a1a', padding: '5px 12px',
+                      backgroundColor: 'transparent', cursor: 'pointer', transition: 'all 0.2s'
+                    }}
+                  >
+                    {copied ? "✓ Copied" : "Copy Code"}
+                  </button>
+                </div>
                 <pre style={{ 
                   margin: 0, fontFamily: 'Space Mono, monospace', fontSize: 12.5, lineHeight: 1.9, 
                   color: '#e2e8f0', whiteSpace: 'pre-wrap', wordBreak: 'break-all'
@@ -690,19 +919,27 @@ Respond ONLY with a single valid JSON object. No markdown. No backticks. Just JS
               </div>
 
               {/* SCORECARD ROW */}
-              <div style={{ borderTop: '1px solid #1a1a1a', padding: '16px 24px', display: 'flex', gap: 16 }}>
+              <div style={{ borderTop: '1px solid #1a1a1a', padding: '16px 24px', display: 'flex', gap: 16, position: 'relative' }}>
                 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingRight: 16, borderRight: '1px solid #1a1a1a' }}>
+                <div 
+                  onMouseEnter={() => setHoveredScore('perf')}
+                  onMouseLeave={() => setHoveredScore(null)}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingRight: 16, borderRight: '1px solid #1a1a1a', cursor: 'help' }}
+                >
                   <div style={{ 
                     fontFamily: 'Space Mono, monospace', fontSize: 16, fontWeight: 'bold',
                     color: result.performance_score >= 85 ? '#00ff88' : result.performance_score >= 65 ? '#f59e0b' : '#ef4444'
                   }}>
-                    {result.performance_score}
+                    {result.performance_score}/100
                   </div>
                   <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, letterSpacing: 1, color: '#3a3a4a' }}>PERF SCORE</div>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingRight: 16, borderRight: '1px solid #1a1a1a' }}>
+                <div 
+                  onMouseEnter={() => setHoveredScore('accel')}
+                  onMouseLeave={() => setHoveredScore(null)}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingRight: 16, borderRight: '1px solid #1a1a1a', cursor: 'help' }}
+                >
                   <div style={{ 
                     fontFamily: 'Space Mono, monospace', fontSize: 16, fontWeight: 'bold',
                     color: result.gpu_accelerated ? '#00ff88' : '#f59e0b'
@@ -712,7 +949,11 @@ Respond ONLY with a single valid JSON object. No markdown. No backticks. Just JS
                   <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, letterSpacing: 1, color: '#3a3a4a' }}>ACCELERATION</div>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingRight: 16, borderRight: '1px solid #1a1a1a' }} title={result.accessibility_note}>
+                <div 
+                  onMouseEnter={() => setHoveredScore('a11y')}
+                  onMouseLeave={() => setHoveredScore(null)}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingRight: 16, borderRight: '1px solid #1a1a1a', cursor: 'help' }}
+                >
                   <div style={{ 
                     fontFamily: 'Space Mono, monospace', fontSize: 16, fontWeight: 'bold',
                     color: (result.accessibility_note.toLowerCase().includes("add") || result.accessibility_note.toLowerCase().includes("missing")) ? '#f59e0b' : '#00ff88'
@@ -722,13 +963,31 @@ Respond ONLY with a single valid JSON object. No markdown. No backticks. Just JS
                   <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, letterSpacing: 1, color: '#3a3a4a' }}>ACCESSIBILITY</div>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <div 
+                  onMouseEnter={() => setHoveredScore('easing')}
+                  onMouseLeave={() => setHoveredScore(null)}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 4, cursor: 'help' }}
+                >
                   <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 16, fontWeight: 'bold', color: '#e2e8f0' }}>
                     {result.easing.split('(')[0].split('-')[0]} 
                   </div>
                   <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, letterSpacing: 1, color: '#3a3a4a' }}>EASING TYPE</div>
                 </div>
 
+                {hoveredScore && (
+                  <div style={{
+                    position: 'absolute', bottom: 'calc(100% + 12px)', left: 24,
+                    background: '#0a0a0a', border: '1px solid #1a1a1a',
+                    padding: '8px 12px', maxWidth: 220, zIndex: 100,
+                    fontFamily: 'Space Mono, monospace', fontSize: 10, color: '#3a3a4a',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.5)'
+                  }}>
+                    {hoveredScore === 'perf' && "Measures GPU acceleration, paint complexity, and composite layer usage"}
+                    {hoveredScore === 'accel' && "GPU-accelerated animations use transform and opacity — no layout thrashing"}
+                    {hoveredScore === 'a11y' && "WCAG requires prefers-reduced-motion support for vestibular disorders"}
+                    {hoveredScore === 'easing' && "The timing function controlling acceleration curve"}
+                  </div>
+                )}
               </div>
 
             </div>
@@ -738,7 +997,7 @@ Respond ONLY with a single valid JSON object. No markdown. No backticks. Just JS
           <div style={{ borderTop: '1px solid #1a1a1a', padding: '10px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#080808' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontFamily: 'Space Mono, monospace', fontSize: 11, color: '#3a3a4a' }}>
               
-              {stage === "idle" && ( <span>Ready to analyze animations</span> )}
+              {stage === "idle" && ( <span>⌘↩ analyze  ·  1-4 switch tabs  ·  ⌘K upload</span> )}
               
               {stage === "extracting" && (
                 <React.Fragment>
@@ -750,7 +1009,7 @@ Respond ONLY with a single valid JSON object. No markdown. No backticks. Just JS
               {stage === "analyzing" && (
                 <React.Fragment>
                   <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#00ff88', animation: 'blink 0.8s infinite' }} />
-                  <span>{statusMessages[statusBarMsgIndex]}</span>
+                  <span>{statusMessage || statusMessages[statusBarMsgIndex]}</span>
                 </React.Fragment>
               )}
               
@@ -772,6 +1031,19 @@ Respond ONLY with a single valid JSON object. No markdown. No backticks. Just JS
         </div>
 
       </main>
+
+      {/* SUCCESS TOAST */}
+      {showToast && (
+        <div style={{
+          position: 'fixed', bottom: 24, right: 24, zIndex: 1000,
+          background: '#0f0f0f', border: '1px solid #00ff88',
+          padding: '12px 20px', color: '#00ff88', fontFamily: 'Space Mono, monospace', fontSize: 12,
+          boxShadow: '0 8px 32px rgba(0,255,136,0.15)',
+          animation: 'fadeSlideIn 0.3s ease, fadeOut 0.3s ease 2.7s forwards'
+        }}>
+          ✓ Analysis complete — code ready
+        </div>
+      )}
     </div>
   );
 }
