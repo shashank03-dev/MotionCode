@@ -62,8 +62,8 @@ Respond ONLY with valid JSON (no markdown, no backticks):
   "framer_motion": "// complete Framer Motion code",
   "react_spring": "// complete React Spring code"
 }
-Keep each code block concise but complete. 
-Max 30 lines per framework output.`
+IMPORTANT: Keep each code block under 25 lines. 
+Be concise but complete. Do not add explanatory comments.`
 
 // ── FREE: Gemini Flash ──────────────────────────
 async function analyzeWithGeminiFree(frames: string[]): Promise<any> {

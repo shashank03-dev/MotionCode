@@ -1,4 +1,4 @@
-const FREE_LIMIT = 5
+const FREE_LIMIT = 3
 const STORAGE_KEY = 'motioncode_usage'
 
 interface UsageData {
