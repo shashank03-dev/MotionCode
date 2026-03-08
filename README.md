@@ -4,7 +4,7 @@
 
 MotionCode is a sophisticated tool designed to bridge the gap between video inspiration and production-ready code. By leveraging AI and advanced frame extraction, MotionCode analyzes animations and transitions from videos to generate clean, high-performance GSAP and Framer Motion code.
 
-![MotionCode Hero](https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000&auto=format&fit=crop)
+
 
 ## ✨ Features
 
