@@ -65,4 +65,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-Crafted with ❤️ by [tige](https://github.com/shashank03-dev)
+Crafted with ❤️ by [shashank](https://github.com/shashank03-dev)
