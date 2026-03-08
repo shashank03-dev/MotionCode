@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { extractFrames } from '@/lib/extractFrames';
 
@@ -46,6 +46,79 @@ export default function AnimationConverter() {
   const [copied, setCopied] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState<boolean>(false);
+
+  const [activeStep, setActiveStep] = useState<number>(0);
+  const [scannerIndex, setScannerIndex] = useState<number>(0);
+  const [statusBarMsgIndex, setStatusBarMsgIndex] = useState<number>(0);
+  const [progressWidth, setProgressWidth] = useState<number>(0);
+  const stepTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const scannerTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const statusTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const stepsList = [
+    `Extracting ${frames.length || 8} frames from video...`,
+    "Sending frames to AI vision model...",
+    "Detecting motion vectors...",
+    "Analyzing easing curves...",
+    "Identifying animation intent...",
+    "Generating CSS keyframes...",
+    "Generating GSAP timeline...",
+    "Generating Framer Motion variants...",
+    "Running performance audit...",
+    "Checking accessibility compliance...",
+    "Compiling output..."
+  ];
+
+  const statusMessages = [
+    "Analyzing motion patterns...",
+    "Reading easing curves...",
+    "Detecting transform paths...",
+    "Almost there..."
+  ];
+
+  useEffect(() => {
+    if (stage === "analyzing") {
+      setActiveStep(0);
+      setScannerIndex(0);
+      setStatusBarMsgIndex(0);
+      setProgressWidth(0);
+
+      const runSteps = (currentStep: number) => {
+        setActiveStep(currentStep);
+        if (currentStep < 10) {
+          stepTimerRef.current = setTimeout(() => runSteps(currentStep + 1), 600);
+        }
+      };
+
+      setTimeout(() => setProgressWidth(85), 100);
+      
+      stepTimerRef.current = setTimeout(() => runSteps(1), 600);
+
+      scannerTimerRef.current = setInterval(() => {
+        setScannerIndex(prev => (prev + 1) % (frames.length || 1));
+      }, 300);
+
+      statusTimerRef.current = setInterval(() => {
+        setStatusBarMsgIndex(prev => (prev + 1) % 4);
+      }, 3000);
+
+    } else {
+      if (stepTimerRef.current) clearTimeout(stepTimerRef.current);
+      if (scannerTimerRef.current) clearInterval(scannerTimerRef.current);
+      if (statusTimerRef.current) clearInterval(statusTimerRef.current);
+      
+      if (stage !== "done") {
+        setProgressWidth(0);
+      }
+    }
+
+    return () => {
+      if (stepTimerRef.current) clearTimeout(stepTimerRef.current);
+      if (scannerTimerRef.current) clearInterval(scannerTimerRef.current);
+      if (statusTimerRef.current) clearInterval(statusTimerRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage, frames.length]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -283,8 +356,14 @@ Respond ONLY with a single valid JSON object. No markdown. No backticks. Just JS
       fontFamily: 'Inter, sans-serif'
     }}>
       <style dangerouslySetInnerHTML={{__html: `
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.15; } }
         @keyframes progress { 0% { width: 0%; } 100% { width: 100%; } }
+        @keyframes fadeSlideIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
+        .copy-btn:hover {
+          box-shadow: 0 0 12px #00ff8860;
+          border-color: #00ff88 !important;
+          color: #00ff88 !important;
+        }
       `}} />
 
       {/* NAVBAR */}
@@ -475,15 +554,78 @@ Respond ONLY with a single valid JSON object. No markdown. No backticks. Just JS
         </div>
 
         {/* RIGHT PANEL */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#080808', overflow: 'hidden' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#080808', overflow: 'hidden', position: 'relative' }}>
           
+          {/* TOP PROGRESS BAR */}
+          <div style={{
+            position: 'absolute', top: 0, left: 0, right: 0, height: 2, backgroundColor: '#1a1a1a', zIndex: 10,
+            opacity: stage === "done" ? 0 : (stage === "analyzing" ? 1 : 0),
+            transition: stage === "done" ? 'opacity 0.4s ease 0.4s' : 'none',
+            pointerEvents: 'none'
+          }}>
+            <div style={{
+              height: '100%', background: 'linear-gradient(90deg, #00ff88, #00cc6e)',
+              width: stage === "done" ? '100%' : (stage === "analyzing" ? `${progressWidth}%` : '0%'),
+              transition: stage === "done" ? 'width 0.1s ease-out' : 'width 20s cubic-bezier(0.1, 0, 0.3, 1)'
+            }} />
+          </div>
+
           {!result ? (
+            stage === "analyzing" ? (
+              <div style={{ flex: 1, padding: '48px 60px', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+                {/* 1. ANIMATED STEPS LIST */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+                  {stepsList.map((step, i) => {
+                    if (i > activeStep) return null;
+                    const isActive = i === activeStep;
+                    return (
+                      <div key={i} style={{ 
+                        display: 'flex', alignItems: 'center', gap: 12, 
+                        animation: 'fadeSlideIn 0.3s ease forwards',
+                        opacity: 0
+                      }}>
+                        {isActive ? (
+                          <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#00ff88', animation: 'blink 0.8s infinite', flexShrink: 0 }} />
+                        ) : (
+                          <div style={{ width: 6, textAlign: 'center', fontFamily: 'Space Mono, monospace', fontSize: 10, color: '#3a3a4a', flexShrink: 0 }}>✓</div>
+                        )}
+                        <div style={{ 
+                          fontFamily: 'Space Mono, monospace', fontSize: 12, 
+                          color: isActive ? '#e2e8f0' : '#3a3a4a'
+                        }}>
+                          [{i + 1}] {step}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* 2. SCANNING FRAME STRIP */}
+                <div style={{ marginTop: 40, flexShrink: 0 }}>
+                  <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, color: '#3a3a4a', letterSpacing: 2, marginBottom: 8 }}>SCANNING FRAMES</div>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {frameThumbs.map((thumb, i) => (
+                      <div key={i} style={{
+                        width: 64, height: 44,
+                        border: i === scannerIndex ? '1px solid #00ff88' : '1px solid #1a1a1a',
+                        boxShadow: i === scannerIndex ? '0 0 8px #00ff8840' : 'none',
+                        transition: 'all 0.1s ease',
+                        display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#000', overflow: 'hidden'
+                      }}>
+                        <img src={thumb} alt={`Frame ${i}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
             /* EMPTY STATE */
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
               <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 48, color: '#1a1a1a' }}>◈</div>
               <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 13, color: '#3a3a4a', marginTop: 16 }}>Upload an animation and click Analyze</div>
               <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 11, color: '#1a1a1a', marginTop: 8 }}>CSS · GSAP · Framer Motion · React Spring</div>
             </div>
+            )
           ) : (
             /* RESULT STATE */
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -531,10 +673,11 @@ Respond ONLY with a single valid JSON object. No markdown. No backticks. Just JS
               {/* CODE OUTPUT AREA */}
               <div style={{ flex: 1, overflow: 'auto', position: 'relative', backgroundColor: '#050505', padding: 24 }}>
                 <button
+                  className="copy-btn"
                   onClick={handleCopy}
                   style={{
                     position: 'absolute', top: 16, right: 16, fontFamily: 'Space Mono, monospace', fontSize: 10,
-                    color: copied ? '#00ff88' : '#3a3a4a', border: '1px solid #1a1a1a', padding: '5px 12px',
+                    color: copied ? '#47bbedff' : '#fcfcffff', border: '1px solid #1a1a1a', padding: '5px 12px',
                     backgroundColor: 'transparent', cursor: 'pointer', transition: 'all 0.2s'
                   }}
                 >
@@ -606,8 +749,8 @@ Respond ONLY with a single valid JSON object. No markdown. No backticks. Just JS
               
               {stage === "analyzing" && (
                 <React.Fragment>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#00ff88', animation: 'blink 1s ease infinite' }} />
-                  <span>Sending to Puter.js...</span>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#00ff88', animation: 'blink 0.8s infinite' }} />
+                  <span>{statusMessages[statusBarMsgIndex]}</span>
                 </React.Fragment>
               )}
               
