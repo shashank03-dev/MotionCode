@@ -3,6 +3,7 @@ import { Inter, Space_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -40,7 +41,10 @@ export default function RootLayout({
           strategy="beforeInteractive"
         />
       </head>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        {children}
+        <SpeedInsights />
+      </body>
     </html>
   );
 }
