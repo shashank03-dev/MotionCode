@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Inter, Space_Mono } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
@@ -35,10 +34,6 @@ export default function RootLayout({
   return (
     <html lang="en" className={cn(inter.variable, spaceMono.variable)}>
       <head>
-        <Script 
-          src="https://js.puter.com/v2/" 
-          strategy="beforeInteractive"
-        />
       </head>
       <body className="antialiased">{children}</body>
     </html>

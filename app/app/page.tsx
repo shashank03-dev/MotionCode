@@ -5,6 +5,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { extractFrames } from '@/lib/extractFrames';
+import { canUseForFree, usagesLeft, incrementUsage } from '@/lib/rateLimit';
 
 type AnalysisResult = {
   intent: string;
@@ -64,35 +65,19 @@ Respond ONLY with valid JSON (no markdown, no backticks):
 Keep each code block concise but complete. 
 Max 30 lines per framework output.`
 
-// ── FREE: Puter.js ──────────────────────────────
-async function analyzeWithPuter(frames: string[]): Promise<any> {
-  const imageMessages = frames.map((b64) => ({
-    type: "image",
-    source: {
-      type: "base64",
-      media_type: "image/jpeg",
-      data: b64
-    }
-  }))
-
-  const response = await (window as any).puter.ai.chat(
-    [
-      ...imageMessages,
-      { type: "text", text: ANIMATION_PROMPT(frames.length) }
-    ],
-    { model: "claude-sonnet-4-6" }
-  )
-
-  const text = response?.message?.content
-    ?.filter((c: any) => c.type === "text")
-    ?.map((c: any) => c.text)
-    ?.join("") ?? ""
-
-  return JSON.parse(text.replace(/```json|```/g, "").trim())
+// ── FREE: Gemini Flash ──────────────────────────
+async function analyzeWithGeminiFree(frames: string[]): Promise<any> {
+  // Uses Flash model — cheaper, faster
+  return callGemini(frames, "gemini-2.5-flash")
 }
 
-// ── PRO: Gemini API ─────────────────────────────
-async function analyzeWithGemini(frames: string[]): Promise<any> {
+// ── PRO: Gemini Pro ─────────────────────────────
+async function analyzeWithGeminiPro(frames: string[]): Promise<any> {
+  // Uses Pro model — better quality
+  return callGemini(frames, "gemini-2.5-pro")
+}
+
+async function callGemini(frames: string[], model: string): Promise<any> {
   const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY
 
   const imageParts = frames.map((b64) => ({
@@ -100,7 +85,7 @@ async function analyzeWithGemini(frames: string[]): Promise<any> {
   }))
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -124,22 +109,13 @@ async function analyzeWithGemini(frames: string[]): Promise<any> {
 
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? ""
   
-  // Extract JSON more aggressively
-  let clean = text
-  
-  // Try to find JSON block between first { and last }
-  const firstBrace = clean.indexOf('{')
-  const lastBrace = clean.lastIndexOf('}')
-  
-  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-    clean = clean.slice(firstBrace, lastBrace + 1)
-  } else {
-    // Fallback: strip markdown fences
-    clean = clean.replace(/```json|```/g, "").trim()
-  }
-  
-  const parsed = JSON.parse(clean)
-  return parsed
+  const firstBrace = text.indexOf('{')
+  const lastBrace = text.lastIndexOf('}')
+  const clean = firstBrace !== -1 && lastBrace > firstBrace
+    ? text.slice(firstBrace, lastBrace + 1)
+    : text.replace(/```json|```/g, "").trim()
+
+  return JSON.parse(clean)
 }
 
 export default function AnimationConverter() {
@@ -148,11 +124,7 @@ export default function AnimationConverter() {
   const [frameCount, setFrameCount] = useState<number>(8);
   const [frames, setFrames] = useState<string[]>([]);
   const [frameThumbs, setFrameThumbs] = useState<string[]>([]);
-  // Hardcoded for now — will connect to Razorpay/Supabase later
-  // Change to 'pro' to test pro flow locally
-  // TODO: Replace with real plan from Supabase profile
-  // when Razorpay + auth is integrated:
-  // const { plan } = useUser()  ← will replace this line
+  // TODO: Replace with Supabase profile plan after auth is added
   const [userPlan, setUserPlan] = useState<'free' | 'pro'>('free')
 
   const [loading, setLoading] = useState<boolean>(false);
@@ -392,37 +364,41 @@ export default function AnimationConverter() {
 
   const handleAnalyze = async () => {
     if (!frames.length || loading) return
+
+    // Check rate limit for free users
+    if (userPlan === 'free' && !canUseForFree()) {
+      setError("Daily limit reached (5/day). Upgrade to Pro for unlimited.")
+      return
+    }
+
     setLoading(true)
     setStage("analyzing")
     setResult(null)
     setError(null)
-  
+
     try {
       let parsed: any
-  
+
       if (userPlan === 'pro') {
-        // Pro: silent, fast, no popup
-        setStatusMessage("Sending to Gemini Vision...")
-        parsed = await analyzeWithGemini(frames)
+        setStatusMessage("Analyzing with Gemini 2.5 Pro...")
+        parsed = await analyzeWithGeminiPro(frames)
       } else {
-        // Free: Puter handles auth + billing
-        setStatusMessage("Sending to Puter.js...")
-        parsed = await analyzeWithPuter(frames)
+        setStatusMessage("Analyzing with Gemini Flash...")
+        parsed = await analyzeWithGeminiFree(frames)
+        incrementUsage() // track usage after success
       }
-  
+
       setResult(parsed)
-      setActiveTab(
-        (localStorage.getItem('motioncode_tab') as any) || 'CSS'
-      )
+      setActiveTab(localStorage.getItem('motioncode_tab') as any || 'CSS')
       setStage("done")
       setShowToast(true)
-  
+
     } catch (err: any) {
       console.error("Analysis error:", err)
       setError(err?.message || "Analysis failed. Try again.")
       setStage("error")
     }
-  
+
     setLoading(false)
   }
 
@@ -700,27 +676,35 @@ export default function AnimationConverter() {
             </div>
           )}
 
-          {/* PUTER LOGO NOTICE */}
-          <div style={{
-            border: `1px solid ${userPlan === 'free' ? '#1a1a1a' : '#00ff88'}`, padding: '10px 14px', 
-            background: '#0a0a0a', margin: '0 20px 20px'
-          }}>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-              <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 11, color: userPlan === 'free' ? '#3a3a4a' : '#00ff88' }}>
-                {userPlan === 'free' ? 'ℹ' : '⚡'}
-              </span>
-              <div style={{ 
-                fontFamily: 'Space Mono, monospace', fontSize: 10, color: userPlan === 'free' ? '#3a3a4a' : '#00ff88', 
-                lineHeight: 1.6 
-              }}>
-                {userPlan === 'free' ? (
-                  <>Powered by Puter.js — a free Puter account is<br/>required to run analysis.</>
-                ) : (
-                  <>Pro — Powered by Gemini Vision.<br/>No sign-in required.</>
-                )}
+          {/* USAGE NOTICE */}
+          {userPlan === 'free' ? (
+            <div style={{
+              border: '1px solid #1a1a1a', padding: '10px 14px', margin: '0 20px 20px', background: '#0a0a0a'
+            }}>
+              {canUseForFree() ? (
+                <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 11, color: '#3a3a4a' }}>
+                  ⚡ {usagesLeft()} free analyses remaining today
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 11, color: '#ef4444' }}>
+                    ✗ Daily limit reached (5/day)
+                  </div>
+                  <Link href="/pricing" style={{ fontFamily: 'Space Mono, monospace', fontSize: 11, color: '#00ff88', textDecoration: 'none' }}>
+                    Upgrade to Pro →
+                  </Link>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{
+              border: '1px solid #00ff88', padding: '10px 14px', margin: '0 20px 20px', background: '#0a0a0a'
+            }}>
+              <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 11, color: '#00ff88' }}>
+                ⚡ Pro — Gemini 2.5 Pro. Unlimited analyses.
               </div>
             </div>
-          </div>
+          )}
 
           {/* ANALYZE BUTTON */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -731,12 +715,12 @@ export default function AnimationConverter() {
             )}
             <button
               onClick={handleAnalyze}
-              disabled={!file || frames.length === 0 || loading || stage === "extracting"}
+              disabled={!file || frames.length === 0 || loading || stage === "extracting" || (userPlan === 'free' && !canUseForFree())}
               style={{
-                margin: '0 20px 20px 20px', padding: 14, cursor: (!file || frames.length === 0 || loading || stage === "extracting") ? 'not-allowed' : 'pointer',
-                border: loading ? '1px solid #00ff88' : 'none',
-                backgroundColor: (!file || frames.length === 0 || stage === "extracting") ? '#1a1a1a' : loading ? 'transparent' : '#00ff88',
-                color: (!file || frames.length === 0 || stage === "extracting") ? '#3a3a4a' : loading ? '#00ff88' : '#080808',
+                margin: '0 20px 20px 20px', padding: 14, cursor: (!file || frames.length === 0 || loading || stage === "extracting" || (userPlan === 'free' && !canUseForFree())) ? 'not-allowed' : 'pointer',
+                border: (userPlan === 'free' && !canUseForFree()) ? '1px solid #ef4444' : loading ? '1px solid #00ff88' : 'none',
+                backgroundColor: (userPlan === 'free' && !canUseForFree()) ? 'transparent' : (!file || frames.length === 0 || stage === "extracting") ? '#1a1a1a' : loading ? 'transparent' : '#00ff88',
+                color: (userPlan === 'free' && !canUseForFree()) ? '#ef4444' : (!file || frames.length === 0 || stage === "extracting") ? '#3a3a4a' : loading ? '#00ff88' : '#080808',
                 fontFamily: 'Space Mono, monospace', fontSize: 13, fontWeight: 'bold', transition: 'all 0.2s'
               }}
             >
@@ -817,7 +801,7 @@ export default function AnimationConverter() {
                   {[
                     "Drop a video or GIF on the left panel",
                     "Choose frame count (8 recommended for accuracy)",
-                    "Click Analyze and sign in with free Puter account",
+                    "Click Analyze. 5 free uses per day.",
                     "Get production code in CSS, GSAP, Framer Motion, React Spring"
                   ].map((text, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 20 }}>
@@ -1024,7 +1008,6 @@ export default function AnimationConverter() {
             </div>
             
             <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 10, color: '#1a1a1a' }}>
-              powered by Puter.js
             </div>
           </div>
 
