@@ -37,33 +37,32 @@ const intentColors: Record<string, string> = {
 };
 
 const ANIMATION_PROMPT = (frameCount: number) => `
-You are a world-class frontend animation engineer.
-I am giving you ${frameCount} sequential frames from a UI animation.
+You are a frontend animation engineer analyzing ${frameCount} frames.
 
-Carefully analyze:
-- Transforms: translateX/Y, scale, rotate, skew
-- Opacity and color transitions  
-- Border-radius morphing
-- Easing curves and timing
-- Animation intent and element type
+Analyze the motion and respond with ONLY this JSON structure.
+No markdown. No backticks. No explanation. Raw JSON only.
+Keep EVERY code value under 15 lines maximum. Be extremely concise.
 
-Respond ONLY with valid JSON (no markdown, no backticks):
 {
   "intent": "morph",
   "element": "button",
   "duration_ms": 400,
   "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
-  "description": "description of what this animation does",
+  "description": "One sentence description max",
   "performance_score": 92,
   "gpu_accelerated": true,
   "accessibility_note": "Add prefers-reduced-motion fallback",
-  "css": "/* complete production CSS keyframe code */",
-  "gsap": "// complete GSAP code",
-  "framer_motion": "// complete Framer Motion code",
-  "react_spring": "// complete React Spring code"
+  "css": ".el{animation:mc 400ms cubic-bezier(0.4,0,0.2,1) forwards}@keyframes mc{0%{transform:scale(1)}100%{transform:scale(0.95)}}@media(prefers-reduced-motion:reduce){.el{animation:none}}",
+  "gsap": "gsap.to('.el',{duration:0.4,ease:'power2.inOut',scale:0.95})",
+  "framer_motion": "const v={initial:{scale:1},animate:{scale:0.95},transition:{duration:0.4}};",
+  "react_spring": "const s=useSpring({from:{scale:1},to:{scale:0.95},config:{duration:400}});"
 }
-IMPORTANT: Keep each code block under 25 lines. 
-Be concise but complete. Do not add explanatory comments.`
+
+CRITICAL RULES:
+- Each code value must be a single minified string under 15 lines
+- No multiline strings — use \\n if needed but keep it short
+- description must be ONE sentence only
+- Return NOTHING except the JSON object`
 
 // ── FREE: Gemini Flash ──────────────────────────
 async function analyzeWithGeminiFree(frames: string[]): Promise<any> {
@@ -108,14 +107,70 @@ async function callGemini(frames: string[], model: string): Promise<any> {
   if (!response.ok) throw new Error(data.error?.message || "Gemini error")
 
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? ""
-  
+
+  // Strip everything before first { and after last }
   const firstBrace = text.indexOf('{')
   const lastBrace = text.lastIndexOf('}')
-  const clean = firstBrace !== -1 && lastBrace > firstBrace
-    ? text.slice(firstBrace, lastBrace + 1)
-    : text.replace(/```json|```/g, "").trim()
 
-  return JSON.parse(clean)
+  if (firstBrace === -1 || lastBrace === -1) {
+    throw new Error("No JSON found in response")
+  }
+
+  const clean = text.slice(firstBrace, lastBrace + 1)
+
+  // Try to parse, if it fails try to recover truncated JSON
+  let parsed
+  try {
+    parsed = JSON.parse(clean)
+  } catch {
+    // JSON was truncated — add closing braces and try again
+    const recovered = clean
+      .replace(/,\s*$/, '')  // remove trailing comma
+      .replace(/:\s*"[^"]*$/, ': ""')  // close open string
+      + '}'  // close the object
+    parsed = JSON.parse(recovered)
+  }
+
+  return parsed
+}
+
+function prettifyCode(code: string, tab: string): string {
+  if (!code) return ""
+  
+  try {
+    if (tab === "CSS") {
+      // Format CSS: add newlines after { } ;
+      return code
+        .replace(/\{/g, ' {\n  ')
+        .replace(/\}/g, '\n}\n')
+        .replace(/;/g, ';\n  ')
+        .replace(/  \n\}/g, '\n}')
+        .replace(/@keyframes/g, '\n@keyframes')
+        .replace(/@media/g, '\n@media')
+        .trim()
+    }
+    
+    if (tab === "GSAP") {
+      return code
+        .replace(/;/g, ';\n')
+        .replace(/\{/g, '{\n  ')
+        .replace(/\}/g, '\n}')
+        .trim()
+    }
+
+    if (tab === "Framer Motion" || tab === "React Spring") {
+      return code
+        .replace(/;/g, ';\n')
+        .replace(/\{/g, '{\n  ')
+        .replace(/\}/g, '\n}')
+        .replace(/,/g, ',\n  ')
+        .trim()
+    }
+    
+    return code
+  } catch {
+    return code
+  }
 }
 
 export default function AnimationConverter() {
@@ -899,7 +954,7 @@ export default function AnimationConverter() {
                 <pre style={{ 
                   margin: 0, fontFamily: 'Space Mono, monospace', fontSize: 12.5, lineHeight: 1.9, 
                   color: '#e2e8f0', whiteSpace: 'pre-wrap', wordBreak: 'break-all'
-                }} dangerouslySetInnerHTML={{ __html: highlightCode(getCodeContent()) }} />
+                }} dangerouslySetInnerHTML={{ __html: highlightCode(prettifyCode(getCodeContent(), activeTab)) }} />
               </div>
 
               {/* SCORECARD ROW */}
