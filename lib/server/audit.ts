@@ -91,6 +91,12 @@ export type AnalysisResourceRequest = {
   workspaceId?: string;
 };
 
+export type AnalysisAuthorizationResult = {
+  workspaceId: string | null;
+};
+
+export type AnalysisAuthorizationDecision = AnalysisAuthorizationResult | false;
+
 export type AnalysisAuthorizationUser = {
   id: string;
 };
@@ -131,7 +137,7 @@ export async function authorizeAnalysisRequestWithSupabase(
   user: AnalysisAuthorizationUser,
   request: AnalysisResourceRequest,
   options: SupabaseRecorderOptions = {},
-) {
+): Promise<AnalysisAuthorizationDecision> {
   const client = options.client ?? createTrustedSupabaseServerClient(options.env);
   const project = await findSingleRow(client, "projects", {
     id: request.projectId,
@@ -182,10 +188,16 @@ export async function authorizeAnalysisRequestWithSupabase(
     return false;
   }
 
-  return hasRow(client, "project_versions", {
+  const hasVersion = await hasRow(client, "project_versions", {
     id: request.versionId,
     project_id: request.projectId,
   });
+
+  if (!hasVersion) {
+    return false;
+  }
+
+  return { workspaceId };
 }
 
 export async function getDailyAnalysisCountWithSupabase(

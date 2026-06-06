@@ -7,6 +7,7 @@ import { ApiError } from "@/lib/server/apiErrors";
 import {
   authorizeAnalysisRequestWithSupabase,
   getDailyAnalysisCountWithSupabase,
+  type AnalysisAuthorizationDecision,
   type SupabaseInsertClient,
 } from "@/lib/server/audit";
 import {
@@ -20,13 +21,24 @@ const VALID_JPEG_BASE64 = Buffer.from([0xff, 0xd8, 0xff, 0xd9]).toString(
   "base64",
 );
 
+const ASSET_ID = "11111111-1111-4111-8111-111111111111";
+const PROJECT_ID = "22222222-2222-4222-8222-222222222222";
+const VERSION_ID = "33333333-3333-4333-8333-333333333333";
+const WORKSPACE_ID = "44444444-4444-4444-8444-444444444444";
+const CANONICAL_WORKSPACE_ID = "55555555-5555-4555-8555-555555555555";
+
+type TestAuthorizeAnalysisRequest = (
+  user: { id: string },
+  requestBody: Record<string, unknown>,
+) => Promise<AnalysisAuthorizationDecision>;
+
 const requestBody = (overrides: Record<string, unknown> = {}) => ({
-  assetId: "asset_123",
+  assetId: ASSET_ID,
   frames: [VALID_JPEG_BASE64],
   model: "gemini-2.5-flash",
-  projectId: "project_123",
-  versionId: "version_123",
-  workspaceId: "workspace_123",
+  projectId: PROJECT_ID,
+  versionId: VERSION_ID,
+  workspaceId: WORKSPACE_ID,
   ...overrides,
 });
 
@@ -47,12 +59,23 @@ const makeRequestWithContentLength = (body: unknown, contentLength: number) =>
     method: "POST",
   });
 
-const makeRequestWithoutContentLength = (rawBody: string) =>
-  new Request("https://motioncode.test/api/analyze", {
-    body: rawBody,
-    headers: { "content-type": "application/json" },
-    method: "POST",
-  });
+const makeStreamingRequestWithoutContentLength = (
+  body: ReadableStream<Uint8Array>,
+) =>
+  ({
+    body,
+    headers: new Headers({ "content-type": "application/json" }),
+  }) as Request;
+
+const makeOversizedStreamingRequestWithoutContentLength = (limit: number) =>
+  makeStreamingRequestWithoutContentLength(
+    new ReadableStream<Uint8Array>({
+      pull(controller) {
+        controller.enqueue({ byteLength: limit + 1 } as Uint8Array);
+        controller.close();
+      },
+    }),
+  );
 
 const spec: MotionSpec = {
   accessibilityNote: "Respect prefers-reduced-motion.",
@@ -136,7 +159,9 @@ function createSelectClient(
 function createDeps(options: { planTier?: PlanTier; userId?: string | null } = {}) {
   return {
     audit: { record: vi.fn(async () => undefined) },
-    authorizeAnalysisRequest: vi.fn(async () => true),
+    authorizeAnalysisRequest: vi.fn<TestAuthorizeAnalysisRequest>(async () => ({
+      workspaceId: WORKSPACE_ID,
+    })),
     generateAnalysis: vi.fn(async () => generated),
     getDailyAnalysisCount: vi.fn(async () => 0),
     getCurrentUser: vi.fn(async () =>
@@ -226,10 +251,8 @@ describe("POST /api/analyze", () => {
     const deps = createDeps();
 
     const response = await handleAnalyzeRequest(
-      makeRequestWithoutContentLength(
-        JSON.stringify({
-          frames: ["x".repeat(MAX_ANALYZE_REQUEST_CONTENT_LENGTH + 1)],
-        }),
+      makeOversizedStreamingRequestWithoutContentLength(
+        MAX_ANALYZE_REQUEST_CONTENT_LENGTH,
       ),
       deps,
     );
@@ -243,6 +266,27 @@ describe("POST /api/analyze", () => {
     expect(deps.getCurrentUser).not.toHaveBeenCalled();
     expect(deps.authorizeAnalysisRequest).not.toHaveBeenCalled();
     expect(deps.generateAnalysis).not.toHaveBeenCalled();
+  });
+
+  it("rejects non-UUID resource IDs before authz or Gemini", async () => {
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
+    const deps = createDeps();
+
+    const response = await handleAnalyzeRequest(
+      makeRequest(requestBody({ projectId: "project_123" })),
+      deps,
+    );
+    const json = (await response.json()) as ApiResponse<AnalysisResult>;
+
+    expect(response.status).toBe(400);
+    expect(json).toMatchObject({
+      code: "INVALID_REQUEST",
+      ok: false,
+    });
+    expect(deps.authorizeAnalysisRequest).not.toHaveBeenCalled();
+    expect(deps.generateAnalysis).not.toHaveBeenCalled();
+    expect(deps.usage.record).not.toHaveBeenCalled();
+    expect(deps.audit.record).not.toHaveBeenCalled();
   });
 
   it("rejects frame arrays above the largest plan before Gemini", async () => {
@@ -304,10 +348,10 @@ describe("POST /api/analyze", () => {
     expect(deps.authorizeAnalysisRequest).toHaveBeenCalledWith(
       { id: "user_123" },
       expect.objectContaining({
-        assetId: "asset_123",
-        projectId: "project_123",
-        versionId: "version_123",
-        workspaceId: "workspace_123",
+        assetId: ASSET_ID,
+        projectId: PROJECT_ID,
+        versionId: VERSION_ID,
+        workspaceId: WORKSPACE_ID,
       }),
     );
     expect(deps.generateAnalysis).not.toHaveBeenCalled();
@@ -344,15 +388,15 @@ describe("POST /api/analyze", () => {
     expect(response.status).toBe(200);
     expect(json).toEqual({
       data: {
-        assetId: "asset_123",
+        assetId: ASSET_ID,
         createdAt: "2026-06-06T12:00:00.000Z",
         frameCount: 1,
         id: "analysis_123",
         model: "gemini-2.5-flash",
         outputs: generated.outputs,
-        projectId: "project_123",
+        projectId: PROJECT_ID,
         spec,
-        versionId: "version_123",
+        versionId: VERSION_ID,
       },
       ok: true,
     });
@@ -365,18 +409,18 @@ describe("POST /api/analyze", () => {
       frameCount: 1,
       model: "gemini-2.5-flash",
       planTier: "free",
-      projectId: "project_123",
+      projectId: PROJECT_ID,
       userId: "user_123",
-      workspaceId: "workspace_123",
+      workspaceId: WORKSPACE_ID,
     });
     expect(deps.usage.record).toHaveBeenCalledWith({
       eventType: "analysis.completed",
       frameCount: 1,
       model: "gemini-2.5-flash",
       planTier: "free",
-      projectId: "project_123",
+      projectId: PROJECT_ID,
       userId: "user_123",
-      workspaceId: "workspace_123",
+      workspaceId: WORKSPACE_ID,
     });
     expect(
       deps.usage.record.mock.invocationCallOrder[0],
@@ -387,6 +431,41 @@ describe("POST /api/analyze", () => {
         eventType: "analysis.completed",
         targetId: "analysis_123",
         targetType: "analysis",
+      }),
+    );
+  });
+
+  it("records usage and audit events with the authorized project workspace when the client omits it", async () => {
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
+    const deps = createDeps();
+    deps.authorizeAnalysisRequest.mockResolvedValue({
+      workspaceId: CANONICAL_WORKSPACE_ID,
+    });
+
+    const response = await handleAnalyzeRequest(
+      makeRequest(requestBody({ workspaceId: undefined })),
+      deps,
+    );
+    const authorizedRequest = deps.authorizeAnalysisRequest.mock.calls[0]?.[1];
+
+    expect(response.status).toBe(200);
+    expect(authorizedRequest).not.toHaveProperty("workspaceId");
+    expect(deps.usage.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "analysis.started",
+        workspaceId: CANONICAL_WORKSPACE_ID,
+      }),
+    );
+    expect(deps.usage.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "analysis.completed",
+        workspaceId: CANONICAL_WORKSPACE_ID,
+      }),
+    );
+    expect(deps.audit.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "analysis.completed",
+        workspaceId: CANONICAL_WORKSPACE_ID,
       }),
     );
   });
@@ -474,16 +553,16 @@ describe("POST /api/analyze", () => {
     const rowForTable = (table: string) => {
       if (table === "projects") {
         return {
-          id: "project_123",
+          id: PROJECT_ID,
           owner_id: "user_123",
-          workspace_id: "workspace_123",
+          workspace_id: WORKSPACE_ID,
         };
       }
       if (table === "assets") {
-        return { id: "asset_123", project_id: "project_123" };
+        return { id: ASSET_ID, project_id: PROJECT_ID };
       }
       if (table === "project_versions") {
-        return { id: "version_123", project_id: "project_123" };
+        return { id: VERSION_ID, project_id: PROJECT_ID };
       }
 
       return { id: `${table}_row` };
@@ -562,9 +641,9 @@ describe("POST /api/analyze", () => {
         frame_count: 1,
         model: "gemini-2.5-flash",
         plan_tier: "free",
-        project_id: "project_123",
+        project_id: PROJECT_ID,
         user_id: "user_123",
-        workspace_id: "workspace_123",
+        workspace_id: WORKSPACE_ID,
       }),
     );
     expect(insert).toHaveBeenCalledWith(
@@ -573,9 +652,9 @@ describe("POST /api/analyze", () => {
         frame_count: 1,
         model: "gemini-2.5-flash",
         plan_tier: "free",
-        project_id: "project_123",
+        project_id: PROJECT_ID,
         user_id: "user_123",
-        workspace_id: "workspace_123",
+        workspace_id: WORKSPACE_ID,
       }),
     );
     expect(insert).toHaveBeenCalledWith(
@@ -584,7 +663,7 @@ describe("POST /api/analyze", () => {
         event_type: "analysis.completed",
         target_id: "analysis_123",
         target_type: "analysis",
-        workspace_id: "workspace_123",
+        workspace_id: WORKSPACE_ID,
       }),
     );
   });
@@ -599,22 +678,22 @@ describe("POST /api/analyze", () => {
     const rowForTable = (table: string) => {
       if (table === "projects") {
         return {
-          id: "project_123",
+          id: PROJECT_ID,
           owner_id: "other_user",
-          workspace_id: "workspace_123",
+          workspace_id: WORKSPACE_ID,
         };
       }
       if (table === "workspaces") {
-        return { id: "workspace_123", plan_tier: "pro" };
+        return { id: WORKSPACE_ID, plan_tier: "pro" };
       }
       if (table === "workspace_members") {
         return { id: "member_123", user_id: "user_123" };
       }
       if (table === "assets") {
-        return { id: "asset_123", project_id: "project_123" };
+        return { id: ASSET_ID, project_id: PROJECT_ID };
       }
       if (table === "project_versions") {
-        return { id: "version_123", project_id: "project_123" };
+        return { id: VERSION_ID, project_id: PROJECT_ID };
       }
 
       return null;
@@ -677,22 +756,22 @@ describe("Supabase analyze authorization", () => {
     const client = createSelectClient((table, query) => {
       if (table === "projects") {
         return {
-          id: "project_123",
+          id: PROJECT_ID,
           owner_id: "other_user",
-          workspace_id: "workspace_123",
+          workspace_id: WORKSPACE_ID,
         };
       }
       if (table === "workspaces") {
-        return { id: "workspace_123", plan_tier: "studio" };
+        return { id: WORKSPACE_ID, plan_tier: "studio" };
       }
       if (table === "team_members") {
         return query.user_id === "user_123" ? { id: "team_member_123" } : null;
       }
       if (table === "assets") {
-        return { id: "asset_123", project_id: "project_123" };
+        return { id: ASSET_ID, project_id: PROJECT_ID };
       }
       if (table === "project_versions") {
-        return { id: "version_123", project_id: "project_123" };
+        return { id: VERSION_ID, project_id: PROJECT_ID };
       }
 
       return null;
@@ -702,37 +781,37 @@ describe("Supabase analyze authorization", () => {
       authorizeAnalysisRequestWithSupabase(
         { id: "user_123" },
         {
-          assetId: "asset_123",
-          projectId: "project_123",
-          versionId: "version_123",
-          workspaceId: "workspace_123",
+          assetId: ASSET_ID,
+          projectId: PROJECT_ID,
+          versionId: VERSION_ID,
+          workspaceId: WORKSPACE_ID,
         },
         { client },
       ),
-    ).resolves.toBe(true);
+    ).resolves.toEqual({ workspaceId: WORKSPACE_ID });
   });
 
   it("allows studio workspace owners to read non-owned projects", async () => {
     const client = createSelectClient((table) => {
       if (table === "projects") {
         return {
-          id: "project_123",
+          id: PROJECT_ID,
           owner_id: "other_user",
-          workspace_id: "workspace_123",
+          workspace_id: WORKSPACE_ID,
         };
       }
       if (table === "workspaces") {
         return {
-          id: "workspace_123",
+          id: WORKSPACE_ID,
           owner_id: "user_123",
           plan_tier: "studio",
         };
       }
       if (table === "assets") {
-        return { id: "asset_123", project_id: "project_123" };
+        return { id: ASSET_ID, project_id: PROJECT_ID };
       }
       if (table === "project_versions") {
-        return { id: "version_123", project_id: "project_123" };
+        return { id: VERSION_ID, project_id: PROJECT_ID };
       }
 
       return null;
@@ -742,14 +821,14 @@ describe("Supabase analyze authorization", () => {
       authorizeAnalysisRequestWithSupabase(
         { id: "user_123" },
         {
-          assetId: "asset_123",
-          projectId: "project_123",
-          versionId: "version_123",
-          workspaceId: "workspace_123",
+          assetId: ASSET_ID,
+          projectId: PROJECT_ID,
+          versionId: VERSION_ID,
+          workspaceId: WORKSPACE_ID,
         },
         { client },
       ),
-    ).resolves.toBe(true);
+    ).resolves.toEqual({ workspaceId: WORKSPACE_ID });
   });
 });
 
@@ -825,18 +904,18 @@ describe("Gemini analysis normalization", () => {
         react_spring: "const s=useSpring({opacity:1})",
       },
       {
-        assetId: "asset_123",
+        assetId: ASSET_ID,
         createdAt: "2026-06-06T12:00:00.000Z",
         frameCount: 3,
         id: "analysis_123",
         model: "gemini-2.5-flash",
-        projectId: "project_123",
-        versionId: "version_123",
+        projectId: PROJECT_ID,
+        versionId: VERSION_ID,
       },
     );
 
     expect(result).toMatchObject({
-      assetId: "asset_123",
+      assetId: ASSET_ID,
       frameCount: 3,
       id: "analysis_123",
       outputs: [

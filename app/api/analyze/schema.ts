@@ -5,6 +5,7 @@ import { PLAN_ENTITLEMENTS } from "@/lib/contracts/plans";
 const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"] as const;
 const JPEG_DATA_URL_PREFIX = /^data:image\/jpe?g;base64,/i;
 const MAX_PLAN_UPLOAD_BYTES = PLAN_ENTITLEMENTS.studio.maxUploadBytes;
+const ResourceIdSchema = z.string().uuid();
 
 export const MAX_ANALYZE_FRAMES =
   PLAN_ENTITLEMENTS.studio.maxFramesPerAnalysis;
@@ -31,12 +32,12 @@ export const Base64JpegFrameSchema = z
 
 export const AnalyzeRequestSchema = z
   .object({
-    assetId: z.string().min(1),
+    assetId: ResourceIdSchema,
     frames: z.array(Base64JpegFrameSchema).min(1).max(MAX_ANALYZE_FRAMES),
     model: z.enum(GEMINI_MODELS).default("gemini-2.5-flash"),
-    projectId: z.string().min(1),
-    versionId: z.string().min(1),
-    workspaceId: z.string().min(1).optional(),
+    projectId: ResourceIdSchema,
+    versionId: ResourceIdSchema,
+    workspaceId: ResourceIdSchema.optional(),
   })
   .strict();
 

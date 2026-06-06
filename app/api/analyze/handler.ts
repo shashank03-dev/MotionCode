@@ -13,6 +13,7 @@ import {
   createSupabaseAuditRecorder,
   createSupabaseUsageEventRecorder,
   getDailyAnalysisCountWithSupabase,
+  type AnalysisAuthorizationDecision,
   type AuditRecorder,
   type UsageEventRecorder,
 } from "@/lib/server/audit";
@@ -52,7 +53,7 @@ export type AnalyzeRouteDeps = {
   authorizeAnalysisRequest?: (
     user: CurrentUser,
     requestBody: AnalyzeRequestBody,
-  ) => Promise<boolean>;
+  ) => Promise<AnalysisAuthorizationDecision>;
   generateAnalysis?: (input: GeminiAnalyzeInput) => Promise<GeminiAnalysis>;
   getCurrentUser?: () => Promise<CurrentUser | null>;
   getDailyAnalysisCount?: (input: DailyAnalysisCountInput) => Promise<number>;
@@ -114,15 +115,17 @@ export async function handleAnalyzeRequest(
     );
   }
 
-  const preflightError = await runPreflightChecks({
+  const preflight = await runPreflightChecks({
     entitlements,
     requestBody,
     resolvedDeps,
     user,
   });
-  if (preflightError) {
-    return preflightError;
+  if (!preflight.ok) {
+    return preflight.response;
   }
+
+  const canonicalWorkspaceId = preflight.workspaceId;
 
   const abuseDecision = resolvedDeps.abuseGuard.check({
     entitlements,
@@ -147,7 +150,7 @@ export async function handleAnalyzeRequest(
       planTier,
       projectId: requestBody.projectId,
       userId: user.id,
-      workspaceId: requestBody.workspaceId,
+      workspaceId: canonicalWorkspaceId,
     });
   } catch {
     return apiError("INTERNAL_ERROR", "Failed to reserve analysis usage.");
@@ -162,6 +165,7 @@ export async function handleAnalyzeRequest(
     requestBody,
     resolvedDeps,
     user,
+    workspaceId: canonicalWorkspaceId,
   });
 
   if (!generatedResult.ok) {
@@ -177,7 +181,7 @@ export async function handleAnalyzeRequest(
         planTier,
         projectId: requestBody.projectId,
         userId: user.id,
-        workspaceId: requestBody.workspaceId,
+        workspaceId: canonicalWorkspaceId,
       }),
       resolvedDeps.audit.record({
         actorId: user.id,
@@ -190,7 +194,7 @@ export async function handleAnalyzeRequest(
         },
         targetId: analysisId,
         targetType: "analysis",
-        workspaceId: requestBody.workspaceId,
+        workspaceId: canonicalWorkspaceId,
       }),
     ]);
   } catch (error) {
@@ -205,6 +209,7 @@ export async function handleAnalyzeRequest(
       reason: persistenceError.code,
       requestBody,
       user,
+      workspaceId: canonicalWorkspaceId,
     });
 
     return apiError(persistenceError.code, persistenceError.message, {
@@ -312,14 +317,23 @@ async function runPreflightChecks({
   requestBody: AnalyzeRequestBody;
   resolvedDeps: ResolvedAnalyzeRouteDeps;
   user: CurrentUser;
-}) {
+}): Promise<
+  | { ok: true; workspaceId: string | null }
+  | { ok: false; response: Response }
+> {
   try {
-    const authorized = await resolvedDeps.authorizeAnalysisRequest(
+    const authorization = await resolvedDeps.authorizeAnalysisRequest(
       user,
       requestBody,
     );
-    if (!authorized) {
-      return apiError("FORBIDDEN", "You cannot analyze the submitted project.");
+    if (!authorization) {
+      return {
+        ok: false,
+        response: apiError(
+          "FORBIDDEN",
+          "You cannot analyze the submitted project.",
+        ),
+      };
     }
 
     const dailyCount = await resolvedDeps.getDailyAnalysisCount({
@@ -328,11 +342,16 @@ async function runPreflightChecks({
     });
 
     if (dailyCount >= entitlements.dailyAnalyses) {
-      return apiError(
-        "QUOTA_EXCEEDED",
-        `Your plan allows ${entitlements.dailyAnalyses} analyses per day.`,
-      );
+      return {
+        ok: false,
+        response: apiError(
+          "QUOTA_EXCEEDED",
+          `Your plan allows ${entitlements.dailyAnalyses} analyses per day.`,
+        ),
+      };
     }
+
+    return { ok: true, workspaceId: authorization.workspaceId };
   } catch (error) {
     const apiFailure = toApiError(
       error,
@@ -340,12 +359,13 @@ async function runPreflightChecks({
       "Analyze request preflight failed.",
     );
 
-    return apiError(apiFailure.code, apiFailure.message, {
-      status: apiFailure.status,
-    });
+    return {
+      ok: false,
+      response: apiError(apiFailure.code, apiFailure.message, {
+        status: apiFailure.status,
+      }),
+    };
   }
-
-  return null;
 }
 
 async function runGeminiAnalysis({
@@ -355,6 +375,7 @@ async function runGeminiAnalysis({
   requestBody,
   resolvedDeps,
   user,
+  workspaceId,
 }: {
   analysisId: string;
   createdAt: string;
@@ -362,6 +383,7 @@ async function runGeminiAnalysis({
   requestBody: AnalyzeRequestBody;
   resolvedDeps: ResolvedAnalyzeRouteDeps;
   user: CurrentUser;
+  workspaceId: string | null;
 }): Promise<
   | { ok: true; result: z.infer<typeof AnalysisResultSchema> }
   | { ok: false; response: Response }
@@ -399,6 +421,7 @@ async function runGeminiAnalysis({
       reason: apiFailure.code,
       requestBody,
       user,
+      workspaceId,
     });
 
     return {
@@ -446,12 +469,14 @@ async function recordFailureAuditSafely(
     reason,
     requestBody,
     user,
+    workspaceId,
   }: {
     analysisId: string;
     planTier: PlanTier;
     reason: string;
     requestBody: AnalyzeRequestBody;
     user: CurrentUser;
+    workspaceId: string | null;
   },
 ) {
   try {
@@ -466,7 +491,7 @@ async function recordFailureAuditSafely(
       },
       targetId: analysisId,
       targetType: "analysis",
-      workspaceId: requestBody.workspaceId,
+      workspaceId,
     });
   } catch {
     // Preserve the original API error even if failure audit persistence fails.
