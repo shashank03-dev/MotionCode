@@ -5,7 +5,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { extractFrames } from '@/lib/extractFrames';
-import { canUseForFree, usagesLeft, incrementUsage } from '@/lib/rateLimit';
+import { canUseForFree, usagesLeft, incrementUsage, FREE_LIMIT } from '@/lib/rateLimit';
 
 type AnalysisResult = {
   intent: string;
@@ -340,7 +340,7 @@ export default function AnimationConverter() {
 
     // Check rate limit for free users
     if (userPlan === 'free' && !canUseForFree()) {
-      setError("Daily limit reached (5/day). Upgrade to Pro for unlimited.")
+      setError(`Daily limit reached (${FREE_LIMIT}/day). Upgrade to Pro for unlimited.`)
       return
     }
 
@@ -657,7 +657,7 @@ export default function AnimationConverter() {
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 11, color: '#ef4444' }}>
-                    ✗ Daily limit reached (5/day)
+                    ✗ Daily limit reached ({FREE_LIMIT}/day)
                   </div>
                   <Link href="/pricing" style={{ fontFamily: 'Space Mono, monospace', fontSize: 11, color: '#00ff88', textDecoration: 'none' }}>
                     Upgrade to Pro →
@@ -770,7 +770,7 @@ export default function AnimationConverter() {
                   {[
                     "Drop a video or GIF on the left panel",
                     "Choose frame count (8 recommended for accuracy)",
-                    "Click Analyze. 5 free uses per day.",
+                    `Click Analyze. ${FREE_LIMIT} free uses per day.`,
                     "Get production code in CSS, GSAP, Framer Motion, React Spring"
                   ].map((text, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 20 }}>

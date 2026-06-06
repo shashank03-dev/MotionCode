@@ -1,4 +1,6 @@
-const FREE_LIMIT = 3
+import { FREE_LIMIT } from "@/lib/usageLimits";
+
+export { FREE_LIMIT } from "@/lib/usageLimits";
 const STORAGE_KEY = 'motioncode_usage'
 
 interface UsageData {
