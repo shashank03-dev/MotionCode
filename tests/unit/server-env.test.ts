@@ -7,7 +7,7 @@ afterEach(() => {
 });
 
 describe("server env loader", () => {
-  it("returns only the server env values needed by API routes", async () => {
+  it("returns the server-only env values needed by API routes", async () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://motioncode.supabase.co";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "public-anon-key";
     process.env.GEMINI_API_KEY = "server-gemini-key";
@@ -19,10 +19,10 @@ describe("server env loader", () => {
 
     expect(env).toEqual({
       geminiApiKey: "server-gemini-key",
+      supabaseServiceRoleKey: "server-only-placeholder",
       supabasePublishableKey: "public-anon-key",
       supabaseUrl: "https://motioncode.supabase.co",
     });
-    expect(JSON.stringify(env)).not.toContain("server-only-placeholder");
   });
 
   it("throws a clear error when the Gemini server key is missing", async () => {
@@ -43,5 +43,16 @@ describe("server env loader", () => {
     const { getServerEnv } = await import("@/lib/server/env");
 
     expect(() => getServerEnv()).toThrow("Missing NEXT_PUBLIC_SUPABASE_URL");
+  });
+
+  it("throws a clear error when the Supabase service role key is missing", async () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://motioncode.supabase.co";
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "public-anon-key";
+    process.env.GEMINI_API_KEY = "server-gemini-key";
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    const { getServerEnv } = await import("@/lib/server/env");
+
+    expect(() => getServerEnv()).toThrow("Missing SUPABASE_SERVICE_ROLE_KEY");
   });
 });

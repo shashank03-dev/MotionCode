@@ -2,8 +2,17 @@ import { randomUUID } from "node:crypto";
 
 import type { User } from "@supabase/supabase-js";
 
-import { PLAN_ENTITLEMENTS, PLAN_TIERS, type PlanTier } from "@/lib/contracts/plans";
-import { createNoopAuditRecorder, createNoopUsageEventRecorder, type AuditRecorder, type UsageEventRecorder } from "@/lib/server/audit";
+import {
+  PLAN_ENTITLEMENTS,
+  PLAN_TIERS,
+  type PlanTier,
+} from "@/lib/contracts/plans";
+import {
+  createSupabaseAuditRecorder,
+  createSupabaseUsageEventRecorder,
+  type AuditRecorder,
+  type UsageEventRecorder,
+} from "@/lib/server/audit";
 import { apiError, apiSuccess, isApiError } from "@/lib/server/apiErrors";
 import { getDefaultAnalyzeAbuseGuard, type AnalyzeAbuseGuard } from "@/lib/server/abuse";
 import {
@@ -89,7 +98,11 @@ export async function handleAnalyzeRequest(
   });
 
   if (!abuseDecision.ok) {
-    return apiError(abuseDecision.code, abuseDecision.message, retryHeaders(abuseDecision.retryAfterMs));
+    return apiError(
+      abuseDecision.code,
+      abuseDecision.message,
+      retryHeaders(abuseDecision.retryAfterMs),
+    );
   }
 
   const analysisId = resolvedDeps.idGenerator();
@@ -167,13 +180,13 @@ export async function handleAnalyzeRequest(
 function resolveAnalyzeDeps(deps: AnalyzeRouteDeps): Required<AnalyzeRouteDeps> {
   return {
     abuseGuard: deps.abuseGuard ?? getDefaultAnalyzeAbuseGuard(),
-    audit: deps.audit ?? createNoopAuditRecorder(),
+    audit: deps.audit ?? createSupabaseAuditRecorder(),
     generateAnalysis: deps.generateAnalysis ?? analyzeFramesWithGemini,
     getCurrentUser: deps.getCurrentUser ?? getSupabaseCurrentUser,
     getPlanTier: deps.getPlanTier ?? resolvePlanTierFromUser,
     idGenerator: deps.idGenerator ?? randomUUID,
     now: deps.now ?? (() => new Date()),
-    usage: deps.usage ?? createNoopUsageEventRecorder(),
+    usage: deps.usage ?? createSupabaseUsageEventRecorder(),
   };
 }
 

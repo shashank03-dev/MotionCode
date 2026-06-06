@@ -1,9 +1,11 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { ApiResponse } from "@/lib/contracts/errors";
 import type { AnalysisResult, MotionSpec } from "@/lib/contracts/motion";
 import type { PlanTier } from "@/lib/contracts/plans";
 import { normalizeGeminiAnalysis } from "@/lib/server/gemini";
+
+const ORIGINAL_ENV = { ...process.env };
 
 const VALID_JPEG_BASE64 = Buffer.from([0xff, 0xd8, 0xff, 0xd9]).toString(
   "base64",
@@ -88,6 +90,13 @@ function createDeps(options: { planTier?: PlanTier; userId?: string | null } = {
     usage: { record: vi.fn(async () => undefined) },
   };
 }
+
+afterEach(() => {
+  process.env = { ...ORIGINAL_ENV };
+  vi.doUnmock("@supabase/supabase-js");
+  vi.resetModules();
+  vi.restoreAllMocks();
+});
 
 describe("POST /api/analyze", () => {
   it("rejects unauthenticated users before calling Gemini", async () => {
@@ -183,6 +192,80 @@ describe("POST /api/analyze", () => {
         eventType: "analysis.completed",
         targetId: "analysis_123",
         targetType: "analysis",
+      }),
+    );
+  });
+
+  it("uses Supabase-backed default recorders for usage and audit events", async () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://motioncode.supabase.co";
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "public-anon-key";
+    process.env.GEMINI_API_KEY = "server-gemini-key";
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-placeholder";
+
+    const insert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn(() => ({ insert }));
+    const createClient = vi.fn(() => ({ from }));
+    vi.doMock("@supabase/supabase-js", async (importOriginal) => {
+      const actual =
+        await importOriginal<typeof import("@supabase/supabase-js")>();
+
+      return {
+        ...actual,
+        createClient,
+      };
+    });
+
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/route");
+    const deps = createDeps();
+    const response = await handleAnalyzeRequest(makeRequest(requestBody()), {
+      abuseGuard: {
+        check: vi.fn(() => ({
+          ok: true as const,
+          remainingRequests: 9,
+          resetAt: Date.now() + 60_000,
+        })),
+        recordModelFailure: vi.fn(),
+        recordModelSuccess: vi.fn(),
+        reset: vi.fn(),
+      },
+      generateAnalysis: deps.generateAnalysis,
+      getCurrentUser: deps.getCurrentUser,
+      getPlanTier: deps.getPlanTier,
+      idGenerator: deps.idGenerator,
+      now: deps.now,
+    });
+
+    expect(response.status).toBe(200);
+    expect(createClient).toHaveBeenCalledWith(
+      "https://motioncode.supabase.co",
+      "service-role-placeholder",
+      expect.objectContaining({
+        auth: expect.objectContaining({
+          autoRefreshToken: false,
+          persistSession: false,
+        }),
+      }),
+    );
+    expect(from).toHaveBeenCalledWith("usage_events");
+    expect(from).toHaveBeenCalledWith("audit_events");
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event_type: "analysis.completed",
+        frame_count: 1,
+        model: "gemini-2.5-flash",
+        plan_tier: "free",
+        project_id: "project_123",
+        user_id: "user_123",
+        workspace_id: "workspace_123",
+      }),
+    );
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actor_id: "user_123",
+        event_type: "analysis.completed",
+        target_id: "analysis_123",
+        target_type: "analysis",
+        workspace_id: "workspace_123",
       }),
     );
   });
