@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { analysisRequestSchema } from "@/app/api/analyze/schema";
-import { publicErrorMessage } from "@/lib/server/errors";
+import { publicErrorMessage, publicErrorStatus } from "@/lib/server/errors";
 import { analyzeFramesWithGemini } from "@/lib/server/gemini";
 import { getFreeUsageLimiter } from "@/lib/server/usage";
 
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       { error: publicErrorMessage(error) },
-      { status: 400 },
+      { status: publicErrorStatus(error) },
     );
   }
 }

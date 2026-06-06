@@ -1,3 +1,5 @@
+import { ZodError } from "zod";
+
 const DEFAULT_ANALYSIS_ERROR = "Analysis is temporarily unavailable.";
 const DAILY_ANALYSIS_LIMIT_ERROR = "Daily analysis limit reached.";
 const GEMINI_PROVIDER_ERROR =
@@ -15,4 +17,12 @@ export function publicErrorMessage(error: unknown): string {
   }
 
   return DEFAULT_ANALYSIS_ERROR;
+}
+
+export function publicErrorStatus(error: unknown): number {
+  if (error instanceof SyntaxError || error instanceof ZodError) {
+    return 400;
+  }
+
+  return 500;
 }

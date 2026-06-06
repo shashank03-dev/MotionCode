@@ -55,6 +55,21 @@ async function loadAnalyzeRoute() {
   return { POST, analyzeFramesWithGemini };
 }
 
+async function loadFailingAnalyzeRoute() {
+  vi.resetModules();
+  const analyzeFramesWithGemini = vi.fn(async () => {
+    throw new Error("Gemini returned no text response");
+  });
+
+  vi.doMock("@/lib/server/gemini", () => ({
+    analyzeFramesWithGemini,
+  }));
+
+  const { POST } = await import("@/app/api/analyze/route");
+
+  return { POST, analyzeFramesWithGemini };
+}
+
 describe("createDailyUsageLimiter", () => {
   it("allows requests below the daily limit", async () => {
     const limiter = createDailyUsageLimiter({ limit: 3 });
@@ -322,5 +337,32 @@ describe("POST /api/analyze usage guard", () => {
     );
 
     expect(blocked.status).toBe(429);
+  });
+
+  it("returns a client error for invalid request payloads", async () => {
+    const { POST, analyzeFramesWithGemini } = await loadAnalyzeRoute();
+    const response = await POST(
+      new Request("http://localhost/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ frames: [], frameCount: 0 }),
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(analyzeFramesWithGemini).not.toHaveBeenCalled();
+  });
+
+  it("returns a server error when the analysis provider fails", async () => {
+    const { POST, analyzeFramesWithGemini } = await loadFailingAnalyzeRoute();
+    const response = await POST(
+      analysisRequest({ "x-forwarded-for": "203.0.113.6" }),
+    );
+
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({
+      error: "The analysis provider returned an error. Try again with fewer frames.",
+    });
+    expect(analyzeFramesWithGemini).toHaveBeenCalledWith(["frame-1"]);
   });
 });
