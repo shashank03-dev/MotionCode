@@ -60,6 +60,12 @@ function tableBlock(sql: string, tableName: string) {
   return match?.[0] ?? "";
 }
 
+function statementIndex(sql: string, statement: RegExp) {
+  const match = statement.exec(sql);
+
+  return match?.index ?? -1;
+}
+
 describe("Supabase data foundation migration", () => {
   const sql = readMigrationSql();
 
@@ -82,6 +88,28 @@ describe("Supabase data foundation migration", () => {
     expect(sql).not.toMatch(/\btruncate\b/i);
     expect(sql).not.toMatch(/\bdrop\s+/i);
     expect(sql).not.toMatch(/\balter\s+table\b[\s\S]*?\bdrop\b/i);
+  });
+
+  it("revokes broad public table privileges before applying narrow grants", () => {
+    const revokeTables = statementIndex(
+      sql,
+      /revoke all on all tables in schema public from anon, authenticated;/i,
+    );
+    const revokeSequences = statementIndex(
+      sql,
+      /revoke all on all sequences in schema public from anon, authenticated;/i,
+    );
+    const firstPositiveGrant = statementIndex(
+      sql,
+      /grant usage on schema public to authenticated;/i,
+    );
+
+    expect(revokeTables).toBeGreaterThan(-1);
+    expect(revokeSequences).toBeGreaterThan(-1);
+    expect(firstPositiveGrant).toBeGreaterThan(-1);
+    expect(revokeTables).toBeLessThan(firstPositiveGrant);
+    expect(revokeSequences).toBeLessThan(firstPositiveGrant);
+    expect(sql).not.toMatch(/\bgrant\b[\s\S]*\bto anon\b/i);
   });
 
   it("enforces plan tiers and role/status check constraints", () => {

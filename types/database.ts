@@ -215,25 +215,8 @@ export type Database = {
           normalized_spec: Json;
           created_at: Timestamp;
         },
-        {
-          id?: string;
-          project_id: string;
-          version_id?: string | null;
-          owner_id: string;
-          model: string;
-          prompt_version: string;
-          status: "queued" | "running" | "succeeded" | "failed";
-          frame_count: number;
-          raw_result?: Json | null;
-          normalized_spec: Json;
-          created_at?: Timestamp;
-        },
-        Partial<{
-          version_id: string | null;
-          status: "queued" | "running" | "succeeded" | "failed";
-          raw_result: Json | null;
-          normalized_spec: Json;
-        }>
+        never,
+        never
       >;
       generated_outputs: TableDefinition<
         {
@@ -247,24 +230,8 @@ export type Database = {
           warnings: Json;
           created_at: Timestamp;
         },
-        {
-          id?: string;
-          analysis_id: string;
-          project_id: string;
-          framework: string;
-          code: string;
-          dependencies?: Json;
-          setup_notes?: Json;
-          warnings?: Json;
-          created_at?: Timestamp;
-        },
-        Partial<{
-          framework: string;
-          code: string;
-          dependencies: Json;
-          setup_notes: Json;
-          warnings: Json;
-        }>
+        never,
+        never
       >;
       usage_events: TableDefinition<
         {
@@ -278,25 +245,8 @@ export type Database = {
           project_id: string | null;
           created_at: Timestamp;
         },
-        {
-          id?: string;
-          user_id: string;
-          event_type: string;
-          plan_tier: PlanTier;
-          model?: string | null;
-          frame_count?: number | null;
-          workspace_id?: string | null;
-          project_id?: string | null;
-          created_at?: Timestamp;
-        },
-        Partial<{
-          event_type: string;
-          plan_tier: PlanTier;
-          model: string | null;
-          frame_count: number | null;
-          workspace_id: string | null;
-          project_id: string | null;
-        }>
+        never,
+        never
       >;
       subscriptions: TableDefinition<
         {
@@ -343,23 +293,8 @@ export type Database = {
           revoked_at: Timestamp | null;
           created_at: Timestamp;
         },
-        {
-          id?: string;
-          project_id: string;
-          owner_id: string;
-          token_hash: string;
-          access_mode?: "read" | "comment";
-          include_comments?: boolean;
-          expires_at?: Timestamp | null;
-          revoked_at?: Timestamp | null;
-          created_at?: Timestamp;
-        },
-        Partial<{
-          access_mode: "read" | "comment";
-          include_comments: boolean;
-          expires_at: Timestamp | null;
-          revoked_at: Timestamp | null;
-        }>
+        never,
+        never
       >;
       project_comments: TableDefinition<
         {
@@ -396,24 +331,11 @@ export type Database = {
           updated_at: Timestamp;
         },
         {
-          id?: string;
           user_id: string;
-          assigned_admin_id?: string | null;
           subject: string;
           body: string;
-          status?: "open" | "pending" | "closed";
-          priority?: "standard" | "priority" | "urgent";
-          created_at?: Timestamp;
-          updated_at?: Timestamp;
         },
-        Partial<{
-          assigned_admin_id: string | null;
-          subject: string;
-          body: string;
-          status: "open" | "pending" | "closed";
-          priority: "standard" | "priority" | "urgent";
-          updated_at: Timestamp;
-        }>
+        never
       >;
       audit_events: TableDefinition<
         {

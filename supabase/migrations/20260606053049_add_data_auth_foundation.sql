@@ -558,6 +558,9 @@ alter table public.admin_plan_overrides enable row level security;
 alter table public.team_members enable row level security;
 alter table storage.objects enable row level security;
 
+revoke all on all tables in schema public from anon, authenticated;
+revoke all on all sequences in schema public from anon, authenticated;
+
 grant usage on schema public to authenticated;
 grant select on
   public.profiles,

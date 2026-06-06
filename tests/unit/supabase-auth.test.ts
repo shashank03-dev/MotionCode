@@ -1,5 +1,10 @@
 import { NextRequest } from "next/server";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
+
+import type { Database } from "@/types/database";
+
+type PublicTable<Name extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][Name];
 
 const ORIGINAL_ENV = { ...process.env };
 
@@ -102,5 +107,27 @@ describe("Supabase auth helpers", () => {
     expect(config.matcher).toEqual([
       "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
     ]);
+  });
+});
+
+describe("Supabase generated-style public write types", () => {
+  it("marks server-owned tables as unavailable for direct client writes", () => {
+    expectTypeOf<PublicTable<"analyses">["Insert"]>().toEqualTypeOf<never>();
+    expectTypeOf<PublicTable<"analyses">["Update"]>().toEqualTypeOf<never>();
+    expectTypeOf<PublicTable<"generated_outputs">["Insert"]>().toEqualTypeOf<never>();
+    expectTypeOf<PublicTable<"generated_outputs">["Update"]>().toEqualTypeOf<never>();
+    expectTypeOf<PublicTable<"usage_events">["Insert"]>().toEqualTypeOf<never>();
+    expectTypeOf<PublicTable<"usage_events">["Update"]>().toEqualTypeOf<never>();
+    expectTypeOf<PublicTable<"share_links">["Insert"]>().toEqualTypeOf<never>();
+    expectTypeOf<PublicTable<"share_links">["Update"]>().toEqualTypeOf<never>();
+  });
+
+  it("limits support ticket client writes to creation only", () => {
+    expectTypeOf<PublicTable<"support_tickets">["Insert"]>().toEqualTypeOf<{
+      user_id: string;
+      subject: string;
+      body: string;
+    }>();
+    expectTypeOf<PublicTable<"support_tickets">["Update"]>().toEqualTypeOf<never>();
   });
 });
