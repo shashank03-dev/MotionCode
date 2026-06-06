@@ -18,10 +18,11 @@ export const dynamic = "force-dynamic";
 
 export async function POST(
   request: Request,
-  { params }: { params: { userId: string } },
+  { params }: { params: Promise<{ userId: string }> },
 ) {
   try {
-    const targetUserId = z.string().uuid().safeParse(params.userId);
+    const { userId } = await params;
+    const targetUserId = z.string().uuid().safeParse(userId);
     if (!targetUserId.success) {
       return apiError("INVALID_REQUEST", "User ID must be a UUID.");
     }

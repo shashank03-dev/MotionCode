@@ -54,7 +54,7 @@ export async function requireDashboardUser() {
 }
 
 export async function getDashboardData(user: Pick<User, "id">) {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const since = new Date();
   since.setUTCHours(0, 0, 0, 0);
 
@@ -93,7 +93,7 @@ export async function getWorkspacePageData(
   workspaceId: string,
   user: Pick<User, "id">,
 ) {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data: workspace, error: workspaceError } = await supabase
     .from("workspaces")
     .select("*")
@@ -137,7 +137,7 @@ export async function getProjectPageData(
   projectId: string,
   user: Pick<User, "id">,
 ) {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data: project, error: projectError } = await supabase
     .from("projects")
     .select("*")
@@ -217,7 +217,7 @@ async function getWorkspaceRole(
     return "owner";
   }
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data: member, error: memberError } = await supabase
     .from("workspace_members")
     .select("role")

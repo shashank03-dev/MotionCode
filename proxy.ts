@@ -4,7 +4,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
 import type { Database } from "@/types/database";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { url, publishableKey } = getSupabasePublicConfig();
   let supabaseResponse = NextResponse.next({
     request,

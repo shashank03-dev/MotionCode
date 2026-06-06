@@ -104,7 +104,7 @@ export function MotionSpecPanel({
         style={{
           display: "grid",
           gap: 8,
-          gridTemplateColumns: "repeat(6, minmax(0, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
           marginTop: 12,
         }}
       >

@@ -49,14 +49,14 @@ export function ExampleGallery({ compact = false }: ExampleGalleryProps) {
   const visibleExamples = compact ? examples.slice(0, 2) : examples;
 
   return (
-    <div className="grid gap-4 lg:grid-cols-3">
+    <div className="grid min-w-0 gap-4 lg:grid-cols-3">
       {visibleExamples.map((example) => {
         const Icon = example.icon;
 
         return (
           <article
             key={example.title}
-            className="rounded-[8px] border border-white/10 bg-[#151811] p-5 shadow-xl shadow-black/10"
+            className="min-w-0 rounded-[8px] border border-white/10 bg-[#151811] p-5 shadow-xl shadow-black/10"
           >
             <div className="mb-5 flex items-start justify-between gap-4">
               <div className="flex size-10 items-center justify-center rounded-[8px] bg-[#9ef0c0]/10 text-[#9ef0c0]">
@@ -73,7 +73,7 @@ export function ExampleGallery({ compact = false }: ExampleGalleryProps) {
             <p className="mt-4 border-t border-white/10 pt-4 font-mono text-xs leading-5 text-[#9ef0c0]">
               {example.spec}
             </p>
-            <pre className="mt-4 overflow-x-auto rounded-[8px] bg-[#0d100b] p-4 text-xs leading-5 text-[#d8cfbc]">
+            <pre className="mt-4 max-w-full overflow-x-auto rounded-[8px] bg-[#0d100b] p-4 text-xs leading-5 text-[#d8cfbc]">
               <code>{example.code}</code>
             </pre>
           </article>
@@ -83,7 +83,7 @@ export function ExampleGallery({ compact = false }: ExampleGalleryProps) {
       {compact ? (
         <Link
           href="/examples"
-          className="flex min-h-64 flex-col justify-between rounded-[8px] border border-dashed border-[#9ef0c0]/40 bg-[#9ef0c0]/10 p-5 text-[#fffbf4] hover:bg-[#9ef0c0]/15"
+          className="flex min-h-64 min-w-0 flex-col justify-between rounded-[8px] border border-dashed border-[#9ef0c0]/40 bg-[#9ef0c0]/10 p-5 text-[#fffbf4] hover:bg-[#9ef0c0]/15"
         >
           <Code2 className="size-8 text-[#9ef0c0]" aria-hidden="true" />
           <span className="font-mono text-2xl">View the examples route</span>

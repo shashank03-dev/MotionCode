@@ -7,13 +7,14 @@ import { resolveSharedProjectByToken } from "@/lib/server/shareLinks";
 export const dynamic = "force-dynamic";
 
 type SharePageProps = {
-  params: {
+  params: Promise<{
     token: string;
-  };
+  }>;
 };
 
 export default async function SharedProjectPage({ params }: SharePageProps) {
-  const shared = await resolveSharedProjectByToken(params.token);
+  const { token } = await params;
+  const shared = await resolveSharedProjectByToken(token);
 
   if (!shared) {
     return <BrandedNotFound />;

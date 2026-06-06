@@ -32,18 +32,18 @@ export function MotionSpecPreview() {
         </span>
       </div>
 
-      <div className="grid gap-0 lg:grid-cols-[0.95fr_1.05fr]">
-        <div className="border-b border-white/10 p-4 lg:border-b-0 lg:border-r">
-          <pre className="overflow-x-auto text-sm leading-6 text-[#fffbf4]">
+      <div className="grid min-w-0 gap-0 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <div className="min-w-0 border-b border-white/10 p-4 lg:border-b-0 lg:border-r">
+          <pre className="max-w-full overflow-x-auto text-sm leading-6 text-[#fffbf4]">
             <code>{motionSpec}</code>
           </pre>
         </div>
-        <div className="bg-[#0f120d] p-4">
+        <div className="min-w-0 bg-[#0f120d] p-4">
           <div className="mb-3 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.18em] text-[#f58f7c]">
             <Code2 className="size-4" aria-hidden="true" />
             CSS starter
           </div>
-          <pre className="overflow-x-auto text-sm leading-6 text-[#d8cfbc]">
+          <pre className="max-w-full overflow-x-auto text-sm leading-6 text-[#d8cfbc]">
             <code>{cssStarter}</code>
           </pre>
         </div>

@@ -13,19 +13,16 @@ import {
 export const dynamic = "force-dynamic";
 
 type VersionPageProps = {
-  params: {
+  params: Promise<{
     projectId: string;
     versionId: string;
-  };
+  }>;
 };
 
 export default async function VersionPage({ params }: VersionPageProps) {
+  const { projectId, versionId } = await params;
   const user = await requireDashboardUser();
-  const data = await getVersionPageData(
-    params.projectId,
-    params.versionId,
-    user,
-  );
+  const data = await getVersionPageData(projectId, versionId, user);
 
   return (
     <AppShell active="projects" userEmail={user.email}>

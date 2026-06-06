@@ -105,7 +105,8 @@ function resolveWorkspaceMemberDeps(
 async function updateWorkspaceMemberRoleWithSupabase(
   input: UpdateWorkspaceMemberInput,
 ) {
-  const { data, error } = await createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
     .from("workspace_members")
     .update({ role: input.role })
     .eq("workspace_id", input.workspaceId)

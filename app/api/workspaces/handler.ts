@@ -219,7 +219,8 @@ function resolveWorkspaceDeps(
 }
 
 async function createWorkspaceWithSupabase(input: CreateWorkspaceInput) {
-  const { data, error } = await createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
     .from("workspaces")
     .insert({
       name: input.name,
@@ -246,7 +247,8 @@ async function updateWorkspaceWithSupabase(input: UpdateWorkspaceInput) {
     update.slug = input.slug;
   }
 
-  const { data, error } = await createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
     .from("workspaces")
     .update(update)
     .eq("id", input.workspaceId)
@@ -261,7 +263,8 @@ async function updateWorkspaceWithSupabase(input: UpdateWorkspaceInput) {
 }
 
 async function listWorkspacesWithSupabase() {
-  const { data, error } = await createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
     .from("workspaces")
     .select("*")
     .order("updated_at", { ascending: false });
@@ -277,7 +280,7 @@ export async function getWorkspaceAccessWithSupabase(
   userId: string,
   workspaceId: string,
 ): Promise<WorkspaceAccess | null> {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data: workspace, error: workspaceError } = await supabase
     .from("workspaces")
     .select("*")
@@ -330,7 +333,8 @@ async function markOnboardingCompleteWithSupabase(userId: string) {
   const update: ProfileUpdate = {
     onboarding_completed_at: new Date().toISOString(),
   };
-  const { error } = await createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase
     .from("profiles")
     .update(update)
     .eq("id", userId)

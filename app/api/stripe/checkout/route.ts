@@ -1,4 +1,5 @@
 import { type PlanTier } from "@/lib/contracts/plans";
+import { getRequestAppOrigin } from "@/lib/server/appOrigin";
 import { apiError, apiSuccess, ApiError, isApiError } from "@/lib/server/apiErrors";
 import { getEntitlementSummary } from "@/lib/server/entitlements";
 import { observeAuthError } from "@/lib/server/observability";
@@ -39,7 +40,7 @@ export async function POST(request: Request) {
     const url = await createCheckoutSession({
       customerId,
       email: summary.profile?.email ?? user.email ?? null,
-      origin: requestOrigin(request),
+      origin: getRequestAppOrigin(request),
       planTier,
       userId: user.id,
     });
@@ -67,10 +68,6 @@ async function readPlanTier(request: Request): Promise<PlanTier | null> {
 
   const body = (await request.json()) as { planTier?: unknown };
   return typeof body.planTier === "string" ? (body.planTier as PlanTier) : null;
-}
-
-function requestOrigin(request: Request) {
-  return new URL(request.url).origin;
 }
 
 function toApiFailure(error: unknown, fallbackMessage: string) {

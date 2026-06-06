@@ -108,9 +108,18 @@ export function AppShell() {
   }, []);
 
   const clearAnimationTimers = useCallback(() => {
-    if (stepTimerRef.current) clearTimeout(stepTimerRef.current);
-    if (scannerTimerRef.current) clearInterval(scannerTimerRef.current);
-    if (statusTimerRef.current) clearInterval(statusTimerRef.current);
+    if (stepTimerRef.current !== null) {
+      clearTimeout(stepTimerRef.current);
+      stepTimerRef.current = null;
+    }
+    if (scannerTimerRef.current !== null) {
+      clearInterval(scannerTimerRef.current);
+      scannerTimerRef.current = null;
+    }
+    if (statusTimerRef.current !== null) {
+      clearInterval(statusTimerRef.current);
+      statusTimerRef.current = null;
+    }
   }, []);
 
   const revokeCurrentFileUrl = useCallback(() => {
@@ -341,10 +350,14 @@ export function AppShell() {
   }, [frames.length, handleAnalyze, loading, result, stage]);
 
   useEffect(() => {
-    const savedTab = getStoredTab();
-    if (savedTab) {
-      setActiveTab(savedTab);
-    }
+    const restoreTimer = window.setTimeout(() => {
+      const savedTab = getStoredTab();
+      if (savedTab) {
+        setActiveTab(savedTab);
+      }
+    }, 0);
+
+    return () => window.clearTimeout(restoreTimer);
   }, []);
 
   useEffect(() => {
@@ -369,12 +382,10 @@ export function AppShell() {
   }, [showToast]);
 
   useEffect(() => {
-    if (stage === "analyzing") {
-      setActiveStep(0);
-      setScannerIndex(0);
-      setStatusBarMsgIndex(0);
-      setProgressWidth(0);
+    let resetTimer: number | null = null;
+    let progressTimer: number | null = null;
 
+    if (stage === "analyzing") {
       const runSteps = (currentStep: number) => {
         setActiveStep(currentStep);
         if (currentStep < stepsList.length - 1) {
@@ -385,7 +396,13 @@ export function AppShell() {
         }
       };
 
-      window.setTimeout(() => setProgressWidth(85), 100);
+      resetTimer = window.setTimeout(() => {
+        setActiveStep(0);
+        setScannerIndex(0);
+        setStatusBarMsgIndex(0);
+        setProgressWidth(0);
+      }, 0);
+      progressTimer = window.setTimeout(() => setProgressWidth(85), 100);
       stepTimerRef.current = window.setTimeout(() => runSteps(1), 600);
       scannerTimerRef.current = window.setInterval(() => {
         setScannerIndex((current) => (current + 1) % (frames.length || 1));
@@ -396,11 +413,19 @@ export function AppShell() {
     } else {
       clearAnimationTimers();
       if (stage !== "done") {
-        setProgressWidth(0);
+        resetTimer = window.setTimeout(() => setProgressWidth(0), 0);
       }
     }
 
-    return clearAnimationTimers;
+    return () => {
+      if (resetTimer !== null) {
+        window.clearTimeout(resetTimer);
+      }
+      if (progressTimer !== null) {
+        window.clearTimeout(progressTimer);
+      }
+      clearAnimationTimers();
+    };
   }, [clearAnimationTimers, frames.length, stage, stepsList.length]);
 
   const intentColor = result
@@ -409,15 +434,16 @@ export function AppShell() {
 
   return (
     <div
+      id="app-root"
       style={{
         backgroundColor: "#080808",
         color: "#e2e8f0",
         display: "flex",
         flexDirection: "column",
         fontFamily: "Inter, sans-serif",
-        height: "100vh",
+        minHeight: "100dvh",
         overflow: "hidden",
-        width: "100vw",
+        width: "100%",
       }}
     >
       <style
@@ -433,11 +459,13 @@ export function AppShell() {
           color: #00ff88 !important;
         }
         @media (max-width: 768px) {
+          #app-root { height: auto !important; min-height: 100dvh !important; overflow: auto !important; }
           #main-area { flex-direction: column !important; }
           #left-panel { width: 100% !important; height: auto !important; min-height: 0 !important; }
-          #right-panel { width: 100% !important; flex: 1 !important; min-height: 60vh !important; }
+          #right-panel { width: 100% !important; flex: 1 !important; min-height: 60vh !important; overflow: visible !important; }
           #video-preview { max-height: 140px !important; }
           #frame-strip-container { overflow-x: scroll !important; flex-wrap: nowrap !important; }
+          #main-area { overflow: visible !important; }
           #navbar { padding: 0 16px !important; }
         }
       `,
@@ -495,6 +523,8 @@ export function AppShell() {
           </Link>
         </div>
       </nav>
+
+      <h1 className="sr-only">MotionCode animation converter</h1>
 
       <main id="main-area" style={{ display: "flex", flex: 1, overflow: "hidden" }}>
         <UploadPanel
@@ -717,14 +747,19 @@ async function analyzeViaApi({
     headers: { "Content-Type": "application/json" },
     method: "POST",
   });
-  const payload = (await response.json()) as ApiResponse<AnalysisResult>;
-
-  if (!payload.ok) {
-    throw new Error(payload.message);
-  }
+  const contentType = response.headers.get("content-type") ?? "";
+  const payload = contentType.includes("application/json")
+    ? ((await response.json()) as ApiResponse<AnalysisResult>)
+    : null;
 
   if (!response.ok) {
-    throw new Error("Analysis failed. Try again.");
+    throw new Error(
+      payload?.ok === false ? payload.message : "Analysis failed. Try again.",
+    );
+  }
+
+  if (!payload?.ok) {
+    throw new Error(payload?.message ?? "Analysis failed. Try again.");
   }
 
   return payload.data;

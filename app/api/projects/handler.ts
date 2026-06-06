@@ -424,7 +424,8 @@ export function canWriteProject(access: ProjectAccess) {
 }
 
 async function createProjectWithSupabase(input: CreateProjectInput) {
-  const { data, error } = await createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
     .from("projects")
     .insert({
       description: input.description,
@@ -456,7 +457,8 @@ async function updateProjectWithSupabase(input: UpdateProjectInput) {
     update.title = input.title;
   }
 
-  const { data, error } = await createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
     .from("projects")
     .update(update)
     .eq("id", input.projectId)
@@ -475,7 +477,8 @@ async function archiveProjectWithSupabase(projectId: string) {
 }
 
 async function listProjectsWithSupabase(_userId: string, workspaceId?: string) {
-  let query = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient();
+  let query = supabase
     .from("projects")
     .select("*")
     .order("updated_at", { ascending: false });
@@ -497,7 +500,7 @@ export async function getProjectAccessWithSupabase(
   userId: string,
   projectId: string,
 ): Promise<ProjectAccess | null> {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data: project, error: projectError } = await supabase
     .from("projects")
     .select("*")
@@ -530,7 +533,7 @@ export async function getProjectAccessWithSupabase(
 async function createProjectVersionWithSupabase(
   input: CreateProjectVersionInput,
 ) {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data: latestVersion, error: latestVersionError } = await supabase
     .from("project_versions")
     .select("version_number")
@@ -576,7 +579,8 @@ async function getProjectVersionWithSupabase(
   projectId: string,
   versionId: string,
 ) {
-  const { data, error } = await createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
     .from("project_versions")
     .select("*")
     .eq("project_id", projectId)

@@ -22,8 +22,8 @@ MotionCode is code-integrated for the planned GA product surface, but paid produ
 - `npm run lint`: passed with image optimization warnings for raw frame preview images.
 - `npm test`: passed, 18 test files and 94 tests.
 - `npm run build`: passed.
-- `npm run test:e2e`: passed, 5 tests.
-- `npm audit --omit=dev --audit-level=moderate`: failed on known Next.js/PostCSS advisories. The exception is documented in `docs/ops/audit-exceptions.md` and must be owned before paid GA.
+- `npm run test:e2e`: passed, 7 tests.
+- `npm audit --omit=dev --audit-level=moderate`: passed after the Next 16.2.7 upgrade and PostCSS 8.5.10 override.
 
 ## Required Environment
 
@@ -53,7 +53,6 @@ Configure these before staging or production release:
 
 ## Release Blockers
 
-- `npm audit --omit=dev --audit-level=moderate` is not clean because `next@14.2.35` requires a breaking security upgrade path.
 - Supabase migration/RLS/storage behavior has not been verified against a live staging project in this branch.
 - Stripe webhook delivery and subscription sync have not been verified against Stripe test mode in this branch.
 - Gemini model access, quota behavior, and failure handling have not been verified with production-like credentials in this branch.

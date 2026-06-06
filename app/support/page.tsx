@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 };
 
 export default async function SupportPage() {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const user = await getCurrentUser(supabase);
 
   if (!user) {

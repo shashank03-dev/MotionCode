@@ -8,14 +8,15 @@ import { getProjectPageData, requireDashboardUser } from "../../dashboard/data";
 export const dynamic = "force-dynamic";
 
 type ProjectPageProps = {
-  params: {
+  params: Promise<{
     projectId: string;
-  };
+  }>;
 };
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
+  const { projectId } = await params;
   const user = await requireDashboardUser();
-  const data = await getProjectPageData(params.projectId, user);
+  const data = await getProjectPageData(projectId, user);
   const canWrite =
     data.project.owner_id === user.id ||
     data.role === "owner" ||

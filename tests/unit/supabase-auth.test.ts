@@ -83,12 +83,12 @@ describe("Supabase auth helpers", () => {
     });
     vi.doMock("@supabase/ssr", () => ({ createServerClient }));
 
-    const { middleware, config } = await import("@/middleware");
+    const { proxy, config } = await import("@/proxy");
     const request = new NextRequest("https://motioncode.test/app", {
       headers: { cookie: "sb-existing-auth-token=old" },
     });
 
-    const response = await middleware(request);
+    const response = await proxy(request);
 
     expect(createServerClient).toHaveBeenCalledWith(
       "https://example.supabase.co",

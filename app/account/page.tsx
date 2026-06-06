@@ -20,12 +20,13 @@ import {
 export const dynamic = "force-dynamic";
 
 type AccountPageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     request?: string;
-  };
+  }>;
 };
 
 export default async function AccountPage({ searchParams }: AccountPageProps) {
+  const resolvedSearchParams = await searchParams;
   const user = await getCurrentUser();
 
   if (!user) {
@@ -103,7 +104,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
           </div>
         </header>
 
-        {searchParams?.request ? (
+        {resolvedSearchParams?.request ? (
           <div className="border border-[var(--accent-border)] bg-[var(--accent-dim)] px-4 py-3 font-mono text-sm text-[var(--text)]">
             Request received.
           </div>

@@ -28,6 +28,7 @@ export function Scorecard({
       style={{
         borderTop: "1px solid #1a1a1a",
         display: "flex",
+        flexWrap: "wrap",
         gap: 16,
         padding: "16px 24px",
         position: "relative",

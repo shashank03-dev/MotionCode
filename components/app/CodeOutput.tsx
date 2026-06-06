@@ -33,6 +33,7 @@ export function CodeOutput({
           borderBottom: "1px solid #1a1a1a",
           display: "flex",
           gap: 4,
+          overflowX: "auto",
           padding: "0 24px",
         }}
       >
@@ -49,6 +50,7 @@ export function CodeOutput({
               fontFamily: "Space Mono, monospace",
               fontSize: 12,
               padding: "12px 16px",
+              whiteSpace: "nowrap",
               transition: "color 0.2s",
             }}
           >

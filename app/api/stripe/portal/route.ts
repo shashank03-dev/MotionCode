@@ -1,3 +1,4 @@
+import { getRequestAppOrigin } from "@/lib/server/appOrigin";
 import { apiError, apiSuccess, ApiError, isApiError } from "@/lib/server/apiErrors";
 import { getEntitlementSummary } from "@/lib/server/entitlements";
 import { observeAuthError } from "@/lib/server/observability";
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
 
     const url = await createBillingPortalSession({
       customerId,
-      origin: new URL(request.url).origin,
+      origin: getRequestAppOrigin(request),
     });
 
     return apiSuccess({ url });

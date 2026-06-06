@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { getConfiguredAppOrigin } from "@/lib/server/appOrigin";
 import { getEntitlementSummary } from "@/lib/server/entitlements";
 import { createBillingPortalSession } from "@/lib/server/stripe";
 import { getCurrentUser } from "@/lib/supabase/server";
@@ -23,14 +24,19 @@ export default async function BillingPage() {
 
   const url = await createBillingPortalSession({
     customerId,
-    origin: requestOrigin(),
+    origin: await requestOrigin(),
   });
 
   redirect(url);
 }
 
-function requestOrigin() {
-  const requestHeaders = headers();
+async function requestOrigin() {
+  const configuredOrigin = getConfiguredAppOrigin();
+  if (configuredOrigin) {
+    return configuredOrigin;
+  }
+
+  const requestHeaders = await headers();
   const host =
     requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
 

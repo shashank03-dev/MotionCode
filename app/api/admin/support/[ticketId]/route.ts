@@ -18,10 +18,11 @@ export const dynamic = "force-dynamic";
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { ticketId: string } },
+  { params }: { params: Promise<{ ticketId: string }> },
 ) {
   try {
-    const ticketId = z.string().uuid().safeParse(params.ticketId);
+    const { ticketId: rawTicketId } = await params;
+    const ticketId = z.string().uuid().safeParse(rawTicketId);
     if (!ticketId.success) {
       return apiError("INVALID_REQUEST", "Ticket ID must be a UUID.");
     }

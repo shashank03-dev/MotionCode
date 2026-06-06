@@ -9,14 +9,15 @@ import { getWorkspacePageData, requireDashboardUser } from "../../dashboard/data
 export const dynamic = "force-dynamic";
 
 type WorkspacePageProps = {
-  params: {
+  params: Promise<{
     workspaceId: string;
-  };
+  }>;
 };
 
 export default async function WorkspacePage({ params }: WorkspacePageProps) {
+  const { workspaceId } = await params;
   const user = await requireDashboardUser();
-  const data = await getWorkspacePageData(params.workspaceId, user);
+  const data = await getWorkspacePageData(workspaceId, user);
 
   return (
     <AppShell active="workspaces" userEmail={user.email}>

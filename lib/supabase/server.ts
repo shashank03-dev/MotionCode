@@ -10,9 +10,9 @@ type SupabaseAuthReader = {
   auth: Pick<SupabaseClient<Database>["auth"], "getUser">;
 };
 
-export function createSupabaseServerClient() {
+export async function createSupabaseServerClient() {
   const { url, publishableKey } = getSupabasePublicConfig();
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
 
   return createServerClient<Database>(url, publishableKey, {
     cookies: {
@@ -38,12 +38,13 @@ export function createSupabaseServerClient() {
 export const createClient = createSupabaseServerClient;
 
 export async function getCurrentUser(
-  supabase: SupabaseAuthReader = createSupabaseServerClient(),
+  supabase?: SupabaseAuthReader,
 ): Promise<User | null> {
+  const client = supabase ?? (await createSupabaseServerClient());
   const {
     data: { user },
     error,
-  } = await supabase.auth.getUser();
+  } = await client.auth.getUser();
 
   if (error || !user) {
     return null;

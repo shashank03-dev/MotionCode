@@ -6,15 +6,15 @@ import {
 export const runtime = "nodejs";
 
 type RouteContext = {
-  params: {
+  params: Promise<{
     workspaceId: string;
-  };
+  }>;
 };
 
 export async function GET(request: Request, context: RouteContext) {
-  return handleGetWorkspaceRequest(request, {}, context.params);
+  return handleGetWorkspaceRequest(request, {}, await context.params);
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
-  return handleUpdateWorkspaceRequest(request, {}, context.params);
+  return handleUpdateWorkspaceRequest(request, {}, await context.params);
 }
