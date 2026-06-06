@@ -1,68 +1,44 @@
 # MotionCode
 
-**The Advanced Motion Intelligence Platform.**
+MotionCode is a focused Next.js app for turning short UI motion references into
+reviewable motion specs and starter snippets.
 
-MotionCode is a sophisticated tool designed to bridge the gap between video inspiration and production-ready code. By leveraging AI and advanced frame extraction, MotionCode analyzes animations and transitions from videos to generate clean, high-performance GSAP and Framer Motion code.
+The public product surface is intentionally conservative: it links the app,
+examples, support, privacy, terms, and pricing anchor without claiming partner
+logos, guaranteed quality, or unavailable integrations.
 
+## Current Surface
 
+- Landing page with truthful product positioning and sample output.
+- Examples route with sample motion specs and starter snippets.
+- Support route with an issue-reporting checklist.
+- Privacy and terms routes for deployment-specific policy notes.
+- App Router loading, error, not-found, and Open Graph image routes.
 
-## ✨ Features
+## Development
 
-- **Video-to-Code Analysis**: Upload any video and extract animation patterns automatically.
-- **GSAP & Framer Motion Output**: Get production-ready code snippets instantly.
-- **Puter.js Integration**: Powered by Puter.js for robust, client-side intelligence.
-- **Frame Extraction**: High-precision frame extraction using FFmpeg for deep analysis.
-- **Modern UI**: Dark-themed, glassmorphic interface with smooth GSAP animations.
-- **Code Preview**: Interactive Monaco editor for immediate code inspection and editing.
+Install dependencies:
 
-## 🚀 Getting Started
+```bash
+npm install
+```
 
-### Prerequisites
+Run the development server:
 
-- Node.js 18.x or later
-- NPM, PNPM, or Yarn
+```bash
+npm run dev
+```
 
-### Installation
+Open [http://localhost:3000](http://localhost:3000).
 
-1. **Clone the repository:**
+## Checks
 
-   ```bash
-   git clone https://github.com/shashank03-dev/MotionCode.git
-   cd MotionCode
-   ```
+```bash
+npm run typecheck
+npm run lint
+npm run build
+```
 
-2. **Install dependencies:**
+## License
 
-   ```bash
-   npm install
-   ```
-
-3. **Set up Environment Variables:**
-   Create a `.env.local` file based on `.env.local.example` (if required).
-
-4. **Run the development server:**
-
-   ```bash
-   npm run dev
-   ```
-
-5. **Open the application:**
-   Navigate to [http://localhost:3000](http://localhost:3000) to see the platform in action.
-
-## 🛠️ Built With
-
-- **Next.js 14** - React Framework
-- **GSAP** - Animation Library
-- **Framer Motion** - Production-ready motion for React
-- **Puter.js** - Cloud Computing & AI
-- **FFmpeg.wasm** - Video processing in the browser
-- **Tailwind CSS** - Styling
-- **Monaco Editor** - Code editing experience
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-Crafted with ❤️ by [shashank](https://github.com/shashank03-dev)
+This project is licensed under the MIT License. See [LICENSE](LICENSE).
