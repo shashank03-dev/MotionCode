@@ -18,11 +18,17 @@ const spaceMono = Space_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://motioncode.vercel.app"),
-  title: "MotionCode — Turn Animations Into Production Code",
+  title: {
+    default: "MotionCode - Motion References to Starter Code",
+    template: "%s | MotionCode",
+  },
   description:
-    "Upload a video. Get CSS, GSAP, and Framer Motion code instantly. The motion intelligence platform for developers.",
+    "Turn short animation references into reviewable motion specs and starter snippets for CSS, GSAP, and Framer Motion.",
   openGraph: {
-    images: ["/og-image.png"],
+    title: "MotionCode",
+    description:
+      "Review motion specs and starter snippets from short animation references.",
+    images: ["/opengraph-image"],
   },
 };
 

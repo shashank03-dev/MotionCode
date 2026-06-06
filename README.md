@@ -1,6 +1,8 @@
 # MotionCode
 
-MotionCode turns short motion references into production-ready animation code. The web app extracts representative frames from uploaded video or GIF files, sends those frames to the server-side Gemini analysis API, and returns normalized motion specs plus CSS, GSAP, Framer Motion, and React Spring examples.
+MotionCode turns short UI motion references into implementation-ready animation specs and starter code. The web app extracts representative frames from uploaded video or GIF files, sends those frames to the server-side Gemini analysis API, and returns normalized motion specs plus CSS, GSAP, Framer Motion, and React Spring examples.
+
+The product surface is intentionally conservative: it links the app, examples, support, privacy, terms, and pricing without claiming unsupported integrations, partner logos, or guaranteed output quality.
 
 ## GA Web Product Scope
 
@@ -11,12 +13,13 @@ MotionCode turns short motion references into production-ready animation code. T
 - User support center at `/support` with ticket creation and account-scoped ticket history.
 - Internal admin support queue at `/admin` and admin users/plan overrides at `/admin/users`.
 - Stripe/Gemini/Supabase environment wiring for production deployment.
+- Examples, privacy, terms, loading, error, not-found, and Open Graph routes.
 
 ## Local Setup
 
 Prerequisites:
 
-- Node.js 18 or newer.
+- Node.js 20.19 or newer.
 - npm.
 - A Supabase project or local Supabase stack.
 - Gemini API key.
@@ -108,3 +111,7 @@ Use targeted tests while developing, then run `npm run typecheck` and `npm run b
 - Admin support: `admin-support.md`
 - Incident response: `incident-response.md`
 - Security exceptions: `security-exceptions.md`
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE).
