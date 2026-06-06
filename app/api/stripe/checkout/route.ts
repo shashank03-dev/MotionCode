@@ -1,6 +1,7 @@
 import { type PlanTier } from "@/lib/contracts/plans";
 import { apiError, apiSuccess, ApiError, isApiError } from "@/lib/server/apiErrors";
 import { getEntitlementSummary } from "@/lib/server/entitlements";
+import { observeAuthError } from "@/lib/server/observability";
 import { createCheckoutSession } from "@/lib/server/stripe";
 import { getCurrentUser } from "@/lib/supabase/server";
 
@@ -9,6 +10,12 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user) {
+    await observeAuthError({
+      action: "stripe_checkout",
+      reason: "missing_session",
+      route: "/api/stripe/checkout",
+    });
+
     return apiError("UNAUTHENTICATED", "Sign in to start checkout.");
   }
 

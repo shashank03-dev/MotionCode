@@ -9,6 +9,7 @@ import type {
 import { PLAN_TIERS, type PlanTier } from "@/lib/contracts/plans";
 import { createTrustedSupabaseServerClient } from "@/lib/server/audit";
 import { ApiError } from "@/lib/server/apiErrors";
+import { observeShareAccess } from "@/lib/server/observability";
 import type { Json } from "@/types/database";
 
 export type ShareAccessMode = "read" | "comment";
@@ -272,17 +273,49 @@ export async function resolveSharedProjectByToken(
   const client = shareClient(options.client);
   const link = await findShareLinkByTokenHash(client, hashShareToken(token));
 
-  if (!link || isInactiveShareLink(link)) {
+  if (!link) {
+    await observeShareAccess({
+      outcome: "not_found",
+      reason: "missing_link",
+      token,
+    });
+
+    return null;
+  }
+
+  if (isInactiveShareLink(link)) {
+    await observeShareAccess({
+      outcome: "inactive",
+      projectId: link.project_id,
+      reason: link.revoked_at ? "revoked" : "expired",
+      token,
+    });
+
     return null;
   }
 
   const project = await findProject(client, link.project_id);
   if (!project) {
+    await observeShareAccess({
+      outcome: "not_found",
+      projectId: link.project_id,
+      reason: "project_missing",
+      token,
+    });
+
     return null;
   }
 
   const workspace = await findWorkspace(client, project.workspace_id);
   if (!workspace) {
+    await observeShareAccess({
+      outcome: "not_found",
+      projectId: project.id,
+      reason: "workspace_missing",
+      token,
+      workspaceId: project.workspace_id,
+    });
+
     return null;
   }
 
@@ -293,6 +326,13 @@ export async function resolveSharedProjectByToken(
   const comments = link.include_comments
     ? await getProjectComments(client, project.id)
     : [];
+
+  await observeShareAccess({
+    outcome: "granted",
+    projectId: project.id,
+    token,
+    workspaceId: workspace.id,
+  });
 
   return {
     analysis,

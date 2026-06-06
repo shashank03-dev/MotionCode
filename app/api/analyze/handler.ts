@@ -25,6 +25,7 @@ import {
   type GeminiAnalysis,
   type GeminiAnalyzeInput,
 } from "@/lib/server/gemini";
+import { observeAnalysis, observeAuthError } from "@/lib/server/observability";
 import { getCurrentUser as getSupabaseCurrentUser } from "@/lib/supabase/server";
 
 import {
@@ -69,6 +70,11 @@ export async function handleAnalyzeRequest(
 ) {
   const contentLengthDecision = checkContentLength(request);
   if (contentLengthDecision) {
+    await observeAnalysis({
+      outcome: "rejected",
+      reason: "content_length_exceeded",
+    });
+
     return contentLengthDecision;
   }
 
@@ -76,6 +82,11 @@ export async function handleAnalyzeRequest(
   try {
     body = await readBoundedJson(request);
   } catch (error) {
+    await observeAnalysis({
+      outcome: "rejected",
+      reason: error instanceof ApiError ? error.code : "invalid_json",
+    });
+
     if (error instanceof ApiError) {
       return apiError(error.code, error.message, { status: error.status });
     }
@@ -84,6 +95,11 @@ export async function handleAnalyzeRequest(
   }
 
   if (body === null) {
+    await observeAnalysis({
+      outcome: "rejected",
+      reason: "empty_body",
+    });
+
     return apiError("INVALID_REQUEST", "Request body must be valid JSON.");
   }
 
@@ -91,11 +107,29 @@ export async function handleAnalyzeRequest(
   const user = await resolvedDeps.getCurrentUser();
 
   if (!user) {
+    await observeAuthError({
+      action: "analysis",
+      reason: "missing_session",
+      route: "/api/analyze",
+    });
+    await observeAnalysis({
+      outcome: "rejected",
+      reason: "UNAUTHENTICATED",
+    });
+
     return apiError("UNAUTHENTICATED", "Sign in to analyze motion.");
   }
 
   const parsed = AnalyzeRequestSchema.safeParse(body);
   if (!parsed.success) {
+    await observeAnalysis({
+      outcome: "rejected",
+      reason: hasFrameValidationIssue(parsed.error)
+        ? "INVALID_MEDIA"
+        : "INVALID_REQUEST",
+      userId: user.id,
+    });
+
     return apiError(
       hasFrameValidationIssue(parsed.error) ? "INVALID_MEDIA" : "INVALID_REQUEST",
       hasFrameValidationIssue(parsed.error)
@@ -109,6 +143,16 @@ export async function handleAnalyzeRequest(
   const entitlements = PLAN_ENTITLEMENTS[planTier];
 
   if (!entitlements.allowedModels.includes(requestBody.model)) {
+    await observeAnalysis({
+      model: requestBody.model,
+      outcome: "rejected",
+      planTier,
+      projectId: requestBody.projectId,
+      reason: "BILLING_REQUIRED",
+      userId: user.id,
+      workspaceId: requestBody.workspaceId,
+    });
+
     return apiError(
       "BILLING_REQUIRED",
       `${planTier} plan does not include ${requestBody.model}.`,
@@ -122,6 +166,17 @@ export async function handleAnalyzeRequest(
     user,
   });
   if (!preflight.ok) {
+    await observeAnalysis({
+      frameCount: requestBody.frames.length,
+      model: requestBody.model,
+      outcome: "rejected",
+      planTier,
+      projectId: requestBody.projectId,
+      reason: "preflight_failed",
+      userId: user.id,
+      workspaceId: requestBody.workspaceId,
+    });
+
     return preflight.response;
   }
 
@@ -135,6 +190,17 @@ export async function handleAnalyzeRequest(
   });
 
   if (!abuseDecision.ok) {
+    await observeAnalysis({
+      frameCount: requestBody.frames.length,
+      model: requestBody.model,
+      outcome: "rejected",
+      planTier,
+      projectId: requestBody.projectId,
+      reason: abuseDecision.code,
+      userId: user.id,
+      workspaceId: canonicalWorkspaceId,
+    });
+
     return apiError(
       abuseDecision.code,
       abuseDecision.message,
@@ -153,11 +219,33 @@ export async function handleAnalyzeRequest(
       workspaceId: canonicalWorkspaceId,
     });
   } catch {
+    await observeAnalysis({
+      frameCount: requestBody.frames.length,
+      model: requestBody.model,
+      outcome: "failed",
+      planTier,
+      projectId: requestBody.projectId,
+      reason: "usage_reservation_failed",
+      userId: user.id,
+      workspaceId: canonicalWorkspaceId,
+    });
+
     return apiError("INTERNAL_ERROR", "Failed to reserve analysis usage.");
   }
 
   const analysisId = resolvedDeps.idGenerator();
   const createdAt = resolvedDeps.now().toISOString();
+  await observeAnalysis({
+    analysisId,
+    frameCount: requestBody.frames.length,
+    model: requestBody.model,
+    outcome: "started",
+    planTier,
+    projectId: requestBody.projectId,
+    userId: user.id,
+    workspaceId: canonicalWorkspaceId,
+  });
+
   const generatedResult = await runGeminiAnalysis({
     analysisId,
     createdAt,
@@ -211,11 +299,33 @@ export async function handleAnalyzeRequest(
       user,
       workspaceId: canonicalWorkspaceId,
     });
+    await observeAnalysis({
+      analysisId,
+      frameCount: requestBody.frames.length,
+      model: requestBody.model,
+      outcome: "failed",
+      planTier,
+      projectId: requestBody.projectId,
+      reason: persistenceError.code,
+      userId: user.id,
+      workspaceId: canonicalWorkspaceId,
+    });
 
     return apiError(persistenceError.code, persistenceError.message, {
       status: persistenceError.status,
     });
   }
+
+  await observeAnalysis({
+    analysisId,
+    frameCount: requestBody.frames.length,
+    model: requestBody.model,
+    outcome: "completed",
+    planTier,
+    projectId: requestBody.projectId,
+    userId: user.id,
+    workspaceId: canonicalWorkspaceId,
+  });
 
   return apiSuccess(generatedResult.result);
 }
@@ -416,6 +526,17 @@ async function runGeminiAnalysis({
       reason: apiFailure.code,
       requestBody,
       user,
+      workspaceId,
+    });
+    await observeAnalysis({
+      analysisId,
+      frameCount: requestBody.frames.length,
+      model: requestBody.model,
+      outcome: "failed",
+      planTier,
+      projectId: requestBody.projectId,
+      reason: apiFailure.code,
+      userId: user.id,
       workspaceId,
     });
 
