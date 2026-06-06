@@ -1,4 +1,6 @@
-const FREE_LIMIT = 3
+import { PLAN_ENTITLEMENTS } from "@/lib/contracts/plans";
+
+const FREE_LIMIT = PLAN_ENTITLEMENTS.free.dailyAnalyses
 const STORAGE_KEY = 'motioncode_usage'
 
 interface UsageData {
