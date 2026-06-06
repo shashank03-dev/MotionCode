@@ -2,8 +2,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { ApiResponse } from "@/lib/contracts/errors";
 import type { AnalysisResult, MotionSpec } from "@/lib/contracts/motion";
-import type { PlanTier } from "@/lib/contracts/plans";
-import { normalizeGeminiAnalysis } from "@/lib/server/gemini";
+import { PLAN_ENTITLEMENTS, type PlanTier } from "@/lib/contracts/plans";
+import { ApiError } from "@/lib/server/apiErrors";
+import {
+  normalizeGeminiAnalysis,
+  normalizeGeminiGeneratedAnalysis,
+} from "@/lib/server/gemini";
 
 const ORIGINAL_ENV = { ...process.env };
 
@@ -25,6 +29,16 @@ const makeRequest = (body: unknown) =>
   new Request("https://motioncode.test/api/analyze", {
     body: JSON.stringify(body),
     headers: { "content-type": "application/json" },
+    method: "POST",
+  });
+
+const makeRequestWithContentLength = (body: unknown, contentLength: number) =>
+  new Request("https://motioncode.test/api/analyze", {
+    body: JSON.stringify(body),
+    headers: {
+      "content-length": String(contentLength),
+      "content-type": "application/json",
+    },
     method: "POST",
   });
 
@@ -80,7 +94,9 @@ const generated = {
 function createDeps(options: { planTier?: PlanTier; userId?: string | null } = {}) {
   return {
     audit: { record: vi.fn(async () => undefined) },
+    authorizeAnalysisRequest: vi.fn(async () => true),
     generateAnalysis: vi.fn(async () => generated),
+    getDailyAnalysisCount: vi.fn(async () => 0),
     getCurrentUser: vi.fn(async () =>
       options.userId === null ? null : { id: options.userId ?? "user_123" },
     ),
@@ -99,8 +115,14 @@ afterEach(() => {
 });
 
 describe("POST /api/analyze", () => {
+  it("keeps the route module limited to valid Next App Router exports", async () => {
+    const route = await import("@/app/api/analyze/route");
+
+    expect(Object.keys(route).sort()).toEqual(["POST", "runtime"]);
+  });
+
   it("rejects unauthenticated users before calling Gemini", async () => {
-    const { handleAnalyzeRequest } = await import("@/app/api/analyze/route");
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
     const deps = createDeps({ userId: null });
 
     const response = await handleAnalyzeRequest(makeRequest(requestBody()), deps);
@@ -116,7 +138,7 @@ describe("POST /api/analyze", () => {
   });
 
   it("rejects frames that are not base64 JPEG payloads", async () => {
-    const { handleAnalyzeRequest } = await import("@/app/api/analyze/route");
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
     const deps = createDeps();
 
     const response = await handleAnalyzeRequest(
@@ -133,8 +155,56 @@ describe("POST /api/analyze", () => {
     expect(deps.generateAnalysis).not.toHaveBeenCalled();
   });
 
+  it("rejects requests with content-length above the hard cap before parsing JSON", async () => {
+    const { handleAnalyzeRequest, MAX_ANALYZE_REQUEST_CONTENT_LENGTH } =
+      await import("@/app/api/analyze/handler");
+    const deps = createDeps();
+
+    const response = await handleAnalyzeRequest(
+      makeRequestWithContentLength(
+        requestBody(),
+        MAX_ANALYZE_REQUEST_CONTENT_LENGTH + 1,
+      ),
+      deps,
+    );
+    const json = (await response.json()) as ApiResponse<AnalysisResult>;
+
+    expect(response.status).toBe(413);
+    expect(json).toMatchObject({
+      code: "INVALID_MEDIA",
+      ok: false,
+    });
+    expect(deps.getCurrentUser).not.toHaveBeenCalled();
+    expect(deps.generateAnalysis).not.toHaveBeenCalled();
+  });
+
+  it("rejects frame arrays above the largest plan before Gemini", async () => {
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
+    const deps = createDeps({ planTier: "studio" });
+
+    const response = await handleAnalyzeRequest(
+      makeRequest(
+        requestBody({
+          frames: Array.from(
+            { length: PLAN_ENTITLEMENTS.studio.maxFramesPerAnalysis + 1 },
+            () => VALID_JPEG_BASE64,
+          ),
+        }),
+      ),
+      deps,
+    );
+    const json = (await response.json()) as ApiResponse<AnalysisResult>;
+
+    expect(response.status).toBe(400);
+    expect(json).toMatchObject({
+      code: "INVALID_MEDIA",
+      ok: false,
+    });
+    expect(deps.generateAnalysis).not.toHaveBeenCalled();
+  });
+
   it("blocks models that are not allowed by the user's plan", async () => {
-    const { handleAnalyzeRequest } = await import("@/app/api/analyze/route");
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
     const deps = createDeps({ planTier: "free" });
 
     const response = await handleAnalyzeRequest(
@@ -151,8 +221,54 @@ describe("POST /api/analyze", () => {
     expect(deps.generateAnalysis).not.toHaveBeenCalled();
   });
 
+  it("returns forbidden and avoids Gemini when the user cannot access submitted IDs", async () => {
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
+    const deps = createDeps();
+    deps.authorizeAnalysisRequest.mockResolvedValue(false);
+
+    const response = await handleAnalyzeRequest(makeRequest(requestBody()), deps);
+    const json = (await response.json()) as ApiResponse<AnalysisResult>;
+
+    expect(response.status).toBe(403);
+    expect(json).toMatchObject({
+      code: "FORBIDDEN",
+      ok: false,
+    });
+    expect(deps.authorizeAnalysisRequest).toHaveBeenCalledWith(
+      { id: "user_123" },
+      expect.objectContaining({
+        assetId: "asset_123",
+        projectId: "project_123",
+        versionId: "version_123",
+        workspaceId: "workspace_123",
+      }),
+    );
+    expect(deps.generateAnalysis).not.toHaveBeenCalled();
+    expect(deps.usage.record).not.toHaveBeenCalled();
+    expect(deps.audit.record).not.toHaveBeenCalled();
+  });
+
+  it("returns quota exceeded when the daily plan limit is already used", async () => {
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
+    const deps = createDeps({ planTier: "free" });
+    deps.getDailyAnalysisCount.mockResolvedValue(
+      PLAN_ENTITLEMENTS.free.dailyAnalyses,
+    );
+
+    const response = await handleAnalyzeRequest(makeRequest(requestBody()), deps);
+    const json = (await response.json()) as ApiResponse<AnalysisResult>;
+
+    expect(response.status).toBe(429);
+    expect(json).toMatchObject({
+      code: "QUOTA_EXCEEDED",
+      ok: false,
+    });
+    expect(deps.generateAnalysis).not.toHaveBeenCalled();
+    expect(deps.usage.record).not.toHaveBeenCalled();
+  });
+
   it("returns an ApiResponse<AnalysisResult> and records usage and audit events", async () => {
-    const { handleAnalyzeRequest } = await import("@/app/api/analyze/route");
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
     const deps = createDeps();
 
     const response = await handleAnalyzeRequest(makeRequest(requestBody()), deps);
@@ -196,6 +312,60 @@ describe("POST /api/analyze", () => {
     );
   });
 
+  it("returns internal error without model cooldown when persistence fails after Gemini succeeds", async () => {
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
+    const deps = createDeps();
+    const abuseGuard = {
+      check: vi.fn(() => ({
+        ok: true as const,
+        remainingRequests: 9,
+        resetAt: Date.now() + 60_000,
+      })),
+      recordModelFailure: vi.fn(),
+      recordModelSuccess: vi.fn(),
+      reset: vi.fn(),
+    };
+    deps.usage.record.mockRejectedValue(
+      new ApiError("INTERNAL_ERROR", "Failed to record usage event."),
+    );
+
+    const response = await handleAnalyzeRequest(makeRequest(requestBody()), {
+      ...deps,
+      abuseGuard,
+    });
+    const json = (await response.json()) as ApiResponse<AnalysisResult>;
+
+    expect(response.status).toBe(500);
+    expect(json).toMatchObject({
+      code: "INTERNAL_ERROR",
+      ok: false,
+    });
+    expect(deps.generateAnalysis).toHaveBeenCalledOnce();
+    expect(abuseGuard.recordModelSuccess).toHaveBeenCalledWith("user_123");
+    expect(abuseGuard.recordModelFailure).not.toHaveBeenCalled();
+  });
+
+  it("returns a JSON model error when failure audit persistence also fails", async () => {
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
+    const deps = createDeps();
+    deps.generateAnalysis.mockRejectedValue(
+      new ApiError("MODEL_FAILED", "Gemini analysis failed."),
+    );
+    deps.audit.record.mockRejectedValue(
+      new ApiError("INTERNAL_ERROR", "Failed to record audit event."),
+    );
+
+    const response = await handleAnalyzeRequest(makeRequest(requestBody()), deps);
+    const json = (await response.json()) as ApiResponse<AnalysisResult>;
+
+    expect(response.status).toBe(502);
+    expect(json).toEqual({
+      code: "MODEL_FAILED",
+      message: "Gemini analysis failed.",
+      ok: false,
+    });
+  });
+
   it("uses Supabase-backed default recorders for usage and audit events", async () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://motioncode.supabase.co";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "public-anon-key";
@@ -203,7 +373,47 @@ describe("POST /api/analyze", () => {
     process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-placeholder";
 
     const insert = vi.fn(async () => ({ error: null }));
-    const from = vi.fn(() => ({ insert }));
+    const rowForTable = (table: string) => {
+      if (table === "projects") {
+        return {
+          id: "project_123",
+          owner_id: "user_123",
+          workspace_id: "workspace_123",
+        };
+      }
+      if (table === "assets") {
+        return { id: "asset_123", project_id: "project_123" };
+      }
+      if (table === "project_versions") {
+        return { id: "version_123", project_id: "project_123" };
+      }
+
+      return { id: `${table}_row` };
+    };
+    const from = vi.fn((table: string) => ({
+      insert,
+      select: vi.fn(
+        (_columns?: string, options?: Record<string, unknown>) => {
+          if (options?.count === "exact") {
+            const countFilter = {
+              eq: vi.fn(() => countFilter),
+              gte: vi.fn(async () => ({ count: 0, error: null })),
+            };
+
+            return countFilter;
+          }
+
+          return {
+            match: vi.fn(() => ({
+              limit: vi.fn(async () => ({
+                data: [rowForTable(table)],
+                error: null,
+              })),
+            })),
+          };
+        },
+      ),
+    }));
     const createClient = vi.fn(() => ({ from }));
     vi.doMock("@supabase/supabase-js", async (importOriginal) => {
       const actual =
@@ -215,7 +425,7 @@ describe("POST /api/analyze", () => {
       };
     });
 
-    const { handleAnalyzeRequest } = await import("@/app/api/analyze/route");
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
     const deps = createDeps();
     const response = await handleAnalyzeRequest(makeRequest(requestBody()), {
       abuseGuard: {
@@ -321,5 +531,13 @@ describe("Gemini analysis normalization", () => {
         performanceScore: 88,
       },
     });
+  });
+
+  it("maps malformed model JSON schemas to SCHEMA_FAILED", () => {
+    expect(() =>
+      normalizeGeminiGeneratedAnalysis({
+        implementation_notes: "not-an-array",
+      }),
+    ).toThrow(expect.objectContaining({ code: "SCHEMA_FAILED" }));
   });
 });

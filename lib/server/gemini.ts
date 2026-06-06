@@ -193,53 +193,59 @@ export async function analyzeFramesWithGemini(
 }
 
 export function normalizeGeminiGeneratedAnalysis(input: unknown): GeminiAnalysis {
-  const raw = RawGeminiAnalysisSchema.parse(input);
-  const spec = MotionSpecSchema.parse({
-    accessibilityNote: stringValue(
-      raw.accessibilityNote,
-      raw.accessibility_note,
-      "Add prefers-reduced-motion fallback.",
-    ),
-    delayMs: nonNegativeInteger(numberValue(raw.delayMs, raw.delay_ms, 0)),
-    description: stringValue(
-      raw.description,
-      "Motion pattern detected from sampled frames.",
-    ),
-    durationMs: nonNegativeInteger(numberValue(raw.durationMs, raw.duration_ms, 300)),
-    easing: stringValue(raw.easing, "ease-out"),
-    element: stringValue(raw.element, "element"),
-    gpuAccelerated: booleanValue(raw.gpuAccelerated, raw.gpu_accelerated, true),
-    implementationNotes: arrayValue(
-      raw.implementationNotes,
-      raw.implementation_notes,
-      [],
-    ),
-    intent: normalizeIntent(raw.intent),
-    keyframesDetected: nonNegativeInteger(
-      numberValue(raw.keyframesDetected, raw.keyframes_detected, 0),
-    ),
-    loops: booleanValue(raw.loops, false),
-    performanceScore: clamp(numberValue(raw.performanceScore, raw.performance_score, 80), 0, 100),
+  return parseGeminiSchema(() => {
+    const raw = RawGeminiAnalysisSchema.parse(input);
+    const spec = MotionSpecSchema.parse({
+      accessibilityNote: stringValue(
+        raw.accessibilityNote,
+        raw.accessibility_note,
+        "Add prefers-reduced-motion fallback.",
+      ),
+      delayMs: nonNegativeInteger(numberValue(raw.delayMs, raw.delay_ms, 0)),
+      description: stringValue(
+        raw.description,
+        "Motion pattern detected from sampled frames.",
+      ),
+      durationMs: nonNegativeInteger(numberValue(raw.durationMs, raw.duration_ms, 300)),
+      easing: stringValue(raw.easing, "ease-out"),
+      element: stringValue(raw.element, "element"),
+      gpuAccelerated: booleanValue(raw.gpuAccelerated, raw.gpu_accelerated, true),
+      implementationNotes: arrayValue(
+        raw.implementationNotes,
+        raw.implementation_notes,
+        [],
+      ),
+      intent: normalizeIntent(raw.intent),
+      keyframesDetected: nonNegativeInteger(
+        numberValue(raw.keyframesDetected, raw.keyframes_detected, 0),
+      ),
+      loops: booleanValue(raw.loops, false),
+      performanceScore: clamp(
+        numberValue(raw.performanceScore, raw.performance_score, 80),
+        0,
+        100,
+      ),
+    });
+
+    const outputs = GeneratedOutputSchema.array().parse([
+      output("css", stringValue(raw.css, ""), [], []),
+      output("gsap", stringValue(raw.gsap, ""), ["gsap"], []),
+      output(
+        "framer-motion",
+        stringValue(raw.framerMotion, raw.framer_motion, ""),
+        ["framer-motion"],
+        [],
+      ),
+      output(
+        "react-spring",
+        stringValue(raw.reactSpring, raw.react_spring, ""),
+        ["@react-spring/web"],
+        [],
+      ),
+    ]);
+
+    return { outputs, spec };
   });
-
-  const outputs = GeneratedOutputSchema.array().parse([
-    output("css", stringValue(raw.css, ""), [], []),
-    output("gsap", stringValue(raw.gsap, ""), ["gsap"], []),
-    output(
-      "framer-motion",
-      stringValue(raw.framerMotion, raw.framer_motion, ""),
-      ["framer-motion"],
-      [],
-    ),
-    output(
-      "react-spring",
-      stringValue(raw.reactSpring, raw.react_spring, ""),
-      ["@react-spring/web"],
-      [],
-    ),
-  ]);
-
-  return { outputs, spec };
 }
 
 export function normalizeGeminiAnalysis(
@@ -247,11 +253,25 @@ export function normalizeGeminiAnalysis(
   context: NormalizeAnalysisContext,
 ): AnalysisResult {
   const generated = normalizeGeminiGeneratedAnalysis(input);
-  return AnalysisResultSchema.parse({
-    ...context,
-    outputs: generated.outputs,
-    spec: generated.spec,
+  return parseGeminiSchema(() => {
+    return AnalysisResultSchema.parse({
+      ...context,
+      outputs: generated.outputs,
+      spec: generated.spec,
+    });
   });
+}
+
+function parseGeminiSchema<T>(parse: () => T): T {
+  try {
+    return parse();
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new ApiError("SCHEMA_FAILED", "Gemini response did not match schema.");
+    }
+
+    throw error;
+  }
 }
 
 function extractGeminiText(payload: unknown) {

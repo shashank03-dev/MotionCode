@@ -1,11 +1,22 @@
 import { z } from "zod";
 
+import { PLAN_ENTITLEMENTS } from "@/lib/contracts/plans";
+
 const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"] as const;
 const JPEG_DATA_URL_PREFIX = /^data:image\/jpe?g;base64,/i;
+const MAX_PLAN_UPLOAD_BYTES = PLAN_ENTITLEMENTS.studio.maxUploadBytes;
+
+export const MAX_ANALYZE_FRAMES =
+  PLAN_ENTITLEMENTS.studio.maxFramesPerAnalysis;
+export const MAX_FRAME_BASE64_LENGTH =
+  Math.ceil((MAX_PLAN_UPLOAD_BYTES * 4) / 3) + "data:image/jpeg;base64,".length;
+export const MAX_ANALYZE_REQUEST_CONTENT_LENGTH =
+  MAX_FRAME_BASE64_LENGTH + MAX_ANALYZE_FRAMES * 128 + 4096;
 
 export const Base64JpegFrameSchema = z
   .string()
   .min(1)
+  .max(MAX_FRAME_BASE64_LENGTH)
   .transform((value) => value.replace(JPEG_DATA_URL_PREFIX, "").replace(/\s/g, ""))
   .superRefine((value, context) => {
     const buffer = decodeBase64(value);
@@ -21,7 +32,7 @@ export const Base64JpegFrameSchema = z
 export const AnalyzeRequestSchema = z
   .object({
     assetId: z.string().min(1),
-    frames: z.array(Base64JpegFrameSchema).min(1),
+    frames: z.array(Base64JpegFrameSchema).min(1).max(MAX_ANALYZE_FRAMES),
     model: z.enum(GEMINI_MODELS).default("gemini-2.5-flash"),
     projectId: z.string().min(1),
     versionId: z.string().min(1),

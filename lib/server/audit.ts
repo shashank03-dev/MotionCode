@@ -42,10 +42,32 @@ type SupabaseInsertResult = {
   error: { message?: string } | null;
 };
 
+type SupabaseSelectResult = {
+  count?: number | null;
+  data?: Array<Record<string, unknown>> | null;
+  error: { message?: string } | null;
+};
+
 type SupabaseInsertBuilder = {
   insert: (
     values: Record<string, unknown>,
   ) => PromiseLike<SupabaseInsertResult> | SupabaseInsertResult;
+  select: (
+    columns?: string,
+    options?: { count?: "exact"; head?: boolean },
+  ) => SupabaseFilterBuilder;
+};
+
+type SupabaseFilterBuilder = {
+  eq: (column: string, value: unknown) => SupabaseFilterBuilder;
+  gte: (
+    column: string,
+    value: unknown,
+  ) => PromiseLike<SupabaseSelectResult> | SupabaseSelectResult;
+  limit: (
+    count: number,
+  ) => PromiseLike<SupabaseSelectResult> | SupabaseSelectResult;
+  match: (query: Record<string, unknown>) => SupabaseFilterBuilder;
 };
 
 export type SupabaseInsertClient = {
@@ -55,6 +77,22 @@ export type SupabaseInsertClient = {
 type SupabaseRecorderOptions = {
   client?: SupabaseInsertClient;
   env?: TrustedSupabaseConfig;
+};
+
+export type AnalysisResourceRequest = {
+  assetId: string;
+  projectId: string;
+  versionId: string;
+  workspaceId?: string;
+};
+
+export type AnalysisAuthorizationUser = {
+  id: string;
+};
+
+export type DailyAnalysisCountInput = {
+  since: Date;
+  userId: string;
 };
 
 export function createNoopAuditRecorder(): AuditRecorder {
@@ -82,6 +120,70 @@ export function createTrustedSupabaseServerClient(
       persistSession: false,
     },
   }) as unknown as SupabaseInsertClient;
+}
+
+export async function authorizeAnalysisRequestWithSupabase(
+  user: AnalysisAuthorizationUser,
+  request: AnalysisResourceRequest,
+  options: SupabaseRecorderOptions = {},
+) {
+  const client = options.client ?? createTrustedSupabaseServerClient(options.env);
+  const project = await findSingleRow(client, "projects", {
+    id: request.projectId,
+  });
+
+  if (!project) {
+    return false;
+  }
+
+  const workspaceId = stringField(project, "workspace_id");
+  if (request.workspaceId && workspaceId !== request.workspaceId) {
+    return false;
+  }
+
+  const ownsProject = stringField(project, "owner_id") === user.id;
+  const isWorkspaceMember =
+    workspaceId &&
+    (await hasRow(client, "workspace_members", {
+      user_id: user.id,
+      workspace_id: workspaceId,
+    }));
+
+  if (!ownsProject && !isWorkspaceMember) {
+    return false;
+  }
+
+  const hasAsset = await hasRow(client, "assets", {
+    id: request.assetId,
+    project_id: request.projectId,
+  });
+  if (!hasAsset) {
+    return false;
+  }
+
+  return hasRow(client, "project_versions", {
+    id: request.versionId,
+    project_id: request.projectId,
+  });
+}
+
+export async function getDailyAnalysisCountWithSupabase(
+  input: DailyAnalysisCountInput,
+  options: SupabaseRecorderOptions = {},
+) {
+  const client = options.client ?? createTrustedSupabaseServerClient(options.env);
+  const result = await client
+    .from("usage_events")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", input.userId)
+    .eq("event_type", "analysis.completed")
+    .gte("created_at", input.since.toISOString());
+
+  if (result.error) {
+    throw new ApiError("INTERNAL_ERROR", "Failed to read usage events.");
+  }
+
+  return result.count ?? 0;
 }
 
 export function createSupabaseAuditRecorder(
@@ -140,4 +242,30 @@ export async function recordAuditEvent(
   event: AuditEventInput,
 ) {
   await recorder.record(event);
+}
+
+async function findSingleRow(
+  client: SupabaseInsertClient,
+  table: string,
+  query: Record<string, unknown>,
+) {
+  const result = await client.from(table).select("*").match(query).limit(1);
+  if (result.error) {
+    throw new ApiError("INTERNAL_ERROR", `Failed to read ${table}.`);
+  }
+
+  return result.data?.[0] ?? null;
+}
+
+async function hasRow(
+  client: SupabaseInsertClient,
+  table: string,
+  query: Record<string, unknown>,
+) {
+  return Boolean(await findSingleRow(client, table, query));
+}
+
+function stringField(row: Record<string, unknown>, field: string) {
+  const value = row[field];
+  return typeof value === "string" ? value : null;
 }
