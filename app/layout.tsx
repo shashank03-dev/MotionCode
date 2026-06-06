@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Space_Mono } from "next/font/google";
 import "./globals.css";
-import { cn } from "@/lib/utils";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -20,9 +19,12 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://motioncode.vercel.app"),
   title: "MotionCode — Turn Animations Into Production Code",
   description:
-    "Upload a video. Get CSS, GSAP, and Framer Motion code instantly. The motion intelligence platform for developers.",
+    "Upload motion media and generate validated CSS, GSAP, Framer Motion, and React Spring snippets through server-side Gemini analysis.",
   openGraph: {
-    images: ["/og-image.png"],
+    title: "MotionCode",
+    description:
+      "Turn animation references into validated frontend motion snippets.",
+    images: ["/og-image.svg"],
   },
 };
 
@@ -32,9 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn(inter.variable, spaceMono.variable)}>
-      <head>
-      </head>
+    <html lang="en" className={`${inter.variable} ${spaceMono.variable}`}>
       <body className="antialiased">{children}</body>
     </html>
   );

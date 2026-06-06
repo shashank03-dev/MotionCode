@@ -71,11 +71,12 @@ export function UploadPanel({
       </div>
 
       <div
-        onClick={() => fileInputRef.current?.click()}
+        className="upload-dropzone"
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
         onDrop={onDrop}
         style={{
+          position: "relative",
           margin: 20, padding: "36px 20px", display: "flex", flexDirection: "column",
           alignItems: "center", justifyContent: "center", cursor: "pointer",
           border: `1.5px dashed ${flashError ? "#ef4444" : dragActive ? "#00ff88" : file ? "#00ff8840" : "#1a1a1a"}`,
@@ -84,9 +85,11 @@ export function UploadPanel({
         }}
       >
         <input
+          id="animation-file-upload"
+          aria-label="Upload animation file"
           type="file"
           ref={fileInputRef}
-          style={{ display: "none" }}
+          className="upload-file-input"
           accept="video/mp4,video/webm,video/quicktime,image/gif,.mp4,.webm,.mov,.gif"
           onChange={(event) => {
             if (event.target.files && event.target.files.length > 0) {
@@ -96,20 +99,33 @@ export function UploadPanel({
         />
 
         {!file ? (
-          <>
+          <label
+            htmlFor="animation-file-upload"
+            style={{
+              display: "flex", flexDirection: "column", alignItems: "center",
+              justifyContent: "center", cursor: "pointer", width: "100%"
+            }}
+          >
             <div style={{ fontFamily: "Space Mono, monospace", fontSize: 28, color: "#1a1a1a" }}>⬆</div>
             <div style={{ fontFamily: "Space Mono, monospace", fontSize: 13, color: "#e2e8f0", marginTop: 12 }}>Drop animation here</div>
             <div style={{ fontFamily: "Space Mono, monospace", fontSize: 11, color: "#3a3a4a", marginTop: 6 }}>MP4 · WebM · MOV · GIF</div>
-          </>
+          </label>
         ) : (
           <>
-            <div style={{ fontFamily: "Space Mono, monospace", fontSize: 12, color: "#00ff88", wordBreak: "break-all", textAlign: "center" }}>{file.name}</div>
-            <div style={{ fontFamily: "Space Mono, monospace", fontSize: 11, color: "#3a3a4a", marginTop: 6 }}>{formatFileSize(file.size)}</div>
+            <label
+              htmlFor="animation-file-upload"
+              style={{
+                display: "flex", flexDirection: "column", alignItems: "center",
+                cursor: "pointer", width: "100%"
+              }}
+            >
+              <div style={{ fontFamily: "Space Mono, monospace", fontSize: 12, color: "#00ff88", wordBreak: "break-all", textAlign: "center" }}>{file.name}</div>
+              <div style={{ fontFamily: "Space Mono, monospace", fontSize: 11, color: "#3a3a4a", marginTop: 6 }}>{formatFileSize(file.size)}</div>
+            </label>
 
             <div style={{ display: "flex", gap: 12, marginTop: 14 }}>
               <button
-                onClick={(event) => {
-                  event.stopPropagation();
+                onClick={() => {
                   fileInputRef.current?.click();
                 }}
                 style={{
@@ -222,7 +238,7 @@ export function UploadPanel({
           border: "1px solid #00ff88", padding: "10px 14px", margin: "0 20px 20px", background: "#0a0a0a"
         }}>
           <div style={{ fontFamily: "Space Mono, monospace", fontSize: 11, color: "#00ff88" }}>
-            ⚡ Pro — Gemini 2.5 Pro. Unlimited analyses.
+            Pro mode enabled.
           </div>
         </div>
       )}

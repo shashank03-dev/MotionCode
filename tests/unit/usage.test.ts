@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createDailyUsageLimiter } from "@/lib/server/usage";
+import {
+  createDailyUsageLimiter,
+  createFreeUsageLimiter,
+  createUpstashDailyUsageLimiter,
+} from "@/lib/server/usage";
 import { FREE_LIMIT as CLIENT_FREE_LIMIT } from "@/lib/rateLimit";
 import { FREE_LIMIT } from "@/lib/usageLimits";
 
@@ -115,6 +119,95 @@ describe("createDailyUsageLimiter", () => {
       allowed: false,
       remaining: 0,
       limit: 1,
+    });
+  });
+});
+
+describe("createUpstashDailyUsageLimiter", () => {
+  it("persists quota counts through Upstash Redis REST before allowing provider calls", async () => {
+    const fetcher = vi.fn(async () => {
+      return new Response(JSON.stringify([{ result: 2 }, { result: 1 }]), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    });
+    const limiter = createUpstashDailyUsageLimiter({
+      limit: 3,
+      restUrl: "https://quota.example.com/",
+      restToken: "secret",
+      now: () => new Date("2026-06-06T12:00:00.000Z"),
+      fetcher,
+    });
+
+    await expect(limiter.consume("identity-hash")).resolves.toEqual({
+      allowed: true,
+      remaining: 1,
+      limit: 3,
+    });
+
+    expect(fetcher).toHaveBeenCalledWith("https://quota.example.com/pipeline", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer secret",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify([
+        ["INCR", "motioncode:usage:2026-06-06:identity-hash"],
+        ["EXPIRE", "motioncode:usage:2026-06-06:identity-hash", 43_200],
+      ]),
+    });
+  });
+
+  it("blocks when Redis count exceeds the quota", async () => {
+    const fetcher = vi.fn(async () => {
+      return new Response(JSON.stringify([{ result: 4 }, { result: 1 }]), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    });
+    const limiter = createUpstashDailyUsageLimiter({
+      limit: 3,
+      restUrl: "https://quota.example.com",
+      restToken: "secret",
+      fetcher,
+    });
+
+    await expect(limiter.consume("identity-hash")).resolves.toEqual({
+      allowed: false,
+      remaining: 0,
+      limit: 3,
+    });
+  });
+
+  it("fails closed when the durable quota store is unavailable", async () => {
+    const fetcher = vi.fn(async () => new Response("{}", { status: 503 }));
+    const limiter = createUpstashDailyUsageLimiter({
+      limit: 3,
+      restUrl: "https://quota.example.com",
+      restToken: "secret",
+      fetcher,
+    });
+
+    await expect(limiter.consume("identity-hash")).rejects.toThrow(
+      "Usage quota store unavailable",
+    );
+  });
+});
+
+describe("createFreeUsageLimiter", () => {
+  it("requires durable quota configuration in production", () => {
+    expect(() => createFreeUsageLimiter({ NODE_ENV: "production" })).toThrow(
+      "UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are required in production",
+    );
+  });
+
+  it("uses the in-memory fallback outside production", async () => {
+    const limiter = createFreeUsageLimiter({ NODE_ENV: "test" });
+
+    await expect(limiter.consume("identity-hash")).resolves.toEqual({
+      allowed: true,
+      remaining: FREE_LIMIT - 1,
+      limit: FREE_LIMIT,
     });
   });
 });

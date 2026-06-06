@@ -1,26 +1,25 @@
 # MotionCode
 
-**The Advanced Motion Intelligence Platform.**
+**Video motion analysis for production code snippets.**
 
-MotionCode is a sophisticated tool designed to bridge the gap between video inspiration and production-ready code. By leveraging AI and advanced frame extraction, MotionCode analyzes animations and transitions from videos to generate clean, high-performance GSAP and Framer Motion code.
+MotionCode helps turn video motion references into implementation-ready animation snippets. The browser extracts frames from supported media, the server-side Gemini endpoint analyzes those frames, and the app returns validated CSS, GSAP, Framer Motion, and React Spring code.
 
 
 
-## ✨ Features
+## Features
 
-- **Video-to-Code Analysis**: Upload any video and extract animation patterns automatically.
-- **GSAP & Framer Motion Output**: Get production-ready code snippets instantly.
-- **Puter.js Integration**: Powered by Puter.js for robust, client-side intelligence.
-- **Frame Extraction**: High-precision frame extraction using FFmpeg for deep analysis.
-- **Modern UI**: Dark-themed, glassmorphic interface with smooth GSAP animations.
-- **Code Preview**: Interactive Monaco editor for immediate code inspection and editing.
+- **Video-to-Code Analysis**: Upload MP4, WebM, MOV, or GIF media and extract frames in the browser.
+- **Server-Side Gemini Analysis**: `/api/analyze` sends extracted JPEG frames to Gemini using a server-only API key.
+- **Validated Code Output**: Gemini responses are normalized before display as CSS, GSAP, Framer Motion, and React Spring snippets.
+- **Usage Guardrails**: Free analysis requests are rate-limited before Gemini is called.
+- **Modern UI**: Dark-themed upload, analysis, and code output panels built for motion review.
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- Node.js 18.x or later
-- NPM, PNPM, or Yarn
+- Node.js 20.19.x or newer
+- npm
 
 ### Installation
 
@@ -34,11 +33,18 @@ MotionCode is a sophisticated tool designed to bridge the gap between video insp
 2. **Install dependencies:**
 
    ```bash
-   npm install
+   npm ci
    ```
 
 3. **Set up Environment Variables:**
-   Create a `.env.local` file based on `.env.local.example` (if required).
+
+   Create `.env.local` and provide the server-side Gemini key:
+
+   ```bash
+   GEMINI_API_KEY=your_key_here
+   UPSTASH_REDIS_REST_URL=your_redis_rest_url
+   UPSTASH_REDIS_REST_TOKEN=your_redis_rest_token
+   ```
 
 4. **Run the development server:**
 
@@ -49,17 +55,21 @@ MotionCode is a sophisticated tool designed to bridge the gap between video insp
 5. **Open the application:**
    Navigate to [http://localhost:3000](http://localhost:3000) to see the platform in action.
 
-## 🛠️ Built With
+## Built With
 
-- **Next.js 14** - React Framework
+- **Next.js 16** - React Framework
 - **GSAP** - Animation Library
-- **Framer Motion** - Production-ready motion for React
-- **Puter.js** - Cloud Computing & AI
-- **FFmpeg.wasm** - Video processing in the browser
+- **Framer Motion** - Motion library for React
+- **Google Gemini API** - Server-side frame analysis
+- **Zod** - Request and response validation
 - **Tailwind CSS** - Styling
-- **Monaco Editor** - Code editing experience
+- **Vitest** - Unit testing
 
-## 📄 License
+## Production Readiness
+
+See [docs/production-readiness.md](docs/production-readiness.md) for the current production posture, required environment variables, security controls, verification commands, and known follow-up work.
+
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 

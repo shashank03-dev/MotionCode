@@ -13,6 +13,15 @@ import { UploadPanel } from "./UploadPanel";
 export type AppStage = "idle" | "extracting" | "analyzing" | "done" | "error";
 export type UserPlan = "free" | "pro";
 
+const CODE_TABS: CodeTab[] = ["CSS", "GSAP", "Framer Motion", "React Spring"];
+
+function getSavedCodeTab(): CodeTab {
+  if (typeof window === "undefined") return "CSS";
+
+  const savedTab = window.localStorage.getItem("motioncode_tab");
+  return CODE_TABS.includes(savedTab as CodeTab) ? (savedTab as CodeTab) : "CSS";
+}
+
 async function analyzeFrames(frames: string[]): Promise<AnimationAnalysisResult> {
   const response = await fetch("/api/analyze", {
     method: "POST",
@@ -35,14 +44,14 @@ export function AppShell() {
   const [frameCount, setFrameCount] = useState(8);
   const [frames, setFrames] = useState<string[]>([]);
   const [frameThumbs, setFrameThumbs] = useState<string[]>([]);
-  // TODO: Replace with Supabase profile plan after auth is added.
+  // Free mode remains the only active plan until account-backed plan state ships.
   const [userPlan] = useState<UserPlan>("free");
 
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [stage, setStage] = useState<AppStage>("idle");
   const [result, setResult] = useState<AnimationAnalysisResult | null>(null);
-  const [activeTab, setActiveTab] = useState<CodeTab>("CSS");
+  const [activeTab, setActiveTab] = useState<CodeTab>(() => getSavedCodeTab());
   const [error, setError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [flashError, setFlashError] = useState(false);
@@ -65,9 +74,22 @@ export function AppShell() {
     const validation = validateFrameRequest(selectedFile, count);
 
     if (!validation.ok) {
+      setFile(null);
+      if (fileUrl) {
+        URL.revokeObjectURL(fileUrl);
+        setFileUrl(null);
+      }
+      setFrames([]);
+      setFrameThumbs([]);
+      setResult(null);
+      setError(null);
+      setProgressWidth(0);
       setFlashError(true);
       setValidationError(validation.error);
       setStage("idle");
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
       setTimeout(() => {
         setFlashError(false);
       }, 1500);
@@ -84,6 +106,7 @@ export function AppShell() {
     setResult(null);
     setFrames([]);
     setFrameThumbs([]);
+    setProgressWidth(0);
 
     try {
       const extracted = await extractFrames(selectedFile, validation.normalizedCount);
@@ -118,6 +141,7 @@ export function AppShell() {
     setResult(null);
     setError(null);
     setValidationError(null);
+    setProgressWidth(0);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -131,6 +155,7 @@ export function AppShell() {
     setValidationError(null);
     setFrames([]);
     setFrameThumbs([]);
+    setProgressWidth(0);
   }, [handleRemoveFile]);
 
   const updateFrameCount = useCallback((count: number) => {
@@ -162,17 +187,21 @@ export function AppShell() {
     if (!frames.length || loading) return;
 
     if (userPlan === "free" && !canUseForFree()) {
-      setError(`Daily limit reached (${FREE_LIMIT}/day). Upgrade to Pro for unlimited.`);
+      setError(`Daily limit reached (${FREE_LIMIT}/day). Try again tomorrow.`);
       return;
     }
 
     setLoading(true);
-    setStage("analyzing");
     setResult(null);
     setError(null);
+    setStatusMessage("Analyzing motion...");
+    setActiveStep(0);
+    setScannerIndex(0);
+    setStatusBarMsgIndex(0);
+    setProgressWidth(0);
+    setStage("analyzing");
 
     try {
-      setStatusMessage("Analyzing motion...");
       const parsed = await analyzeFrames(frames);
 
       if (userPlan === "free") {
@@ -180,7 +209,7 @@ export function AppShell() {
       }
 
       setResult(parsed);
-      setActiveTab((localStorage.getItem("motioncode_tab") as CodeTab) || "CSS");
+      setActiveTab(getSavedCodeTab());
       setStage("done");
       setShowToast(true);
     } catch (err: unknown) {
@@ -204,21 +233,13 @@ export function AppShell() {
         fileInputRef.current?.click();
       }
       if (["1", "2", "3", "4"].includes(event.key) && result) {
-        const tabs: CodeTab[] = ["CSS", "GSAP", "Framer Motion", "React Spring"];
-        setActiveTab(tabs[parseInt(event.key) - 1]);
+        setActiveTab(CODE_TABS[parseInt(event.key) - 1]);
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [frames.length, handleAnalyze, loading, result, stage]);
-
-  useEffect(() => {
-    const savedTab = localStorage.getItem("motioncode_tab") as CodeTab;
-    if (savedTab && ["CSS", "GSAP", "Framer Motion", "React Spring"].includes(savedTab)) {
-      setActiveTab(savedTab);
-    }
-  }, []);
 
   useEffect(() => {
     if (activeTab) {
@@ -243,11 +264,6 @@ export function AppShell() {
 
   useEffect(() => {
     if (stage === "analyzing") {
-      setActiveStep(0);
-      setScannerIndex(0);
-      setStatusBarMsgIndex(0);
-      setProgressWidth(0);
-
       const runSteps = (currentStep: number) => {
         setActiveStep(currentStep);
         if (currentStep < 10) {
@@ -255,7 +271,7 @@ export function AppShell() {
         }
       };
 
-      setTimeout(() => setProgressWidth(85), 100);
+      const progressTimer = setTimeout(() => setProgressWidth(85), 100);
 
       stepTimerRef.current = setTimeout(() => runSteps(1), 600);
 
@@ -266,14 +282,12 @@ export function AppShell() {
       statusTimerRef.current = setInterval(() => {
         setStatusBarMsgIndex((prev) => (prev + 1) % 4);
       }, 3000);
-    } else {
-      if (stepTimerRef.current) clearTimeout(stepTimerRef.current);
-      if (scannerTimerRef.current) clearInterval(scannerTimerRef.current);
-      if (statusTimerRef.current) clearInterval(statusTimerRef.current);
-
-      if (stage !== "done") {
-        setProgressWidth(0);
-      }
+      return () => {
+        clearTimeout(progressTimer);
+        if (stepTimerRef.current) clearTimeout(stepTimerRef.current);
+        if (scannerTimerRef.current) clearInterval(scannerTimerRef.current);
+        if (statusTimerRef.current) clearInterval(statusTimerRef.current);
+      };
     }
 
     return () => {

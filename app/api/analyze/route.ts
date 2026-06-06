@@ -1,39 +1,55 @@
 import { NextResponse } from "next/server";
+import { createHash } from "node:crypto";
 import { analysisRequestSchema } from "@/app/api/analyze/schema";
+import { publicErrorMessage } from "@/lib/server/errors";
 import { analyzeFramesWithGemini } from "@/lib/server/gemini";
-import { freeUsageLimiter } from "@/lib/server/usage";
+import { getFreeUsageLimiter } from "@/lib/server/usage";
 
 export const runtime = "nodejs";
 
-const IDENTITY_HEADERS = [
+const VERCEL_IDENTITY_HEADERS = ["x-vercel-forwarded-for"] as const;
+const LOCAL_IDENTITY_HEADERS = [
   "x-vercel-forwarded-for",
   "x-real-ip",
   "x-forwarded-for",
 ] as const;
 
 function identityFromRequest(request: Request): string {
-  for (const header of IDENTITY_HEADERS) {
+  const headers =
+    process.env.VERCEL === "1"
+      ? VERCEL_IDENTITY_HEADERS
+      : process.env.NODE_ENV !== "production"
+        ? LOCAL_IDENTITY_HEADERS
+      : [];
+
+  for (const header of headers) {
     const identity = firstHeaderValue(request.headers.get(header));
 
     if (identity) {
-      return identity;
+      return hashIdentity(identity);
     }
   }
 
-  return "anonymous";
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Trusted request identity is required for quota enforcement");
+  }
+
+  return hashIdentity("anonymous");
 }
 
 function firstHeaderValue(value: string | null): string | undefined {
-  // This is cost throttling, not authentication; direct callers can spoof
-  // forwarding headers until a real user identity is introduced.
   return value?.split(",")[0]?.trim() || undefined;
+}
+
+function hashIdentity(identity: string): string {
+  return createHash("sha256").update(identity).digest("hex");
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const input = analysisRequestSchema.parse(body);
-    const usage = await freeUsageLimiter.consume(identityFromRequest(request));
+    const usage = await getFreeUsageLimiter().consume(identityFromRequest(request));
 
     if (!usage.allowed) {
       return NextResponse.json(
@@ -50,7 +66,13 @@ export async function POST(request: Request) {
 
     return NextResponse.json(result);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Analysis failed";
-    return NextResponse.json({ error: message }, { status: 400 });
+    console.error("[analyze]", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+
+    return NextResponse.json(
+      { error: publicErrorMessage(error) },
+      { status: 400 },
+    );
   }
 }
