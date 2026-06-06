@@ -45,11 +45,11 @@ const scrambleText = (element: HTMLElement | null, finalString: string, goingOut
 };
 
 const FEATURES_DATA = [
-  { num: "01", title: "Upload Any Format", desc: "Drag in MP4, GIF, WebM, or Lottie files. Our engine handles any animation source with frame-perfect accuracy.", code: "// 8 frames extracted\n> format: MP4 → JPEG\n> resolution: 1920×1080" },
+  { num: "01", title: "Upload Motion Media", desc: "Drag in MP4, WebM, MOV, or GIF files. MotionCode extracts representative frames for analysis.", code: "// 8 frames extracted\n> format: MP4 → JPEG\n> resolution: 1920×1080" },
   { num: "02", title: "AI Frame Analysis", desc: "Neural networks decompose motion into discrete keyframes, easing curves, and transform paths — automatically.", code: "// motion analyzed\n> keyframes: 12\n> easing: cubic-bezier(...)" },
-  { num: "03", title: "Multi-Framework Output", desc: "Get production-ready CSS, GSAP, and Framer Motion code. Copy, paste, ship.", code: "// output ready\n> CSS  ✓\n> GSAP  ✓\n> Framer ✓" },
-  { num: "04", title: "Performance Scorer", desc: "Every generated animation is benchmarked for jank, repaints, and composite layer usage with a 0-100 score.", code: "// perf score\n> GPU layers: yes\n> score: 94/100" },
-  { num: "05", title: "Accessibility Audit", desc: "Automatic prefers-reduced-motion fallbacks and WCAG compliance checks on every export.", code: "// a11y check\n> reduced-motion: ✓\n> WCAG AA: pass" }
+  { num: "03", title: "Multi-Framework Output", desc: "Get CSS, GSAP, Framer Motion, and React Spring snippets. Copy, paste, ship.", code: "// output ready\n> CSS  ✓\n> GSAP  ✓\n> Framer ✓" },
+  { num: "04", title: "Implementation Scorecard", desc: "Review model-estimated performance cues, GPU-friendly properties, and easing metadata before using the snippet.", code: "// scorecard\n> GPU cues: transform\n> score: model-estimated" },
+  { num: "05", title: "Accessibility Guidance", desc: "Surface reduced-motion recommendations so you can add the right fallback in your production code.", code: "// guidance\n> reduced-motion: recommended\n> review required" }
 ];
 
 export default function LandingPage() {
@@ -218,7 +218,7 @@ export default function LandingPage() {
         <div className="flex items-center gap-6">
           <Link href="#features" style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "var(--muted)" }}>Features</Link>
           <Link href="#how-it-works" style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "var(--muted)" }}>How it Works</Link>
-          <Link href="#pricing" style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "var(--muted)" }}>Pricing</Link>
+          <Link href="/pricing" style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "var(--muted)" }}>Pricing</Link>
           <Link href="/app" 
                 style={{
                   border: "1px solid var(--accent)",
@@ -299,7 +299,7 @@ export default function LandingPage() {
              marginTop: "28px",
              maxWidth: "420px"
            }}>
-          Upload a video. Get CSS, GSAP, and Framer Motion code instantly.
+          Upload motion media. Get CSS, GSAP, Framer Motion, and React Spring snippets.
         </p>
 
         <div className="flex flex-row gap-4 relative z-10" style={{ marginTop: "40px" }}>
@@ -372,7 +372,7 @@ export default function LandingPage() {
             <div ref={el => { heroTermLinesRef.current[3] = el; }} style={{ display: "block", color: "#00ff88" }}>&gt; duration: 340ms</div>
             <div ref={el => { heroTermLinesRef.current[4] = el; }} style={{ display: "block", color: "#3a3a4a" }}>&gt; generating output...</div>
             <div ref={el => { heroTermLinesRef.current[5] = el; }} style={{ display: "block", color: "#00ff88" }}>
-              &gt; CSS  GSAP  Framer Motion  ✓ <span className="blink-cursor" style={{ opacity: 1, display: "inline-block" }}>▊</span>
+              &gt; CSS  GSAP  Framer Motion  React Spring  ✓ <span className="blink-cursor" style={{ opacity: 1, display: "inline-block" }}>▊</span>
             </div>
           </div>
         </div>
@@ -381,12 +381,12 @@ export default function LandingPage() {
       {/* SECTION 3 - LOGO STRIP */}
       <section style={{ padding: "40px 0", borderBottom: "1px solid var(--border)", background: "var(--bg)", display: "flex", flexDirection: "column", alignItems: "center", overflow: "hidden" }}>
         <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "var(--muted)", letterSpacing: "3px", whiteSpace: "nowrap", marginBottom: "32px", opacity: 0.6 }}>
-          TRUSTED BY DEVELOPERS AT
+          OUTPUTS FOR MODERN FRONTEND STACKS
         </div>
         <div className="flex whitespace-nowrap marquee-scroll w-full">
           {Array.from({ length: 2 }).map((_, i) => (
             <div key={i} className="flex" style={{ gap: "80px", paddingRight: "80px" }}>
-              {["Vercel", "Stripe", "Linear", "Figma", "Notion", "Loom", "Raycast", "Resend"].map(brand => (
+              {["CSS", "GSAP", "Framer Motion", "React Spring", "Transforms", "Opacity", "Keyframes", "Easing"].map(brand => (
                 <span key={brand} style={{ fontFamily: "var(--font-mono)", fontSize: "13px", color: "var(--muted)" }}>
                   {brand}
                 </span>
@@ -397,7 +397,7 @@ export default function LandingPage() {
       </section>
 
       {/* SECTION 4 - LOGO/FEATURES (STICKY SCROLL) */}
-      <section ref={featuresSectionRef} 
+      <section id="features" ref={featuresSectionRef}
                style={{ position: "relative", height: "100vh", overflow: "hidden", display: "flex", borderBottom: "1px solid var(--border)", marginBottom: `${(FEATURES_DATA.length - 1) * 100}vh` }}>
         
         <div style={{ position: "absolute", left: "20px", top: "50%", transform: "translateY(-50%)", writingMode: "vertical-rl", textOrientation: "mixed", fontFamily: "var(--font-mono)", fontSize: "9px", color: "#1a1a1a", letterSpacing: "3px" }}>
@@ -565,9 +565,14 @@ export default function LandingPage() {
               <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#3a3a4a", letterSpacing: "2px", marginBottom: "20px", textTransform: "uppercase" }}>
                 Product
               </div>
-              {["Converter", "Pricing", "Changelog", "Docs"].map(link => (
-                <Link key={link} href="#" style={{ fontFamily: "var(--font-body)", fontSize: "13px", color: "#3a3a4a", lineHeight: 2.2, display: "block", textDecoration: "none", transition: "color 0.2s" }} onMouseOver={e => e.currentTarget.style.color = "#e2e8f0"} onMouseOut={e => e.currentTarget.style.color = "#3a3a4a"}>
-                  {link}
+              {[
+                { label: "Converter", href: "/app" },
+                { label: "Pricing", href: "/pricing" },
+                { label: "Features", href: "#features" },
+                { label: "How it Works", href: "#how-it-works" },
+              ].map(link => (
+                <Link key={link.label} href={link.href} style={{ fontFamily: "var(--font-body)", fontSize: "13px", color: "#3a3a4a", lineHeight: 2.2, display: "block", textDecoration: "none", transition: "color 0.2s" }} onMouseOver={e => e.currentTarget.style.color = "#e2e8f0"} onMouseOut={e => e.currentTarget.style.color = "#3a3a4a"}>
+                  {link.label}
                 </Link>
               ))}
             </div>
@@ -575,23 +580,14 @@ export default function LandingPage() {
             {/* Column "Company" */}
             <div>
               <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#3a3a4a", letterSpacing: "2px", marginBottom: "20px", textTransform: "uppercase" }}>
-                Company
+                Routes
               </div>
-              {["About", "Careers", "Blog", "Security"].map(link => (
-                <Link key={link} href="#" style={{ fontFamily: "var(--font-body)", fontSize: "13px", color: "#3a3a4a", lineHeight: 2.2, display: "block", textDecoration: "none", transition: "color 0.2s" }} onMouseOver={e => e.currentTarget.style.color = "#e2e8f0"} onMouseOut={e => e.currentTarget.style.color = "#3a3a4a"}>
-                  {link}
-                </Link>
-              ))}
-            </div>
-
-            {/* Column "Legal" */}
-            <div>
-              <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#3a3a4a", letterSpacing: "2px", marginBottom: "20px", textTransform: "uppercase" }}>
-                Legal
-              </div>
-              {["Privacy", "Terms", "SLA", "DPA"].map(link => (
-                <Link key={link} href="#" style={{ fontFamily: "var(--font-body)", fontSize: "13px", color: "#3a3a4a", lineHeight: 2.2, display: "block", textDecoration: "none", transition: "color 0.2s" }} onMouseOver={e => e.currentTarget.style.color = "#e2e8f0"} onMouseOut={e => e.currentTarget.style.color = "#3a3a4a"}>
-                  {link}
+              {[
+                { label: "Home", href: "/" },
+                { label: "App", href: "/app" },
+              ].map(link => (
+                <Link key={link.label} href={link.href} style={{ fontFamily: "var(--font-body)", fontSize: "13px", color: "#3a3a4a", lineHeight: 2.2, display: "block", textDecoration: "none", transition: "color 0.2s" }} onMouseOver={e => e.currentTarget.style.color = "#e2e8f0"} onMouseOut={e => e.currentTarget.style.color = "#3a3a4a"}>
+                  {link.label}
                 </Link>
               ))}
             </div>
@@ -618,13 +614,9 @@ export default function LandingPage() {
           <div style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "#1a1a1a" }}>
             © 2026 MotionCode. All rights reserved.
           </div>
-          <div style={{ display: "flex", gap: "24px" }}>
-            {["Twitter ↗", "GitHub ↗", "LinkedIn ↗"].map(link => (
-              <Link key={link} href="#" style={{ fontFamily: "var(--font-mono)", fontSize: "11px", color: "#3a3a4a", textDecoration: "none", transition: "color 0.2s" }} onMouseOver={e => e.currentTarget.style.color = "#00ff88"} onMouseOut={e => e.currentTarget.style.color = "#3a3a4a"}>
-                {link}
-              </Link>
-            ))}
-          </div>
+          <Link href="/pricing" style={{ fontFamily: "var(--font-mono)", fontSize: "11px", color: "#3a3a4a", textDecoration: "none", transition: "color 0.2s" }} onMouseOver={e => e.currentTarget.style.color = "#00ff88"} onMouseOut={e => e.currentTarget.style.color = "#3a3a4a"}>
+            Pricing
+          </Link>
         </div>
 
       </footer>
