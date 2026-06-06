@@ -3,6 +3,8 @@ import type { DragEvent, MouseEvent, RefObject } from "react";
 
 import type { PlanEntitlements, PlanTier } from "@/lib/contracts/plans";
 
+/* eslint-disable @next/next/no-img-element -- Upload previews are local blob URLs that next/image cannot optimize. */
+
 import { FrameStrip } from "./FrameStrip";
 import type { AnalysisStage } from "./types";
 

@@ -1,3 +1,5 @@
+/* eslint-disable @next/next/no-img-element -- Frame thumbnails are local blob/data URLs that next/image cannot optimize. */
+
 type FrameStripProps = {
   frameCount: number;
   scannerIndex?: number;
