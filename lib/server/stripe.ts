@@ -4,6 +4,7 @@ import { PLAN_TIERS, type PlanTier } from "@/lib/contracts/plans";
 
 import { apiError, apiSuccess, ApiError } from "./apiErrors";
 import { createTrustedSupabaseServerClient } from "./audit";
+import { observeBillingWebhook } from "./observability";
 
 type DbResult = {
   error: { message?: string } | null;
@@ -137,6 +138,11 @@ export async function handleStripeWebhookRequest(
 ) {
   const signature = request.headers.get("stripe-signature");
   if (!signature) {
+    await observeBillingWebhook({
+      outcome: "rejected",
+      reason: "missing_signature",
+    });
+
     return apiError("INVALID_REQUEST", "Missing Stripe signature.");
   }
 
@@ -149,18 +155,38 @@ export async function handleStripeWebhookRequest(
       requireEnv("STRIPE_WEBHOOK_SECRET"),
     );
   } catch {
+    await observeBillingWebhook({
+      outcome: "rejected",
+      reason: "invalid_signature",
+    });
+
     return apiError("INVALID_REQUEST", "Invalid Stripe signature.");
   }
 
   try {
     await (deps.syncEvent ?? syncStripeWebhookEvent)(event);
   } catch (error) {
+    await observeBillingWebhook({
+      eventId: event.id,
+      outcome: "failed",
+      reason: error instanceof ApiError ? error.code : "sync_failed",
+      stripeEventType: event.type,
+      userId: stripeEventUserId(event),
+    });
+
     if (error instanceof ApiError) {
       return apiError(error.code, error.message, { status: error.status });
     }
 
     return apiError("INTERNAL_ERROR", "Failed to process Stripe webhook.");
   }
+
+  await observeBillingWebhook({
+    eventId: event.id,
+    outcome: "processed",
+    stripeEventType: event.type,
+    userId: stripeEventUserId(event),
+  });
 
   return apiSuccess({ received: true as const });
 }
@@ -398,6 +424,15 @@ function metadataString(
   key: string,
 ) {
   return getString(object.metadata?.[key]);
+}
+
+function stripeEventUserId(event: Stripe.Event) {
+  const object = event.data.object as {
+    client_reference_id?: unknown;
+    metadata?: Stripe.Metadata | null;
+  };
+
+  return getString(object.client_reference_id) ?? metadataString(object, "userId");
 }
 
 function isPlanTier(value: unknown): value is PlanTier {

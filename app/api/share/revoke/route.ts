@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { apiError, apiSuccess, isApiError } from "@/lib/server/apiErrors";
+import { observeAuthError } from "@/lib/server/observability";
 import { revokeProjectShareLink } from "@/lib/server/shareLinks";
 import { getCurrentUser } from "@/lib/supabase/server";
 
@@ -34,6 +35,12 @@ export async function POST(request: Request) {
 
   const user = await getCurrentUser();
   if (!user) {
+    await observeAuthError({
+      action: "share_revoke",
+      reason: "missing_session",
+      route: "/api/share/revoke",
+    });
+
     return apiError("UNAUTHENTICATED", "Sign in to revoke a share link.");
   }
 

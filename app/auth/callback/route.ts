@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { observeAuthError } from "@/lib/server/observability";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -10,6 +11,12 @@ export async function GET(request: Request) {
   const next = normalizeNextPath(requestUrl.searchParams.get("next"));
 
   if (!code) {
+    await observeAuthError({
+      action: "callback",
+      reason: "missing_code",
+      route: "/auth/callback",
+    });
+
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
@@ -17,6 +24,12 @@ export async function GET(request: Request) {
   const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
+    await observeAuthError({
+      action: "callback",
+      reason: "exchange_failed",
+      route: "/auth/callback",
+    });
+
     return NextResponse.redirect(new URL("/login", request.url));
   }
 

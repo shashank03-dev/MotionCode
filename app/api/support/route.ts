@@ -6,6 +6,7 @@ import {
   SupportTicketCreateSchema,
 } from "@/lib/server/adminSupport";
 import { apiError, apiSuccess, ApiError } from "@/lib/server/apiErrors";
+import { observeAuthError } from "@/lib/server/observability";
 import { apiErrorFromUnknown } from "@/lib/server/routeResponses";
 import {
   createSupabaseServerClient,
@@ -20,6 +21,12 @@ export async function GET() {
     const supabase = createSupabaseServerClient();
     const user = await getCurrentUser(supabase);
     if (!user) {
+      await observeAuthError({
+        action: "support_list",
+        reason: "missing_session",
+        route: "/api/support",
+      });
+
       return apiError("UNAUTHENTICATED", "Sign in to view support tickets.");
     }
 
@@ -35,6 +42,12 @@ export async function POST(request: Request) {
     const supabase = createSupabaseServerClient();
     const user = await getCurrentUser(supabase);
     if (!user) {
+      await observeAuthError({
+        action: "support_create",
+        reason: "missing_session",
+        route: "/api/support",
+      });
+
       return apiError("UNAUTHENTICATED", "Sign in to create a support ticket.");
     }
 
