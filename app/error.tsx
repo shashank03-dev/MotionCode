@@ -1,87 +1,48 @@
 "use client";
 
 import Link from "next/link";
+import { RefreshCcw } from "lucide-react";
 
-export default function Error({
-  reset,
-}: {
+type ErrorPageProps = {
   error: Error & { digest?: string };
   reset: () => void;
-}) {
+};
+
+export default function ErrorPage({ error, reset }: ErrorPageProps) {
   return (
-    <main
-      style={{
-        alignItems: "center",
-        background: "var(--bg)",
-        color: "var(--text)",
-        display: "flex",
-        minHeight: "100vh",
-        padding: "64px 10vw",
-      }}
-    >
-      <section style={{ maxWidth: "680px" }}>
-        <div
-          style={{
-            color: "var(--muted)",
-            fontFamily: "var(--font-mono)",
-            fontSize: "10px",
-            letterSpacing: "2px",
-            textTransform: "uppercase",
-          }}
-        >
-          MotionCode / Runtime error
+    <main className="flex min-h-screen items-center justify-center bg-[#10120d] px-4 py-16 text-[#fffbf4]">
+      <section className="w-full max-w-2xl rounded-[8px] border border-white/10 bg-[#151811] p-6 text-center">
+        <div className="mx-auto flex size-12 items-center justify-center rounded-[8px] bg-[#f58f7c]/10 text-[#f58f7c]">
+          <RefreshCcw className="size-6" aria-hidden="true" />
         </div>
-        <h1
-          style={{
-            color: "var(--text)",
-            fontFamily: "var(--font-mono)",
-            fontSize: "clamp(44px, 7vw, 96px)",
-            lineHeight: 1,
-            margin: "20px 0",
-          }}
-        >
-          Motion pipeline interrupted.
-        </h1>
-        <p
-          style={{
-            color: "var(--muted)",
-            fontFamily: "var(--font-body)",
-            fontSize: "15px",
-            lineHeight: 1.7,
-            marginBottom: "32px",
-          }}
-        >
-          Something failed while rendering this route. Retry the request or
-          return to a stable MotionCode page.
+        <p className="mt-6 font-mono text-xs uppercase tracking-[0.22em] text-[#ffd166]">
+          Error
         </p>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "16px" }}>
+        <h1 className="mt-3 font-mono text-3xl leading-tight">
+          MotionCode could not load this page.
+        </h1>
+        <p className="mt-4 text-sm leading-6 text-[#d8cfbc]/75">
+          Try loading the route again. If it keeps failing, use the support page
+          checklist and include the route where this happened.
+        </p>
+        {process.env.NODE_ENV !== "production" ? (
+          <p className="mt-4 rounded-[8px] bg-[#0d100b] p-3 font-mono text-xs text-[#f58f7c]">
+            {error.message}
+          </p>
+        ) : null}
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
           <button
-            onClick={reset}
-            style={{
-              background: "var(--accent)",
-              border: "1px solid var(--accent)",
-              color: "var(--bg)",
-              fontFamily: "var(--font-mono)",
-              fontSize: "13px",
-              fontWeight: 700,
-              padding: "14px 28px",
-            }}
             type="button"
+            onClick={reset}
+            className="inline-flex h-10 items-center rounded-[8px] bg-[#9ef0c0] px-4 text-sm font-semibold text-[#10120d] hover:bg-[#c8ffd9]"
           >
-            Retry
+            Try again
           </button>
           <Link
-            href="/"
-            style={{
-              border: "1px solid var(--accent)",
-              color: "var(--accent)",
-              fontFamily: "var(--font-mono)",
-              fontSize: "13px",
-              padding: "14px 28px",
-              textDecoration: "none",
-            }}
+            href="/support"
+            className="inline-flex h-10 items-center rounded-[8px] border border-white/15 px-4 text-sm font-semibold text-[#fffbf4] hover:border-[#9ef0c0]/50"
           >
-            Back home
+            Support
           </Link>
         </div>
       </section>

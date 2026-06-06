@@ -1,236 +1,142 @@
 import Link from "next/link";
-import { FREE_LIMIT } from "@/lib/usageLimits";
+import { Check, Sparkles } from "lucide-react";
 
-const plans = [
+import { PLAN_ENTITLEMENTS, type PlanTier } from "@/lib/contracts/plans";
+
+import { CheckoutButton } from "./CheckoutButton";
+
+const PLAN_COPY: Record<
+  PlanTier,
   {
-    name: "Free",
-    price: "$0",
-    eyebrow: "Open beta",
-    description: "Start converting motion into code without setup or a card.",
-    features: [
-      `${FREE_LIMIT} free analyses per day`,
-      "CSS, GSAP, Framer Motion, and React Spring output",
-      "Frame extraction from MP4, WebM, MOV, and GIF",
-      "Performance and accessibility scorecards",
-    ],
+    cta: string;
+    description: string;
+    price: string;
+  }
+> = {
+  free: {
     cta: "Start free",
-    href: "/app",
-    highlighted: false,
+    description: "For testing the motion analysis workflow.",
+    price: "$0",
   },
-  {
-    name: "Pro",
-    price: "Coming soon",
-    eyebrow: "For heavier motion work",
-    description: "A planned upgrade path for teams with frequent exports.",
-    features: [
-      "Higher analysis limits after account support ships",
-      "Plan-aware model routing after billing support ships",
-      "Saved export history on the roadmap",
-      "Early access to new export targets",
-    ],
-    cta: "Join waitlist",
-    href: "/app",
-    highlighted: true,
+  pro: {
+    cta: "Upgrade",
+    description: "For individual production motion work.",
+    price: "$19",
   },
+  studio: {
+    cta: "Upgrade",
+    description: "For teams managing shared animation systems.",
+    price: "$79",
+  },
+};
+
+const FEATURE_LABELS: Array<[keyof typeof PLAN_ENTITLEMENTS.free, string]> = [
+  ["dailyAnalyses", "daily analyses"],
+  ["maxFramesPerAnalysis", "frames per analysis"],
+  ["savedProjects", "saved projects"],
+  ["teamSeats", "team seats"],
+  ["workspaceCount", "workspaces"],
+  ["auditLogRetentionDays", "audit log days"],
 ];
 
 export default function PricingPage() {
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "var(--bg)",
-        color: "var(--text)",
-        padding: "96px 10vw",
-      }}
-    >
-      <nav
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "96px",
-        }}
-      >
-        <Link
-          href="/"
-          style={{
-            color: "var(--accent)",
-            fontFamily: "var(--font-mono)",
-            fontSize: "16px",
-            textDecoration: "none",
-          }}
-        >
-          MotionCode
-        </Link>
-        <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
-          <Link
-            href="/#features"
-            style={{
-              color: "var(--muted)",
-              fontFamily: "var(--font-mono)",
-              fontSize: "12px",
-              textDecoration: "none",
-            }}
-          >
-            Features
-          </Link>
-          <Link
-            href="/app"
-            style={{
-              border: "1px solid var(--accent)",
-              color: "var(--accent)",
-              fontFamily: "var(--font-mono)",
-              fontSize: "12px",
-              padding: "8px 20px",
-              textDecoration: "none",
-            }}
-          >
-            Try free
-          </Link>
-        </div>
-      </nav>
-
-      <section>
-        <div
-          style={{
-            color: "var(--muted)",
-            fontFamily: "var(--font-mono)",
-            fontSize: "10px",
-            letterSpacing: "2px",
-            textTransform: "uppercase",
-          }}
-        >
-          Plans
-        </div>
-        <h1
-          style={{
-            color: "var(--text)",
-            fontFamily: "var(--font-mono)",
-            fontSize: "clamp(48px, 8vw, 112px)",
-            lineHeight: 1,
-            margin: "16px 0 24px",
-          }}
-        >
-          Pricing
-        </h1>
-        <p
-          style={{
-            color: "var(--muted)",
-            fontFamily: "var(--font-body)",
-            fontSize: "15px",
-            lineHeight: 1.7,
-            maxWidth: "560px",
-            margin: 0,
-          }}
-        >
-          Choose the MotionCode plan that matches how often you turn animations
-          into production-ready code.
-        </p>
-      </section>
-
-      <section
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: "24px",
-          marginTop: "64px",
-        }}
-      >
-        {plans.map((plan) => (
-          <article
-            key={plan.name}
-            style={{
-              border: `1px solid ${
-                plan.highlighted ? "var(--accent-border)" : "var(--border)"
-              }`,
-              background: plan.highlighted ? "var(--accent-dim)" : "transparent",
-              padding: "32px",
-              minHeight: "420px",
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            <div
-              style={{
-                color: plan.highlighted ? "var(--accent)" : "var(--muted)",
-                fontFamily: "var(--font-mono)",
-                fontSize: "10px",
-                letterSpacing: "2px",
-                textTransform: "uppercase",
-              }}
-            >
-              {plan.eyebrow}
-            </div>
-            <h2
-              style={{
-                color: "var(--text)",
-                fontFamily: "var(--font-mono)",
-                fontSize: "32px",
-                margin: "20px 0 8px",
-              }}
-            >
-              {plan.name}
-            </h2>
-            <div
-              style={{
-                color: "var(--accent)",
-                fontFamily: "var(--font-mono)",
-                fontSize: "24px",
-                marginBottom: "20px",
-              }}
-            >
-              {plan.price}
-            </div>
-            <p
-              style={{
-                color: "var(--muted)",
-                fontFamily: "var(--font-body)",
-                fontSize: "14px",
-                lineHeight: 1.7,
-                margin: 0,
-              }}
-            >
-              {plan.description}
-            </p>
-            <ul
-              style={{
-                color: "var(--text)",
-                fontFamily: "var(--font-body)",
-                fontSize: "14px",
-                lineHeight: 1.9,
-                listStyle: "none",
-                margin: "32px 0",
-                padding: 0,
-              }}
-            >
-              {plan.features.map((feature) => (
-                <li key={feature} style={{ color: "var(--muted)" }}>
-                  <span style={{ color: "var(--accent)" }}>+</span> {feature}
-                </li>
-              ))}
-            </ul>
+    <main className="min-h-screen bg-[var(--bg)] px-4 py-8 text-[var(--text)] sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl">
+        <header className="flex flex-col gap-4 border-b border-[var(--border)] pb-6 md:flex-row md:items-end md:justify-between">
+          <div>
             <Link
-              href={plan.href}
-              style={{
-                background: plan.highlighted ? "var(--accent)" : "transparent",
-                border: "1px solid var(--accent)",
-                color: plan.highlighted ? "var(--bg)" : "var(--accent)",
-                display: "inline-block",
-                fontFamily: "var(--font-mono)",
-                fontSize: "13px",
-                fontWeight: 700,
-                marginTop: "auto",
-                padding: "14px 24px",
-                textAlign: "center",
-                textDecoration: "none",
-              }}
+              href="/"
+              className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--muted)]"
             >
-              {plan.cta}
+              MotionCode
             </Link>
-          </article>
-        ))}
-      </section>
+            <h1 className="mt-3 font-mono text-4xl">Pricing</h1>
+          </div>
+          <Link
+            className="inline-flex h-10 items-center justify-center border border-[var(--border)] px-4 font-mono text-sm text-[var(--accent)]"
+            href="/account"
+          >
+            Account
+          </Link>
+        </header>
+
+        <section className="mt-8 grid gap-4 lg:grid-cols-3">
+          {(["free", "pro", "studio"] as const).map((tier) => (
+            <PlanColumn key={tier} tier={tier} />
+          ))}
+        </section>
+      </div>
     </main>
   );
+}
+
+function PlanColumn({ tier }: { tier: PlanTier }) {
+  const copy = PLAN_COPY[tier];
+  const entitlements = PLAN_ENTITLEMENTS[tier];
+
+  return (
+    <section className="flex min-h-[540px] flex-col border border-[var(--border)] bg-[#171812] p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="font-mono text-xs uppercase text-[var(--muted)]">
+            {tier}
+          </p>
+          <h2 className="mt-3 font-mono text-3xl capitalize">{tier}</h2>
+        </div>
+        {tier === "studio" ? (
+          <Sparkles className="h-5 w-5 text-[var(--accent)]" aria-hidden="true" />
+        ) : null}
+      </div>
+      <p className="mt-4 min-h-12 text-sm leading-6 text-[var(--accent)]">
+        {copy.description}
+      </p>
+      <div className="mt-6 flex items-end gap-2">
+        <span className="font-mono text-4xl">{copy.price}</span>
+        <span className="pb-1 text-sm text-[var(--muted)]">/ month</span>
+      </div>
+      <div className="mt-6">
+        {tier === "free" ? (
+          <Link
+            className="inline-flex h-10 w-full items-center justify-center border border-[var(--border)] px-4 font-mono text-sm text-[var(--accent)]"
+            href="/app"
+          >
+            {copy.cta}
+          </Link>
+        ) : (
+          <CheckoutButton planTier={tier} />
+        )}
+      </div>
+      <ul className="mt-8 flex flex-1 flex-col gap-4 text-sm text-[var(--accent)]">
+        {FEATURE_LABELS.map(([key, label]) => (
+          <li key={key} className="flex items-start gap-3">
+            <Check className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            <span>
+              {formatFeatureValue(entitlements[key])} {label}
+            </span>
+          </li>
+        ))}
+        <li className="flex items-start gap-3">
+          <Check className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>{entitlements.allowedModels.join(", ")}</span>
+        </li>
+        <li className="flex items-start gap-3">
+          <Check className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>{entitlements.supportPriority} support</span>
+        </li>
+      </ul>
+    </section>
+  );
+}
+
+function formatFeatureValue(value: unknown) {
+  if (typeof value === "number") {
+    return value.toLocaleString();
+  }
+
+  if (typeof value === "boolean") {
+    return value ? "Includes" : "No";
+  }
+
+  return String(value);
 }

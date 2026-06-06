@@ -1,60 +1,77 @@
+const fallbackSupabaseOrigin = "https://*.supabase.co";
+
+export function buildContentSecurityPolicy(
+  supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL,
+) {
+  const supabaseOrigin = normalizeOrigin(supabaseUrl) ?? fallbackSupabaseOrigin;
+  const supabaseWebsocketOrigin = supabaseOrigin.startsWith("https://")
+    ? supabaseOrigin.replace("https://", "wss://")
+    : "wss://*.supabase.co";
+
+  return [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "object-src 'none'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https://*.supabase.co",
+    "font-src 'self' data:",
+    `connect-src 'self' ${supabaseOrigin} ${supabaseWebsocketOrigin} https://*.supabase.co wss://*.supabase.co https://api.stripe.com`,
+    "frame-src https://js.stripe.com https://hooks.stripe.com",
+    "media-src 'self' data: blob: https://*.supabase.co",
+    "worker-src 'self' blob:",
+    "manifest-src 'self'",
+  ].join("; ");
+}
+
+export const securityHeaders = [
+  {
+    key: "X-Content-Type-Options",
+    value: "nosniff",
+  },
+  {
+    key: "Referrer-Policy",
+    value: "strict-origin-when-cross-origin",
+  },
+  {
+    key: "X-Frame-Options",
+    value: "DENY",
+  },
+  {
+    key: "Permissions-Policy",
+    value:
+      "camera=(), microphone=(), geolocation=(), browsing-topics=(), payment=(self)",
+  },
+  {
+    key: "Content-Security-Policy",
+    value: buildContentSecurityPolicy(),
+  },
+];
+
 /** @type {import('next').NextConfig} */
-const scriptSrc = [
-  "script-src",
-  "'self'",
-  "'unsafe-inline'",
-  ...(process.env.NODE_ENV === "development" ? ["'unsafe-eval'"] : []),
-].join(" ");
-
-const connectSrc = [
-  "connect-src",
-  "'self'",
-  ...(process.env.NODE_ENV === "development"
-    ? ["ws://localhost:*", "ws://127.0.0.1:*"]
-    : []),
-].join(" ");
-
-const contentSecurityPolicy = [
-  "default-src 'self'",
-  scriptSrc,
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
-  "font-src 'self' data:",
-  connectSrc,
-  "media-src 'self' blob: data:",
-  "object-src 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "frame-ancestors 'none'",
-].join("; ");
-
 const nextConfig = {
   async headers() {
     return [
       {
-        source: "/:path*",
-        headers: [
-          {
-            key: "Content-Security-Policy",
-            value: contentSecurityPolicy,
-          },
-          {
-            key: "Referrer-Policy",
-            value: "strict-origin-when-cross-origin",
-          },
-          {
-            key: "Permissions-Policy",
-            value:
-              "camera=(), microphone=(), geolocation=(), payment=(), usb=(), fullscreen=(self), clipboard-write=(self)",
-          },
-          {
-            key: "X-Frame-Options",
-            value: "DENY",
-          },
-        ],
+        source: "/(.*)",
+        headers: securityHeaders,
       },
     ];
   },
 };
+
+function normalizeOrigin(value) {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
+}
 
 export default nextConfig;

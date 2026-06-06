@@ -1,141 +1,160 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { extractFrames, validateFrameRequest } from "@/lib/extractFrames";
 
-const originalCreateObjectURL = Object.getOwnPropertyDescriptor(
-  URL,
-  "createObjectURL",
-);
-const originalRevokeObjectURL = Object.getOwnPropertyDescriptor(
-  URL,
-  "revokeObjectURL",
-);
+import { extractFrames } from "@/lib/extractFrames";
+import { PLAN_ENTITLEMENTS } from "@/lib/contracts/plans";
+
+const jpegDataUrl = "data:image/jpeg;base64,/9j/AA==";
+
+function makeFile(type: string, name = "clip.mp4", size = 4) {
+  const file = new File(["data"], name, { type });
+  Object.defineProperty(file, "size", { value: size });
+  return file;
+}
+
+function mockCanvas() {
+  const originalCreateElement = document.createElement.bind(document);
+  return vi.spyOn(document, "createElement").mockImplementation((tagName) => {
+    if (tagName === "canvas") {
+      return {
+        getContext: () => ({ drawImage: vi.fn() }),
+        height: 0,
+        toDataURL: () => jpegDataUrl,
+        width: 0,
+      } as unknown as HTMLCanvasElement;
+    }
+
+    return originalCreateElement(tagName);
+  });
+}
+
+function mockVideoElement(video: Record<string, unknown>) {
+  const originalCreateElement = document.createElement.bind(document);
+  return vi.spyOn(document, "createElement").mockImplementation((tagName) => {
+    if (tagName === "video") {
+      return video as unknown as HTMLVideoElement;
+    }
+
+    if (tagName === "canvas") {
+      return {
+        getContext: () => ({ drawImage: vi.fn() }),
+        height: 0,
+        toDataURL: () => jpegDataUrl,
+        width: 0,
+      } as unknown as HTMLCanvasElement;
+    }
+
+    return originalCreateElement(tagName);
+  });
+}
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
-  vi.unstubAllGlobals();
-
-  if (originalCreateObjectURL) {
-    Object.defineProperty(URL, "createObjectURL", originalCreateObjectURL);
-  } else {
-    Reflect.deleteProperty(URL, "createObjectURL");
-  }
-
-  if (originalRevokeObjectURL) {
-    Object.defineProperty(URL, "revokeObjectURL", originalRevokeObjectURL);
-  } else {
-    Reflect.deleteProperty(URL, "revokeObjectURL");
-  }
-});
-
-describe("validateFrameRequest", () => {
-  it("accepts supported video files under size limit", () => {
-    const file = new File(["x"], "motion.mp4", { type: "video/mp4" });
-
-    expect(validateFrameRequest(file, 8)).toEqual({
-      ok: true,
-      normalizedCount: 8,
-    });
-  });
-
-  it("rejects unsupported file types", () => {
-    const file = new File(["x"], "motion.json", { type: "application/json" });
-
-    expect(validateFrameRequest(file, 8)).toEqual({
-      ok: false,
-      error: "Unsupported format. Use MP4, WebM, MOV, or GIF.",
-    });
-  });
-
-  it("rejects unsupported video file types", () => {
-    const unsupportedFiles = [
-      new File(["x"], "motion.ogv", { type: "video/ogg" }),
-      new File(["x"], "motion.avi", { type: "video/x-msvideo" }),
-    ];
-
-    for (const file of unsupportedFiles) {
-      expect(validateFrameRequest(file, 8)).toEqual({
-        ok: false,
-        error: "Unsupported format. Use MP4, WebM, MOV, or GIF.",
-      });
-    }
-  });
-
-  it("rejects oversized files", () => {
-    const file = new File([new Uint8Array(51 * 1024 * 1024)], "large.mp4", {
-      type: "video/mp4",
-    });
-
-    expect(validateFrameRequest(file, 8)).toEqual({
-      ok: false,
-      error: "File is too large. Maximum size is 50 MB.",
-    });
-  });
-
-  it("clamps frame counts to supported range", () => {
-    const file = new File(["x"], "motion.mp4", { type: "video/mp4" });
-
-    expect(validateFrameRequest(file, 99)).toEqual({
-      ok: true,
-      normalizedCount: 12,
-    });
-  });
-
-  it("normalizes non-finite and fractional frame counts before clamping", () => {
-    const file = new File(["x"], "motion.mp4", { type: "video/mp4" });
-
-    expect(validateFrameRequest(file, Number.NaN)).toEqual({
-      ok: true,
-      normalizedCount: 8,
-    });
-    expect(validateFrameRequest(file, Infinity)).toEqual({
-      ok: true,
-      normalizedCount: 8,
-    });
-    expect(validateFrameRequest(file, 4.9)).toEqual({
-      ok: true,
-      normalizedCount: 4,
-    });
-    expect(validateFrameRequest(file, 0)).toEqual({
-      ok: true,
-      normalizedCount: 1,
-    });
-    expect(validateFrameRequest(file, -3)).toEqual({
-      ok: true,
-      normalizedCount: 1,
-    });
-  });
 });
 
 describe("extractFrames", () => {
-  it("revokes the GIF object URL when image loading fails", async () => {
-    const createObjectURL = vi.fn(() => "blob:motion-gif");
-    const revokeObjectURL = vi.fn();
-    const file = new File(["x"], "motion.gif", { type: "image/gif" });
+  it("rejects unsupported media types", async () => {
+    await expect(extractFrames(makeFile("video/ogg", "clip.ogv"))).rejects
+      .toThrow("Unsupported format. Use MP4, WebM, MOV, or GIF.");
+  });
 
-    class FailingImage {
-      onerror: ((event: Event) => void) | null = null;
+  it("rejects files larger than the configured max bytes", async () => {
+    const maxBytes = PLAN_ENTITLEMENTS.free.maxUploadBytes;
 
-      set src(_value: string) {
-        queueMicrotask(() => {
-          this.onerror?.(new Event("error"));
-        });
-      }
-    }
+    await expect(
+      extractFrames(makeFile("video/mp4", "clip.mp4", maxBytes + 1)),
+    ).rejects.toThrow("File is too large.");
+  });
 
-    Object.defineProperty(URL, "createObjectURL", {
-      configurable: true,
-      value: createObjectURL,
+  it("rejects frame counts outside the configured limit", async () => {
+    await expect(extractFrames(makeFile("video/mp4"), 0)).rejects.toThrow(
+      "Frame count must be between 1 and 6.",
+    );
+    await expect(
+      extractFrames(makeFile("video/mp4"), PLAN_ENTITLEMENTS.free.maxFramesPerAnalysis + 1),
+    ).rejects.toThrow("Frame count must be between 1 and 6.");
+  });
+
+  it("revokes GIF object URLs after extraction", async () => {
+    const revokeObjectURL = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:gif");
+    mockCanvas();
+
+    vi.stubGlobal(
+      "Image",
+      class {
+        naturalHeight = 120;
+        naturalWidth = 160;
+        onerror: (() => void) | null = null;
+        onload: (() => void) | null = null;
+
+        set src(_value: string) {
+          queueMicrotask(() => this.onload?.());
+        }
+      },
+    );
+
+    await expect(extractFrames(makeFile("image/gif", "clip.gif"))).resolves
+      .toEqual(["/9j/AA=="]);
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:gif");
+  });
+
+  it("rejects non-finite video durations and revokes object URLs", async () => {
+    const revokeObjectURL = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:video");
+    const listeners = new Map<string, EventListener>();
+    mockVideoElement({
+      addEventListener: vi.fn((event: string, listener: EventListener) => {
+        listeners.set(event, listener);
+      }),
+      crossOrigin: "",
+      duration: Infinity,
+      load: vi.fn(() => {
+        queueMicrotask(() => listeners.get("loadedmetadata")?.(new Event("loadedmetadata")));
+      }),
+      muted: false,
+      preload: "",
+      removeEventListener: vi.fn(),
+      src: "",
     });
-    Object.defineProperty(URL, "revokeObjectURL", {
-      configurable: true,
-      value: revokeObjectURL,
-    });
-    vi.stubGlobal("Image", FailingImage);
 
-    await expect(extractFrames(file, 8)).rejects.toMatchObject({
-      message: "Failed to extract GIF frame",
+    await expect(extractFrames(makeFile("video/mp4"))).rejects.toThrow(
+      "Cannot determine video duration.",
+    );
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:video");
+  });
+
+  it("rejects and revokes object URLs when seeking times out", async () => {
+    vi.useFakeTimers();
+    const revokeObjectURL = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:slow-video");
+    const listeners = new Map<string, EventListener>();
+    mockVideoElement({
+      addEventListener: vi.fn((event: string, listener: EventListener) => {
+        listeners.set(event, listener);
+      }),
+      crossOrigin: "",
+      duration: 1,
+      load: vi.fn(() => {
+        queueMicrotask(() => listeners.get("loadedmetadata")?.(new Event("loadedmetadata")));
+      }),
+      muted: false,
+      preload: "",
+      removeEventListener: vi.fn(),
+      src: "",
+      videoHeight: 100,
+      videoWidth: 100,
+      set currentTime(_value: number) {
+        // Keep the video pending until the seek timeout fires.
+      },
     });
-    expect(createObjectURL).toHaveBeenCalledWith(file);
-    expect(revokeObjectURL).toHaveBeenCalledWith("blob:motion-gif");
+
+    const pending = expect(
+      extractFrames(makeFile("video/mp4"), 1, { seekTimeoutMs: 10 }),
+    ).rejects.toThrow("Timed out seeking video frame.");
+    await vi.runAllTimersAsync();
+
+    await pending;
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:slow-video");
   });
 });

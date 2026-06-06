@@ -1,0 +1,74 @@
+import { FolderKanban, Gauge, Plus, Sparkles } from "lucide-react";
+import Link from "next/link";
+import type { ReactNode } from "react";
+
+import { cn } from "@/lib/utils";
+
+type AppShellProps = {
+  active?: "dashboard" | "projects" | "workspaces";
+  children: ReactNode;
+  userEmail?: string | null;
+};
+
+const navItems = [
+  { href: "/dashboard", icon: Gauge, key: "dashboard", label: "Dashboard" },
+  { href: "/dashboard#workspaces", icon: FolderKanban, key: "workspaces", label: "Workspaces" },
+  { href: "/dashboard#projects", icon: Sparkles, key: "projects", label: "Projects" },
+] as const;
+
+export function AppShell({ active = "dashboard", children, userEmail }: AppShellProps) {
+  return (
+    <div className="min-h-screen bg-[#11120d] text-[#fffbf4]">
+      <div className="grid min-h-screen lg:grid-cols-[240px_1fr]">
+        <aside className="border-b border-[#56544966] bg-[#15160f] px-5 py-4 lg:border-b-0 lg:border-r">
+          <div className="flex items-center justify-between lg:block">
+            <Link
+              href="/dashboard"
+              className="font-mono text-sm font-bold text-[#d8cfbc]"
+            >
+              MotionCode
+            </Link>
+            <Link
+              href="/onboarding"
+              className="inline-flex size-8 items-center justify-center border border-[#d8cfbc66] text-[#d8cfbc] lg:mt-8"
+              title="New workspace"
+            >
+              <Plus className="size-4" />
+            </Link>
+          </div>
+
+          <nav className="mt-5 flex gap-2 lg:flex-col">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = active === item.key;
+
+              return (
+                <Link
+                  key={item.key}
+                  href={item.href}
+                  className={cn(
+                    "inline-flex h-9 items-center gap-2 border px-3 text-sm text-[#b8af9d] transition",
+                    isActive
+                      ? "border-[#d8cfbc] bg-[#d8cfbc1f] text-[#fffbf4]"
+                      : "border-transparent hover:border-[#56544966] hover:text-[#fffbf4]",
+                  )}
+                >
+                  <Icon className="size-4" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          {userEmail ? (
+            <div className="mt-8 hidden border-t border-[#56544966] pt-4 text-xs text-[#8f887a] lg:block">
+              {userEmail}
+            </div>
+          ) : null}
+        </aside>
+
+        <main className="min-w-0 px-5 py-6 sm:px-8 lg:px-10">{children}</main>
+      </div>
+    </div>
+  );
+}

@@ -1,6 +1,6 @@
-import { FREE_LIMIT } from "@/lib/usageLimits";
+import { PLAN_ENTITLEMENTS } from "@/lib/contracts/plans";
 
-export { FREE_LIMIT } from "@/lib/usageLimits";
+const FREE_LIMIT = PLAN_ENTITLEMENTS.free.dailyAnalyses
 const STORAGE_KEY = 'motioncode_usage'
 
 interface UsageData {

@@ -8,8 +8,8 @@
 
 # testing
 /coverage
-/test-results
 /playwright-report
+/test-results
 /.lighthouseci
 
 # next.js
@@ -29,7 +29,12 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
+.env
+.env.development
+.env.test
+.env.production
 .env*.local
+!.env.local.example
 
 # vercel
 .vercel

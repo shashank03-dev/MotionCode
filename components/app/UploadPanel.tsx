@@ -1,263 +1,428 @@
-/* eslint-disable @next/next/no-img-element */
-
-import type { DragEvent, MouseEvent, RefObject } from "react";
 import Link from "next/link";
-import { canUseForFree, FREE_LIMIT, usagesLeft } from "@/lib/rateLimit";
-import type { AppStage, UserPlan } from "./AppShell";
+import type { DragEvent, MouseEvent, RefObject } from "react";
+
+import type { PlanEntitlements, PlanTier } from "@/lib/contracts/plans";
+
+import { FrameStrip } from "./FrameStrip";
+import type { AnalysisStage } from "./types";
 
 type UploadPanelProps = {
-  file: File | null;
-  fileUrl: string | null;
-  frameCount: number;
-  frames: string[];
-  frameThumbs: string[];
-  userPlan: UserPlan;
-  loading: boolean;
-  stage: AppStage;
-  validationError: string | null;
-  flashError: boolean;
+  canUseFree: boolean;
   dragActive: boolean;
+  entitlements: PlanEntitlements;
+  file: File | null;
   fileInputRef: RefObject<HTMLInputElement>;
-  onFile: (file: File) => void;
-  onRemoveFile: (event?: MouseEvent<HTMLElement>) => void;
-  onFrameCountChange: (count: number) => void;
+  fileUrl: string | null;
+  flashError: boolean;
+  frameCount: number;
+  frameThumbs: string[];
+  framesLength: number;
+  loading: boolean;
   onAnalyze: () => void;
-  onDragOver: (event: DragEvent<HTMLDivElement>) => void;
   onDragLeave: (event: DragEvent<HTMLDivElement>) => void;
+  onDragOver: (event: DragEvent<HTMLDivElement>) => void;
   onDrop: (event: DragEvent<HTMLDivElement>) => void;
+  onFileSelected: (file: File) => void;
+  onFrameCountChange: (count: number) => void;
+  onRemoveFile: (event?: MouseEvent) => void;
+  stage: AnalysisStage;
+  usageRemaining: number;
+  userPlan: PlanTier;
+  validationError: string | null;
 };
 
-function formatFileSize(bytes: number) {
-  if (bytes === 0) return "0 Bytes";
-  const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
-}
-
 export function UploadPanel({
-  file,
-  fileUrl,
-  frameCount,
-  frames,
-  frameThumbs,
-  userPlan,
-  loading,
-  stage,
-  validationError,
-  flashError,
+  canUseFree,
   dragActive,
+  entitlements,
+  file,
   fileInputRef,
-  onFile,
-  onRemoveFile,
-  onFrameCountChange,
+  fileUrl,
+  flashError,
+  frameCount,
+  frameThumbs,
+  framesLength,
+  loading,
   onAnalyze,
-  onDragOver,
   onDragLeave,
+  onDragOver,
   onDrop,
+  onFileSelected,
+  onFrameCountChange,
+  onRemoveFile,
+  stage,
+  usageRemaining,
+  userPlan,
+  validationError,
 }: UploadPanelProps) {
-  const freeLimitReached = userPlan === "free" && !canUseForFree();
   const analyzeDisabled =
-    !file || frames.length === 0 || loading || stage === "extracting" || freeLimitReached;
+    !file ||
+    framesLength === 0 ||
+    loading ||
+    stage === "extracting" ||
+    (userPlan === "free" && !canUseFree);
 
   return (
-    <div id="left-panel" style={{
-      width: 400, flexShrink: 0, borderRight: "1px solid #1a1a1a",
-      backgroundColor: "#0a0a0a", display: "flex", flexDirection: "column",
-      overflowY: "auto"
-    }}>
-      <div style={{ padding: "14px 24px", borderBottom: "1px solid #1a1a1a" }}>
-        <span style={{ fontFamily: "Space Mono, monospace", fontSize: 9, letterSpacing: 3, color: "#3a3a4a", fontWeight: "bold" }}>INPUT</span>
+    <div
+      id="left-panel"
+      style={{
+        backgroundColor: "#0a0a0a",
+        borderRight: "1px solid #1a1a1a",
+        display: "flex",
+        flexDirection: "column",
+        flexShrink: 0,
+        overflowY: "auto",
+        width: 400,
+      }}
+    >
+      <div style={{ borderBottom: "1px solid #1a1a1a", padding: "14px 24px" }}>
+        <span
+          style={{
+            color: "#3a3a4a",
+            fontFamily: "Space Mono, monospace",
+            fontSize: 9,
+            fontWeight: "bold",
+            letterSpacing: 3,
+          }}
+        >
+          INPUT
+        </span>
       </div>
 
       <div
-        className="upload-dropzone"
-        onDragOver={onDragOver}
+        onClick={() => fileInputRef.current?.click()}
         onDragLeave={onDragLeave}
+        onDragOver={onDragOver}
         onDrop={onDrop}
         style={{
-          position: "relative",
-          margin: 20, padding: "36px 20px", display: "flex", flexDirection: "column",
-          alignItems: "center", justifyContent: "center", cursor: "pointer",
-          border: `1.5px dashed ${flashError ? "#ef4444" : dragActive ? "#00ff88" : file ? "#00ff8840" : "#1a1a1a"}`,
-          backgroundColor: flashError ? "#ef444408" : dragActive ? "#00ff8808" : "transparent",
-          transition: "all 0.2s ease"
+          alignItems: "center",
+          backgroundColor: flashError
+            ? "#ef444408"
+            : dragActive
+              ? "#00ff8808"
+              : "transparent",
+          border: `1.5px dashed ${
+            flashError
+              ? "#ef4444"
+              : dragActive
+                ? "#00ff88"
+                : file
+                  ? "#00ff8840"
+                  : "#1a1a1a"
+          }`,
+          cursor: "pointer",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          margin: 20,
+          padding: "36px 20px",
+          transition: "all 0.2s ease",
         }}
       >
         <input
-          id="animation-file-upload"
-          aria-label="Upload animation file"
-          type="file"
-          ref={fileInputRef}
-          className="upload-file-input"
-          accept="video/mp4,video/webm,video/quicktime,image/gif,.mp4,.webm,.mov,.gif"
+          accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.gif,image/gif"
           onChange={(event) => {
-            if (event.target.files && event.target.files.length > 0) {
-              onFile(event.target.files[0]);
+            const selectedFile = event.target.files?.[0];
+            if (selectedFile) {
+              onFileSelected(selectedFile);
             }
           }}
+          ref={fileInputRef}
+          style={{ display: "none" }}
+          type="file"
         />
 
         {!file ? (
-          <label
-            htmlFor="animation-file-upload"
-            style={{
-              display: "flex", flexDirection: "column", alignItems: "center",
-              justifyContent: "center", cursor: "pointer", width: "100%"
-            }}
-          >
-            <div style={{ fontFamily: "Space Mono, monospace", fontSize: 28, color: "#1a1a1a" }}>⬆</div>
-            <div style={{ fontFamily: "Space Mono, monospace", fontSize: 13, color: "#e2e8f0", marginTop: 12 }}>Drop animation here</div>
-            <div style={{ fontFamily: "Space Mono, monospace", fontSize: 11, color: "#3a3a4a", marginTop: 6 }}>MP4 · WebM · MOV · GIF</div>
-          </label>
-        ) : (
           <>
-            <label
-              htmlFor="animation-file-upload"
+            <div
               style={{
-                display: "flex", flexDirection: "column", alignItems: "center",
-                cursor: "pointer", width: "100%"
+                color: "#1a1a1a",
+                fontFamily: "Space Mono, monospace",
+                fontSize: 28,
               }}
             >
-              <div style={{ fontFamily: "Space Mono, monospace", fontSize: 12, color: "#00ff88", wordBreak: "break-all", textAlign: "center" }}>{file.name}</div>
-              <div style={{ fontFamily: "Space Mono, monospace", fontSize: 11, color: "#3a3a4a", marginTop: 6 }}>{formatFileSize(file.size)}</div>
-            </label>
+              UP
+            </div>
+            <div
+              style={{
+                color: "#e2e8f0",
+                fontFamily: "Space Mono, monospace",
+                fontSize: 13,
+                marginTop: 12,
+              }}
+            >
+              Drop animation here
+            </div>
+            <div
+              style={{
+                color: "#3a3a4a",
+                fontFamily: "Space Mono, monospace",
+                fontSize: 11,
+                marginTop: 6,
+              }}
+            >
+              MP4 / WebM / MOV / GIF
+            </div>
+          </>
+        ) : (
+          <>
+            <div
+              style={{
+                color: "#00ff88",
+                fontFamily: "Space Mono, monospace",
+                fontSize: 12,
+                textAlign: "center",
+                wordBreak: "break-all",
+              }}
+            >
+              {file.name}
+            </div>
+            <div
+              style={{
+                color: "#3a3a4a",
+                fontFamily: "Space Mono, monospace",
+                fontSize: 11,
+                marginTop: 6,
+              }}
+            >
+              {formatFileSize(file.size)}
+            </div>
 
             <div style={{ display: "flex", gap: 12, marginTop: 14 }}>
-              <button
-                onClick={() => {
+              <SmallButton
+                label="CHANGE"
+                onClick={(event) => {
+                  event.stopPropagation();
                   fileInputRef.current?.click();
                 }}
-                style={{
-                  fontFamily: "Space Mono, monospace", fontSize: 9, color: "#e2e8f0",
-                  backgroundColor: "#1a1a1a", border: "none", padding: "4px 10px",
-                  cursor: "pointer", transition: "all 0.2s"
-                }}
-                onMouseOver={(event) => event.currentTarget.style.backgroundColor = "#2a2a2a"}
-                onMouseOut={(event) => event.currentTarget.style.backgroundColor = "#1a1a1a"}
-              >
-                CHANGE
-              </button>
-              <button
-                onClick={onRemoveFile}
-                style={{
-                  fontFamily: "Space Mono, monospace", fontSize: 9, color: "#ef4444",
-                  backgroundColor: "#ef444415", border: "none", padding: "4px 10px",
-                  cursor: "pointer", transition: "all 0.2s"
-                }}
-                onMouseOver={(event) => event.currentTarget.style.backgroundColor = "#ef444425"}
-                onMouseOut={(event) => event.currentTarget.style.backgroundColor = "#ef444415"}
-              >
-                DELETE
-              </button>
+              />
+              <SmallButton
+                danger
+                label="DELETE"
+                onClick={(event) => onRemoveFile(event)}
+              />
             </div>
           </>
         )}
       </div>
 
       {validationError && (
-        <div style={{
-          fontFamily: "Space Mono, monospace", fontSize: 11, color: "#ef4444",
-          textAlign: "center", marginBottom: 16
-        }}>
+        <div
+          style={{
+            color: "#ef4444",
+            fontFamily: "Space Mono, monospace",
+            fontSize: 11,
+            marginBottom: 16,
+            textAlign: "center",
+          }}
+        >
           {validationError}
         </div>
       )}
 
       {fileUrl && (
-        <div style={{ margin: "0 20px", border: "1px solid #1a1a1a", backgroundColor: "#000", display: "flex", justifyContent: "center", alignItems: "center" }}>
+        <div
+          style={{
+            alignItems: "center",
+            backgroundColor: "#000",
+            border: "1px solid #1a1a1a",
+            display: "flex",
+            justifyContent: "center",
+            margin: "0 20px",
+          }}
+        >
           {file?.type?.startsWith("video/") ? (
-            <video id="video-preview" src={fileUrl} controls muted loop style={{ maxHeight: 200, width: "100%", objectFit: "contain" }} />
+            <video
+              controls
+              id="video-preview"
+              loop
+              muted
+              src={fileUrl}
+              style={{ maxHeight: 200, objectFit: "contain", width: "100%" }}
+            />
           ) : (
-            <img id="video-preview" src={fileUrl} alt="preview" style={{ maxHeight: 200, width: "100%", objectFit: "contain" }} />
+            <img
+              alt="preview"
+              id="video-preview"
+              src={fileUrl}
+              style={{ maxHeight: 200, objectFit: "contain", width: "100%" }}
+            />
           )}
         </div>
       )}
 
-      {frameThumbs.length > 0 && (
-        <div style={{ padding: "16px 20px", borderTop: "1px solid #1a1a1a", marginTop: 20 }}>
-          <div style={{ fontFamily: "Space Mono, monospace", fontSize: 9, letterSpacing: 2, color: "#3a3a4a", marginBottom: 10 }}>EXTRACTED FRAMES ({frames.length})</div>
-          <div id="frame-strip-container" style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {frameThumbs.map((thumb, i) => (
-              <img key={i} src={thumb} alt={`Frame ${i}`} style={{ width: 54, height: 38, objectFit: "cover", border: "1px solid #1a1a1a", flexShrink: 0 }} />
-            ))}
-          </div>
-        </div>
-      )}
+      <FrameStrip frameCount={framesLength} thumbs={frameThumbs} />
 
-      <div style={{ padding: "12px 20px", borderTop: "1px solid #1a1a1a", marginTop: "auto" }}>
-        <div style={{ fontFamily: "Space Mono, monospace", fontSize: 9, color: "#3a3a4a", marginBottom: 10 }}>FRAME COUNT</div>
+      <div
+        style={{
+          borderTop: "1px solid #1a1a1a",
+          marginTop: "auto",
+          padding: "12px 20px",
+        }}
+      >
+        <div
+          style={{
+            color: "#3a3a4a",
+            fontFamily: "Space Mono, monospace",
+            fontSize: 9,
+            marginBottom: 10,
+          }}
+        >
+          FRAME COUNT
+        </div>
         <div style={{ display: "flex", gap: 8 }}>
-          {[4, 6, 8, 12].map((num) => (
+          {getFrameCountOptions(entitlements.maxFramesPerAnalysis).map((count) => (
             <button
-              key={num}
-              onClick={() => onFrameCountChange(num)}
+              key={count}
+              onClick={() => onFrameCountChange(count)}
               style={{
-                fontFamily: "Space Mono, monospace", fontSize: 12, padding: "4px 12px",
-                backgroundColor: "transparent", cursor: "pointer", transition: "all 0.2s",
-                border: `1px solid ${frameCount === num ? "#00ff88" : "#1a1a1a"}`,
-                color: frameCount === num ? "#00ff88" : "#e2e8f0"
+                backgroundColor: "transparent",
+                border: `1px solid ${frameCount === count ? "#00ff88" : "#1a1a1a"}`,
+                color: frameCount === count ? "#00ff88" : "#e2e8f0",
+                cursor: "pointer",
+                fontFamily: "Space Mono, monospace",
+                fontSize: 12,
+                padding: "4px 12px",
+                transition: "all 0.2s",
               }}
             >
-              {num}
+              {count}
             </button>
           ))}
         </div>
       </div>
 
       {loading && (
-        <div style={{ margin: "0 20px 16px", height: 2, backgroundColor: "#1a1a1a", overflow: "hidden" }}>
-          <div style={{
-            height: "100%", background: "linear-gradient(90deg, #00ff88, #00cc6e)",
-            animation: "progress 20s cubic-bezier(0.1, 0.7, 0.1, 1) forwards"
-          }} />
+        <div
+          style={{
+            backgroundColor: "#1a1a1a",
+            height: 2,
+            margin: "0 20px 16px",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              animation: "progress 20s cubic-bezier(0.1, 0.7, 0.1, 1) forwards",
+              background: "linear-gradient(90deg, #00ff88, #00cc6e)",
+              height: "100%",
+            }}
+          />
         </div>
       )}
 
       {userPlan === "free" ? (
-        <div style={{
-          border: "1px solid #1a1a1a", padding: "10px 14px", margin: "0 20px 20px", background: "#0a0a0a"
-        }}>
-          {canUseForFree() ? (
-            <div style={{ fontFamily: "Space Mono, monospace", fontSize: 11, color: "#3a3a4a" }}>
-              ⚡ {usagesLeft()} free analyses remaining today
+        <div
+          style={{
+            background: "#0a0a0a",
+            border: "1px solid #1a1a1a",
+            margin: "0 20px 20px",
+            padding: "10px 14px",
+          }}
+        >
+          {canUseFree ? (
+            <div
+              style={{
+                color: "#3a3a4a",
+                fontFamily: "Space Mono, monospace",
+                fontSize: 11,
+              }}
+            >
+              {usageRemaining} free analyses remaining today
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <div style={{ fontFamily: "Space Mono, monospace", fontSize: 11, color: "#ef4444" }}>
-                ✗ Daily limit reached ({FREE_LIMIT}/day)
+              <div
+                style={{
+                  color: "#ef4444",
+                  fontFamily: "Space Mono, monospace",
+                  fontSize: 11,
+                }}
+              >
+                Daily limit reached ({entitlements.dailyAnalyses}/day)
               </div>
-              <Link href="/pricing" style={{ fontFamily: "Space Mono, monospace", fontSize: 11, color: "#00ff88", textDecoration: "none" }}>
-                Upgrade to Pro →
+              <Link
+                href="/pricing"
+                style={{
+                  color: "#00ff88",
+                  fontFamily: "Space Mono, monospace",
+                  fontSize: 11,
+                  textDecoration: "none",
+                }}
+              >
+                Upgrade to Pro
               </Link>
             </div>
           )}
         </div>
       ) : (
-        <div style={{
-          border: "1px solid #00ff88", padding: "10px 14px", margin: "0 20px 20px", background: "#0a0a0a"
-        }}>
-          <div style={{ fontFamily: "Space Mono, monospace", fontSize: 11, color: "#00ff88" }}>
-            Pro mode enabled.
+        <div
+          style={{
+            background: "#0a0a0a",
+            border: "1px solid #00ff88",
+            margin: "0 20px 20px",
+            padding: "10px 14px",
+          }}
+        >
+          <div
+            style={{
+              color: "#00ff88",
+              fontFamily: "Space Mono, monospace",
+              fontSize: 11,
+            }}
+          >
+            Pro analysis enabled.
           </div>
         </div>
       )}
 
       <div style={{ display: "flex", flexDirection: "column" }}>
         {!file && (
-          <div style={{ fontFamily: "Space Mono, monospace", fontSize: 10, color: "#3a3a4a", textAlign: "center", marginBottom: 8 }}>
-            ↑ Upload a file to enable analysis
+          <div
+            style={{
+              color: "#3a3a4a",
+              fontFamily: "Space Mono, monospace",
+              fontSize: 10,
+              marginBottom: 8,
+              textAlign: "center",
+            }}
+          >
+            Upload a file to enable analysis
           </div>
         )}
         <button
-          onClick={onAnalyze}
           disabled={analyzeDisabled}
+          onClick={onAnalyze}
           style={{
-            margin: "0 20px 20px 20px", padding: 14, cursor: analyzeDisabled ? "not-allowed" : "pointer",
-            border: freeLimitReached ? "1px solid #ef4444" : loading ? "1px solid #00ff88" : "none",
-            backgroundColor: freeLimitReached ? "transparent" : (!file || frames.length === 0 || stage === "extracting") ? "#1a1a1a" : loading ? "transparent" : "#00ff88",
-            color: freeLimitReached ? "#ef4444" : (!file || frames.length === 0 || stage === "extracting") ? "#3a3a4a" : loading ? "#00ff88" : "#080808",
-            fontFamily: "Space Mono, monospace", fontSize: 13, fontWeight: "bold", transition: "all 0.2s"
+            backgroundColor:
+              userPlan === "free" && !canUseFree
+                ? "transparent"
+                : !file || framesLength === 0 || stage === "extracting"
+                  ? "#1a1a1a"
+                  : loading
+                    ? "transparent"
+                    : "#00ff88",
+            border:
+              userPlan === "free" && !canUseFree
+                ? "1px solid #ef4444"
+                : loading
+                  ? "1px solid #00ff88"
+                  : "none",
+            color:
+              userPlan === "free" && !canUseFree
+                ? "#ef4444"
+                : !file || framesLength === 0 || stage === "extracting"
+                  ? "#3a3a4a"
+                  : loading
+                    ? "#00ff88"
+                    : "#080808",
+            cursor: analyzeDisabled ? "not-allowed" : "pointer",
+            fontFamily: "Space Mono, monospace",
+            fontSize: 13,
+            fontWeight: "bold",
+            margin: "0 20px 20px 20px",
+            padding: 14,
+            transition: "all 0.2s",
           }}
         >
           {loading ? "Analyzing..." : stage === "extracting" ? "Extracting..." : "Analyze"}
@@ -265,4 +430,52 @@ export function UploadPanel({
       </div>
     </div>
   );
+}
+
+type SmallButtonProps = {
+  danger?: boolean;
+  label: string;
+  onClick: (event: MouseEvent<HTMLButtonElement>) => void;
+};
+
+function SmallButton({ danger = false, label, onClick }: SmallButtonProps) {
+  const baseColor = danger ? "#ef4444" : "#e2e8f0";
+  const baseBackground = danger ? "#ef444415" : "#1a1a1a";
+  const hoverBackground = danger ? "#ef444425" : "#2a2a2a";
+
+  return (
+    <button
+      onClick={onClick}
+      onMouseOut={(event) => {
+        event.currentTarget.style.backgroundColor = baseBackground;
+      }}
+      onMouseOver={(event) => {
+        event.currentTarget.style.backgroundColor = hoverBackground;
+      }}
+      style={{
+        backgroundColor: baseBackground,
+        border: "none",
+        color: baseColor,
+        cursor: "pointer",
+        fontFamily: "Space Mono, monospace",
+        fontSize: 9,
+        padding: "4px 10px",
+        transition: "all 0.2s",
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+function getFrameCountOptions(maxFrames: number) {
+  return [4, 6, 8, 12].filter((count) => count <= maxFrames);
+}
+
+function formatFileSize(bytes: number) {
+  if (bytes === 0) return "0 Bytes";
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }
