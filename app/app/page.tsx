@@ -5,6 +5,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { extractFrames, validateFrameRequest } from '@/lib/extractFrames';
+import { escapeCodeForDisplay, fileNameForTab, type CodeTab } from '@/lib/generatedCode';
 import { canUseForFree, usagesLeft, incrementUsage, FREE_LIMIT } from '@/lib/rateLimit';
 
 type AnalysisResult = {
@@ -24,8 +25,6 @@ type AnalysisResult = {
   framer_motion: string;
   react_spring: string;
 };
-
-type TabType = "CSS" | "GSAP" | "Framer Motion" | "React Spring";
 
 const intentColors: Record<string, string> = {
   morph: "#00ff88",
@@ -104,7 +103,7 @@ export default function AnimationConverter() {
   const [statusMessage, setStatusMessage] = useState<string>("");
   const [stage, setStage] = useState<"idle" | "extracting" | "analyzing" | "done" | "error">("idle");
   const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [activeTab, setActiveTab] = useState<TabType>("CSS");
+  const [activeTab, setActiveTab] = useState<CodeTab>("CSS");
   const [copied, setCopied] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -158,7 +157,7 @@ export default function AnimationConverter() {
       }
       // 1-4 Switch tabs
       if (['1', '2', '3', '4'].includes(e.key) && result) {
-        const tabs: TabType[] = ["CSS", "GSAP", "Framer Motion", "React Spring"];
+        const tabs: CodeTab[] = ["CSS", "GSAP", "Framer Motion", "React Spring"];
         setActiveTab(tabs[parseInt(e.key) - 1]);
       }
     };
@@ -169,7 +168,7 @@ export default function AnimationConverter() {
 
   // Remember last tab
   useEffect(() => {
-    const savedTab = localStorage.getItem('motioncode_tab') as TabType;
+    const savedTab = localStorage.getItem('motioncode_tab') as CodeTab;
     if (savedTab && ["CSS", "GSAP", "Framer Motion", "React Spring"].includes(savedTab)) {
       setActiveTab(savedTab);
     }
@@ -410,17 +409,11 @@ export default function AnimationConverter() {
 
   const handleDownload = () => {
     const code = getCodeContent();
-    const extensions: Record<TabType, string> = {
-      "CSS": "animation.css",
-      "GSAP": "animation.gsap.js",
-      "Framer Motion": "AnimatedComponent.tsx",
-      "React Spring": "AnimatedComponent.tsx"
-    };
     const blob = new Blob([code], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = extensions[activeTab];
+    a.download = fileNameForTab(activeTab);
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -455,7 +448,7 @@ export default function AnimationConverter() {
     }
 
     return tokens.map((t) => {
-      const escaped = t.value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const escaped = escapeCodeForDisplay(t.value);
       switch(t.type) {
         case 'string': return `<span style="color: #a3e635">${escaped}</span>`;
         case 'comment': return `<span style="color: #3a3a4a">${escaped}</span>`;
@@ -831,7 +824,7 @@ export default function AnimationConverter() {
 
               {/* FRAMEWORK TABS */}
               <div style={{ borderBottom: '1px solid #1a1a1a', padding: '0 24px', display: 'flex', gap: 4 }}>
-                {(["CSS", "GSAP", "Framer Motion", "React Spring"] as TabType[]).map(tab => (
+                {(["CSS", "GSAP", "Framer Motion", "React Spring"] as CodeTab[]).map(tab => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
