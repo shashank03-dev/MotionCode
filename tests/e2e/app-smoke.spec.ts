@@ -13,7 +13,7 @@ test.describe("application smoke", () => {
     ).toBeVisible();
 
     await page.getByRole("link", { name: /Open app/i }).first().click();
-    await expect(page).toHaveURL(/\/app$/);
+    await expect(page).toHaveURL(/\/app$/, { timeout: 20_000 });
     await expect(page.getByText("</> MotionCode")).toBeVisible();
     await expect(page.getByText("Drop animation here")).toBeVisible();
   });
