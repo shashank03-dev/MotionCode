@@ -5,7 +5,6 @@ import { z } from "zod";
 
 import {
   PLAN_ENTITLEMENTS,
-  PLAN_TIERS,
   type PlanTier,
 } from "@/lib/contracts/plans";
 import {
@@ -19,6 +18,7 @@ import {
 } from "@/lib/server/audit";
 import { apiError, apiSuccess, ApiError, isApiError } from "@/lib/server/apiErrors";
 import { getDefaultAnalyzeAbuseGuard, type AnalyzeAbuseGuard } from "@/lib/server/abuse";
+import { resolvePlanTierForUser } from "@/lib/server/entitlements";
 import {
   AnalysisResultSchema,
   analyzeFramesWithGemini,
@@ -234,16 +234,11 @@ function resolveAnalyzeDeps(
     getCurrentUser: deps.getCurrentUser ?? getSupabaseCurrentUser,
     getDailyAnalysisCount:
       deps.getDailyAnalysisCount ?? getDailyAnalysisCountWithSupabase,
-    getPlanTier: deps.getPlanTier ?? resolvePlanTierFromUser,
+    getPlanTier: deps.getPlanTier ?? resolvePlanTierForUser,
     idGenerator: deps.idGenerator ?? randomUUID,
     now: deps.now ?? (() => new Date()),
     usage: deps.usage ?? createSupabaseUsageEventRecorder(),
   };
-}
-
-async function resolvePlanTierFromUser(user: CurrentUser): Promise<PlanTier> {
-  const planTier = user.app_metadata?.plan_tier;
-  return PLAN_TIERS.includes(planTier as PlanTier) ? (planTier as PlanTier) : "free";
 }
 
 function checkContentLength(request: Request) {
