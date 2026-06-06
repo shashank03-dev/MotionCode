@@ -4,7 +4,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { extractFrames } from '@/lib/extractFrames';
+import { extractFrames, validateFrameRequest } from '@/lib/extractFrames';
 import { canUseForFree, usagesLeft, incrementUsage, FREE_LIMIT } from '@/lib/rateLimit';
 
 type AnalysisResult = {
@@ -243,14 +243,17 @@ export default function AnimationConverter() {
   }, [stage, frames.length]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const extractionSequenceRef = useRef<number>(0);
 
   const handleFileWithCount = async (selectedFile: File, count: number) => {
-    const isVideo = selectedFile.type.startsWith("video/");
-    const isGif = selectedFile.type === "image/gif";
-    
-    if (!isVideo && !isGif) {
+    const extractionSequence = extractionSequenceRef.current + 1;
+    extractionSequenceRef.current = extractionSequence;
+    const validation = validateFrameRequest(selectedFile, count);
+
+    if (!validation.ok) {
       setFlashError(true);
-      setValidationError("Unsupported format. Use MP4, WebM, MOV, or GIF.");
+      setValidationError(validation.error);
+      setStage("idle");
       setTimeout(() => {
         setFlashError(false);
       }, 1500);
@@ -269,11 +272,15 @@ export default function AnimationConverter() {
     setFrameThumbs([]);
 
     try {
-      const extracted = await extractFrames(selectedFile, count);
+      const extracted = await extractFrames(selectedFile, validation.normalizedCount);
+      if (extractionSequence !== extractionSequenceRef.current) return;
+
       setFrames(extracted);
       setFrameThumbs(extracted.map(b => "data:image/jpeg;base64," + b));
       setStage("idle");
     } catch (err: unknown) {
+      if (extractionSequence !== extractionSequenceRef.current) return;
+
       setStage("error");
       setError((err as Error).message || "Failed to extract frames.");
     }
@@ -285,6 +292,7 @@ export default function AnimationConverter() {
 
   const handleRemoveFile = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    extractionSequenceRef.current += 1;
     setFile(null);
     if (fileUrl) {
       URL.revokeObjectURL(fileUrl);
@@ -295,6 +303,7 @@ export default function AnimationConverter() {
     setStage("idle");
     setResult(null);
     setError(null);
+    setValidationError(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -534,7 +543,7 @@ export default function AnimationConverter() {
               type="file" 
               ref={fileInputRef} 
               style={{ display: 'none' }} 
-              accept="video/*,.gif"
+              accept="video/mp4,video/webm,video/quicktime,image/gif,.mp4,.webm,.mov,.gif"
               onChange={(e) => e.target.files && e.target.files.length > 0 && handleFile(e.target.files[0])}
             />
             
