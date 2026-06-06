@@ -441,9 +441,9 @@ export function AppShell() {
         display: "flex",
         flexDirection: "column",
         fontFamily: "Inter, sans-serif",
-        minHeight: "100dvh",
+        height: "100vh",
         overflow: "hidden",
-        width: "100%",
+        width: "100vw",
       }}
     >
       <style
@@ -459,13 +459,11 @@ export function AppShell() {
           color: #00ff88 !important;
         }
         @media (max-width: 768px) {
-          #app-root { height: auto !important; min-height: 100dvh !important; overflow: auto !important; }
           #main-area { flex-direction: column !important; }
           #left-panel { width: 100% !important; height: auto !important; min-height: 0 !important; }
-          #right-panel { width: 100% !important; flex: 1 !important; min-height: 60vh !important; overflow: visible !important; }
+          #right-panel { width: 100% !important; flex: 1 !important; min-height: 60vh !important; }
           #video-preview { max-height: 140px !important; }
           #frame-strip-container { overflow-x: scroll !important; flex-wrap: nowrap !important; }
-          #main-area { overflow: visible !important; }
           #navbar { padding: 0 16px !important; }
         }
       `,
