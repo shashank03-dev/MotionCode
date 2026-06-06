@@ -31,7 +31,7 @@ create table if not exists public.workspace_members (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.workspaces(id) on delete cascade,
   user_id uuid not null references public.profiles(id),
-  role text not null check (role in ('owner', 'admin', 'member')),
+  role text not null check (role in ('admin', 'member')),
   created_at timestamptz not null default now(),
   unique (workspace_id, user_id)
 );
@@ -195,7 +195,7 @@ create table if not exists public.team_members (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.workspaces(id) on delete cascade,
   user_id uuid not null references public.profiles(id),
-  role text not null check (role in ('owner', 'admin', 'member')),
+  role text not null check (role in ('admin', 'member')),
   created_at timestamptz not null default now(),
   unique (workspace_id, user_id)
 );
@@ -251,12 +251,84 @@ create trigger support_tickets_set_updated_at
   before update on public.support_tickets
   for each row execute function private.set_updated_at();
 
+create or replace function private.ensure_project_latest_version_matches()
+returns trigger
+language plpgsql
+set search_path = public, pg_catalog
+as $$
+begin
+  if new.latest_version_id is not null and not exists (
+    select 1
+    from public.project_versions
+    where id = new.latest_version_id
+      and project_id = new.id
+  ) then
+    raise exception 'projects.latest_version_id must reference a version for the same project'
+      using errcode = '23514';
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger projects_latest_version_matches
+  before insert or update on public.projects
+  for each row execute function private.ensure_project_latest_version_matches();
+
+create or replace function private.ensure_analysis_version_matches()
+returns trigger
+language plpgsql
+set search_path = public, pg_catalog
+as $$
+begin
+  if new.version_id is not null and not exists (
+    select 1
+    from public.project_versions
+    where id = new.version_id
+      and project_id = new.project_id
+  ) then
+    raise exception 'analyses.version_id must reference a version for the same project'
+      using errcode = '23514';
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger analyses_version_matches
+  before insert or update on public.analyses
+  for each row execute function private.ensure_analysis_version_matches();
+
+create or replace function private.ensure_generated_output_analysis_matches()
+returns trigger
+language plpgsql
+set search_path = public, pg_catalog
+as $$
+begin
+  if not exists (
+    select 1
+    from public.analyses
+    where id = new.analysis_id
+      and project_id = new.project_id
+  ) then
+    raise exception 'generated_outputs.analysis_id must reference an analysis for the same project'
+      using errcode = '23514';
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger generated_outputs_analysis_matches
+  before insert or update on public.generated_outputs
+  for each row execute function private.ensure_generated_output_analysis_matches();
+
 create or replace function private.is_internal_admin(_user_id uuid)
 returns boolean
 language sql
 stable
 security definer
-set search_path = public
+set search_path = public, pg_catalog
 as $$
   select coalesce(
     exists (
@@ -270,12 +342,12 @@ as $$
   );
 $$;
 
-create or replace function private.is_workspace_member(_workspace_id uuid, _user_id uuid)
+create or replace function private.is_workspace_owner(_workspace_id uuid, _user_id uuid)
 returns boolean
 language sql
 stable
 security definer
-set search_path = public
+set search_path = public, pg_catalog
 as $$
   select coalesce(
     exists (
@@ -283,7 +355,46 @@ as $$
       from public.workspaces
       where id = _workspace_id
         and owner_id = _user_id
+    ),
+    false
+  );
+$$;
+
+create or replace function private.is_workspace_admin(_workspace_id uuid, _user_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_catalog
+as $$
+  select coalesce(
+    exists (
+      select 1
+      from public.workspace_members
+      where workspace_id = _workspace_id
+        and user_id = _user_id
+        and role = 'admin'
     )
+    or exists (
+      select 1
+      from public.team_members
+      where workspace_id = _workspace_id
+        and user_id = _user_id
+        and role = 'admin'
+    ),
+    false
+  );
+$$;
+
+create or replace function private.is_workspace_member(_workspace_id uuid, _user_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_catalog
+as $$
+  select coalesce(
+    private.is_workspace_owner(_workspace_id, _user_id)
     or exists (
       select 1
       from public.workspace_members
@@ -305,29 +416,11 @@ returns boolean
 language sql
 stable
 security definer
-set search_path = public
+set search_path = public, pg_catalog
 as $$
   select coalesce(
-    exists (
-      select 1
-      from public.workspaces
-      where id = _workspace_id
-        and owner_id = _user_id
-    )
-    or exists (
-      select 1
-      from public.workspace_members
-      where workspace_id = _workspace_id
-        and user_id = _user_id
-        and role in ('owner', 'admin')
-    )
-    or exists (
-      select 1
-      from public.team_members
-      where workspace_id = _workspace_id
-        and user_id = _user_id
-        and role in ('owner', 'admin')
-    ),
+    private.is_workspace_owner(_workspace_id, _user_id)
+    or private.is_workspace_admin(_workspace_id, _user_id),
     false
   );
 $$;
@@ -337,7 +430,7 @@ returns integer
 language sql
 stable
 security definer
-set search_path = public
+set search_path = public, pg_catalog
 as $$
   select case coalesce(
     (select plan_tier from public.workspaces where id = _workspace_id),
@@ -353,7 +446,7 @@ returns integer
 language sql
 stable
 security definer
-set search_path = public
+set search_path = public, pg_catalog
 as $$
   select count(*)::integer
   from (
@@ -370,7 +463,7 @@ returns boolean
 language sql
 stable
 security definer
-set search_path = public
+set search_path = public, pg_catalog
 as $$
   select coalesce(
     exists (
@@ -395,7 +488,7 @@ returns boolean
 language sql
 stable
 security definer
-set search_path = public
+set search_path = public, pg_catalog
 as $$
   select coalesce(
     exists (
@@ -491,25 +584,18 @@ grant insert on
   public.projects,
   public.project_versions,
   public.assets,
-  public.analyses,
-  public.generated_outputs,
-  public.usage_events,
-  public.share_links,
   public.project_comments,
-  public.support_tickets,
   public.admin_plan_overrides,
   public.team_members
 to authenticated;
+grant insert (user_id, subject, body) on public.support_tickets to authenticated;
 grant update (display_name, avatar_url, onboarding_completed_at, updated_at) on public.profiles to authenticated;
 grant update (name, slug, updated_at) on public.workspaces to authenticated;
 grant update (role) on public.workspace_members to authenticated;
 grant update (title, description, status, latest_version_id, updated_at) on public.projects to authenticated;
 grant update (label, motion_spec) on public.project_versions to authenticated;
 grant update (storage_path, filename, mime_type, byte_size, duration_ms, frame_count) on public.assets to authenticated;
-grant update (version_id, status, raw_result, normalized_spec) on public.analyses to authenticated;
-grant update (access_mode, include_comments, expires_at, revoked_at) on public.share_links to authenticated;
 grant update (body, resolved_at) on public.project_comments to authenticated;
-grant update (assigned_admin_id, subject, body, status, priority, updated_at) on public.support_tickets to authenticated;
 grant update (plan_tier, reason, expires_at) on public.admin_plan_overrides to authenticated;
 grant update (role) on public.team_members to authenticated;
 grant delete on public.workspace_members, public.team_members to authenticated;
@@ -551,14 +637,14 @@ create policy "authenticated users can create workspaces"
     and plan_tier = 'free'
   );
 
-create policy "workspace owners and admins can update workspaces"
+create policy "workspace owners can update workspaces"
   on public.workspaces for update
   to authenticated
   using (
-    private.can_manage_workspace_members(id, (select auth.uid()))
+    private.is_workspace_owner(id, (select auth.uid()))
   )
   with check (
-    private.can_manage_workspace_members(id, (select auth.uid()))
+    private.is_workspace_owner(id, (select auth.uid()))
   );
 
 create policy "workspace members can read membership"
@@ -573,29 +659,34 @@ create policy "workspace owners and admins can invite members"
   to authenticated
   with check (
     (
-      private.can_manage_workspace_members(workspace_id, (select auth.uid()))
+      private.is_workspace_owner(workspace_id, (select auth.uid()))
+      or (
+        private.is_workspace_admin(workspace_id, (select auth.uid()))
+        and role = 'member'
+      )
     )
     and private.workspace_member_count(workspace_id) < private.workspace_seat_limit(workspace_id)
   );
 
-create policy "workspace owners and admins can update members"
+create policy "workspace owners can update members"
   on public.workspace_members for update
   to authenticated
   using (
-    private.can_manage_workspace_members(workspace_id, (select auth.uid()))
+    private.is_workspace_owner(workspace_id, (select auth.uid()))
   )
   with check (
-    private.can_manage_workspace_members(workspace_id, (select auth.uid()))
+    private.is_workspace_owner(workspace_id, (select auth.uid()))
   );
 
 create policy "workspace owners and admins can remove members"
   on public.workspace_members for delete
   to authenticated
   using (
-    (
-      private.can_manage_workspace_members(workspace_id, (select auth.uid()))
+    private.is_workspace_owner(workspace_id, (select auth.uid()))
+    or (
+      private.is_workspace_admin(workspace_id, (select auth.uid()))
+      and role = 'member'
     )
-    and role <> 'owner'
   );
 
 create policy "authenticated users can read projects"
@@ -690,26 +781,6 @@ create policy "project readers can read analyses"
     private.can_read_project(project_id, (select auth.uid()))
   );
 
-create policy "project writers can create analyses"
-  on public.analyses for insert
-  to authenticated
-  with check (
-    owner_id = (select auth.uid())
-    and (
-      private.can_write_project(project_id, (select auth.uid()))
-    )
-  );
-
-create policy "project writers can update analyses"
-  on public.analyses for update
-  to authenticated
-  using (
-    private.can_write_project(project_id, (select auth.uid()))
-  )
-  with check (
-    private.can_write_project(project_id, (select auth.uid()))
-  );
-
 create policy "project readers can read generated outputs"
   on public.generated_outputs for select
   to authenticated
@@ -717,26 +788,10 @@ create policy "project readers can read generated outputs"
     private.can_read_project(project_id, (select auth.uid()))
   );
 
-create policy "project writers can create generated outputs"
-  on public.generated_outputs for insert
-  to authenticated
-  with check (
-    private.can_write_project(project_id, (select auth.uid()))
-  );
-
 create policy "users can read their usage events"
   on public.usage_events for select
   to authenticated
   using (user_id = (select auth.uid()) or private.is_internal_admin((select auth.uid())));
-
-create policy "users can create their usage events"
-  on public.usage_events for insert
-  to authenticated
-  with check (
-    user_id = (select auth.uid())
-    and (workspace_id is null or private.is_workspace_member(workspace_id, (select auth.uid())))
-    and (project_id is null or private.can_read_project(project_id, (select auth.uid())))
-  );
 
 create policy "users and admins can read subscriptions"
   on public.subscriptions for select
@@ -758,28 +813,6 @@ create policy "authenticated users can read their share links"
   on public.share_links for select
   to authenticated
   using (
-    owner_id = (select auth.uid())
-    or private.can_write_project(project_id, (select auth.uid()))
-  );
-
-create policy "project writers can create share links"
-  on public.share_links for insert
-  to authenticated
-  with check (
-    owner_id = (select auth.uid())
-    and (
-      private.can_write_project(project_id, (select auth.uid()))
-    )
-  );
-
-create policy "project writers can update share links"
-  on public.share_links for update
-  to authenticated
-  using (
-    owner_id = (select auth.uid())
-    or private.can_write_project(project_id, (select auth.uid()))
-  )
-  with check (
     owner_id = (select auth.uid())
     or private.can_write_project(project_id, (select auth.uid()))
   );
@@ -822,12 +855,6 @@ create policy "ticket creators can create support tickets"
   on public.support_tickets for insert
   to authenticated
   with check (user_id = (select auth.uid()));
-
-create policy "ticket creators and admins can update support tickets"
-  on public.support_tickets for update
-  to authenticated
-  using (user_id = (select auth.uid()) or private.is_internal_admin((select auth.uid())))
-  with check (user_id = (select auth.uid()) or private.is_internal_admin((select auth.uid())));
 
 create policy "workspace admins can read audit events"
   on public.audit_events for select
@@ -872,29 +899,34 @@ create policy "workspace owners and admins can invite team members"
   to authenticated
   with check (
     (
-      private.can_manage_workspace_members(workspace_id, (select auth.uid()))
+      private.is_workspace_owner(workspace_id, (select auth.uid()))
+      or (
+        private.is_workspace_admin(workspace_id, (select auth.uid()))
+        and role = 'member'
+      )
     )
     and private.workspace_member_count(workspace_id) < private.workspace_seat_limit(workspace_id)
   );
 
-create policy "workspace owners and admins can update team members"
+create policy "workspace owners can update team members"
   on public.team_members for update
   to authenticated
   using (
-    private.can_manage_workspace_members(workspace_id, (select auth.uid()))
+    private.is_workspace_owner(workspace_id, (select auth.uid()))
   )
   with check (
-    private.can_manage_workspace_members(workspace_id, (select auth.uid()))
+    private.is_workspace_owner(workspace_id, (select auth.uid()))
   );
 
 create policy "workspace owners and admins can remove team members"
   on public.team_members for delete
   to authenticated
   using (
-    (
-      private.can_manage_workspace_members(workspace_id, (select auth.uid()))
+    private.is_workspace_owner(workspace_id, (select auth.uid()))
+    or (
+      private.is_workspace_admin(workspace_id, (select auth.uid()))
+      and role = 'member'
     )
-    and role <> 'owner'
   );
 
 create policy "workspace members can read project assets"

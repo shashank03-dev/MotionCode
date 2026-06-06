@@ -49,6 +49,17 @@ function policyBlock(sql: string, policyName: string) {
   return match?.[0] ?? "";
 }
 
+function tableBlock(sql: string, tableName: string) {
+  const match = sql.match(
+    new RegExp(
+      `create table if not exists public\\.${escapeRegExp(tableName)} \\([\\s\\S]*?\\n\\);`,
+      "i",
+    ),
+  );
+
+  return match?.[0] ?? "";
+}
+
 describe("Supabase data foundation migration", () => {
   const sql = readMigrationSql();
 
@@ -74,12 +85,16 @@ describe("Supabase data foundation migration", () => {
   });
 
   it("enforces plan tiers and role/status check constraints", () => {
+    const workspaceMembersTable = tableBlock(sql, "workspace_members");
+    const teamMembersTable = tableBlock(sql, "team_members");
+
     expect(sql).toMatch(
       /profiles[\s\S]*plan_tier[\s\S]*check[\s\S]*'free'[\s\S]*'pro'[\s\S]*'studio'/i,
     );
-    expect(sql).toMatch(
-      /workspace_members[\s\S]*role[\s\S]*check[\s\S]*'owner'[\s\S]*'admin'[\s\S]*'member'/i,
-    );
+    expect(workspaceMembersTable).toMatch(/role[\s\S]*check[\s\S]*'admin'[\s\S]*'member'/i);
+    expect(workspaceMembersTable).not.toMatch(/'owner'/i);
+    expect(teamMembersTable).toMatch(/role[\s\S]*check[\s\S]*'admin'[\s\S]*'member'/i);
+    expect(teamMembersTable).not.toMatch(/'owner'/i);
     expect(sql).toMatch(
       /support_tickets[\s\S]*status[\s\S]*check[\s\S]*'open'[\s\S]*'pending'[\s\S]*'closed'/i,
     );
@@ -122,6 +137,127 @@ describe("Supabase data foundation migration", () => {
     );
   });
 
+  it("keeps share link creation and revocation server-route only", () => {
+    expect(sql).not.toMatch(
+      /grant\s+insert\s+on[^;]*public\.share_links[^;]*to authenticated;/i,
+    );
+    expect(sql).not.toMatch(
+      /grant\s+update[^;]*on public\.share_links\s+to authenticated;/i,
+    );
+    expect(sql).not.toMatch(
+      /create policy\s+"[^"]+"\s+on public\.share_links\s+for insert\s+to authenticated/i,
+    );
+    expect(sql).not.toMatch(
+      /create policy\s+"[^"]+"\s+on public\.share_links\s+for update\s+to authenticated/i,
+    );
+  });
+
+  it("prevents workspace member role escalation through client RLS", () => {
+    const insertMembersPolicy = policyBlock(
+      sql,
+      "workspace owners and admins can invite members",
+    );
+    const updateMembersPolicy = policyBlock(
+      sql,
+      "workspace owners can update members",
+    );
+    const removeMembersPolicy = policyBlock(
+      sql,
+      "workspace owners and admins can remove members",
+    );
+
+    expect(sql).toMatch(/create or replace function private\.is_workspace_owner/i);
+    expect(sql).toMatch(/create or replace function private\.is_workspace_admin/i);
+    expect(insertMembersPolicy).toMatch(/private\.is_workspace_owner/i);
+    expect(insertMembersPolicy).toMatch(/private\.is_workspace_admin[\s\S]*role = 'member'/i);
+    expect(insertMembersPolicy).not.toMatch(/role = 'admin'[\s\S]*private\.is_workspace_admin/i);
+    expect(updateMembersPolicy).toMatch(/private\.is_workspace_owner/i);
+    expect(updateMembersPolicy).not.toMatch(/private\.is_workspace_admin/i);
+    expect(removeMembersPolicy).toMatch(/private\.is_workspace_owner/i);
+    expect(removeMembersPolicy).toMatch(/private\.is_workspace_admin[\s\S]*role = 'member'/i);
+  });
+
+  it("prevents team member compatibility role escalation through client RLS", () => {
+    const insertMembersPolicy = policyBlock(
+      sql,
+      "workspace owners and admins can invite team members",
+    );
+    const updateMembersPolicy = policyBlock(
+      sql,
+      "workspace owners can update team members",
+    );
+    const removeMembersPolicy = policyBlock(
+      sql,
+      "workspace owners and admins can remove team members",
+    );
+
+    expect(insertMembersPolicy).toMatch(/private\.is_workspace_owner/i);
+    expect(insertMembersPolicy).toMatch(/private\.is_workspace_admin[\s\S]*role = 'member'/i);
+    expect(updateMembersPolicy).toMatch(/private\.is_workspace_owner/i);
+    expect(updateMembersPolicy).not.toMatch(/private\.is_workspace_admin/i);
+    expect(removeMembersPolicy).toMatch(/private\.is_workspace_owner/i);
+    expect(removeMembersPolicy).toMatch(/private\.is_workspace_admin[\s\S]*role = 'member'/i);
+  });
+
+  it("enforces cross-project relationships that simple foreign keys cannot express", () => {
+    expect(sql).toMatch(
+      /create or replace function private\.ensure_project_latest_version_matches/i,
+    );
+    expect(sql).toMatch(/create trigger projects_latest_version_matches/i);
+    expect(sql).toMatch(
+      /create or replace function private\.ensure_analysis_version_matches/i,
+    );
+    expect(sql).toMatch(/create trigger analyses_version_matches/i);
+    expect(sql).toMatch(
+      /create or replace function private\.ensure_generated_output_analysis_matches/i,
+    );
+    expect(sql).toMatch(/create trigger generated_outputs_analysis_matches/i);
+  });
+
+  it("keeps server-owned analysis, output, and usage writes out of direct client grants", () => {
+    for (const table of ["analyses", "generated_outputs", "usage_events"]) {
+      expect(sql).not.toMatch(
+        new RegExp(
+          `grant\\s+insert\\s+on[^;]*public\\.${table}[^;]*to authenticated;`,
+          "i",
+        ),
+      );
+      expect(sql).not.toMatch(
+        new RegExp(
+          `grant\\s+update[^;]*on public\\.${table}\\s+to authenticated;`,
+          "i",
+        ),
+      );
+      expect(sql).not.toMatch(
+        new RegExp(
+          `create policy\\s+"[^"]+"\\s+on public\\.${table}\\s+for insert\\s+to authenticated`,
+          "i",
+        ),
+      );
+      expect(sql).not.toMatch(
+        new RegExp(
+          `create policy\\s+"[^"]+"\\s+on public\\.${table}\\s+for update\\s+to authenticated`,
+          "i",
+        ),
+      );
+    }
+  });
+
+  it("limits support ticket direct writes to ticket creation fields only", () => {
+    expect(sql).toMatch(
+      /grant insert \(user_id, subject, body\) on public\.support_tickets to authenticated;/i,
+    );
+    expect(sql).not.toMatch(
+      /grant\s+insert\s+on[^;]*public\.support_tickets[^;]*to authenticated;/i,
+    );
+    expect(sql).not.toMatch(
+      /grant\s+update[^;]*on public\.support_tickets\s+to authenticated;/i,
+    );
+    expect(sql).not.toMatch(
+      /create policy\s+"[^"]+"\s+on public\.support_tickets\s+for update\s+to authenticated/i,
+    );
+  });
+
   it("keeps audit events append-only through server helpers", () => {
     expect(sql).toMatch(/comment on table public\.audit_events/i);
     expect(sql).not.toMatch(
@@ -153,5 +289,10 @@ describe("Supabase data foundation migration", () => {
     expect(sql).toMatch(
       /\(?storage\.foldername\(name\)\)?\[2\]\s*=\s*project_id::text/i,
     );
+  });
+
+  it("hardens security-definer functions with explicit pg_catalog search path", () => {
+    expect(sql).toMatch(/security definer\s+set search_path = public, pg_catalog/i);
+    expect(sql).not.toMatch(/security definer\s+set search_path = public\s+as \$\$/i);
   });
 });

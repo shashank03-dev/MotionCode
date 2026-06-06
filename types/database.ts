@@ -91,20 +91,20 @@ export type Database = {
           id: string;
           workspace_id: string;
           user_id: string;
-          role: "owner" | "admin" | "member";
+          role: "admin" | "member";
           created_at: Timestamp;
         },
         {
           id?: string;
           workspace_id: string;
           user_id: string;
-          role: "owner" | "admin" | "member";
+          role: "admin" | "member";
           created_at?: Timestamp;
         },
         Partial<{
           workspace_id: string;
           user_id: string;
-          role: "owner" | "admin" | "member";
+          role: "admin" | "member";
         }>
       >;
       projects: TableDefinition<
@@ -468,20 +468,20 @@ export type Database = {
           id: string;
           workspace_id: string;
           user_id: string;
-          role: "owner" | "admin" | "member";
+          role: "admin" | "member";
           created_at: Timestamp;
         },
         {
           id?: string;
           workspace_id: string;
           user_id: string;
-          role: "owner" | "admin" | "member";
+          role: "admin" | "member";
           created_at?: Timestamp;
         },
         Partial<{
           workspace_id: string;
           user_id: string;
-          role: "owner" | "admin" | "member";
+          role: "admin" | "member";
         }>
       >;
     };
