@@ -71,18 +71,26 @@ export async function handleAnalyzeRequest(
     return contentLengthDecision;
   }
 
+  let body: unknown;
+  try {
+    body = await readBoundedJson(request);
+  } catch (error) {
+    if (error instanceof ApiError) {
+      return apiError(error.code, error.message, { status: error.status });
+    }
+
+    return apiError("INVALID_REQUEST", "Request body must be valid JSON.");
+  }
+
+  if (body === null) {
+    return apiError("INVALID_REQUEST", "Request body must be valid JSON.");
+  }
+
   const resolvedDeps = resolveAnalyzeDeps(deps);
   const user = await resolvedDeps.getCurrentUser();
 
   if (!user) {
     return apiError("UNAUTHENTICATED", "Sign in to analyze motion.");
-  }
-
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return apiError("INVALID_REQUEST", "Request body must be valid JSON.");
   }
 
   const parsed = AnalyzeRequestSchema.safeParse(body);
@@ -129,6 +137,20 @@ export async function handleAnalyzeRequest(
       abuseDecision.message,
       retryHeaders(abuseDecision.retryAfterMs),
     );
+  }
+
+  try {
+    await resolvedDeps.usage.record({
+      eventType: "analysis.started",
+      frameCount: requestBody.frames.length,
+      model: requestBody.model,
+      planTier,
+      projectId: requestBody.projectId,
+      userId: user.id,
+      workspaceId: requestBody.workspaceId,
+    });
+  } catch {
+    return apiError("INTERNAL_ERROR", "Failed to reserve analysis usage.");
   }
 
   const analysisId = resolvedDeps.idGenerator();
@@ -236,6 +258,48 @@ function checkContentLength(request: Request) {
   }
 
   return null;
+}
+
+async function readBoundedJson(request: Request) {
+  const text = await readBoundedBodyText(request);
+
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    throw new Error("Invalid JSON");
+  }
+}
+
+async function readBoundedBodyText(request: Request) {
+  const reader = request.body?.getReader();
+  if (!reader) {
+    return await request.text();
+  }
+
+  const decoder = new TextDecoder();
+  let totalBytes = 0;
+  let text = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+
+    totalBytes += value.byteLength;
+    if (totalBytes > MAX_ANALYZE_REQUEST_CONTENT_LENGTH) {
+      await reader.cancel();
+      throw new ApiError(
+        "INVALID_MEDIA",
+        "Analyze request payload is too large.",
+        413,
+      );
+    }
+
+    text += decoder.decode(value, { stream: true });
+  }
+
+  return text + decoder.decode();
 }
 
 async function runPreflightChecks({

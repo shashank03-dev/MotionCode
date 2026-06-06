@@ -79,6 +79,11 @@ type SupabaseRecorderOptions = {
   env?: TrustedSupabaseConfig;
 };
 
+const DAILY_ANALYSIS_USAGE_EVENT_TYPES = [
+  "analysis.started",
+  "analysis.completed",
+] as const;
+
 export type AnalysisResourceRequest = {
   assetId: string;
   projectId: string;
@@ -142,15 +147,31 @@ export async function authorizeAnalysisRequestWithSupabase(
   }
 
   const ownsProject = stringField(project, "owner_id") === user.id;
-  const isWorkspaceMember =
-    workspaceId &&
-    (await hasRow(client, "workspace_members", {
-      user_id: user.id,
-      workspace_id: workspaceId,
-    }));
+  if (!ownsProject) {
+    if (!workspaceId) {
+      return false;
+    }
 
-  if (!ownsProject && !isWorkspaceMember) {
-    return false;
+    const workspace = await findSingleRow(client, "workspaces", {
+      id: workspaceId,
+    });
+    if (stringField(workspace ?? {}, "plan_tier") !== "studio") {
+      return false;
+    }
+
+    const isWorkspaceMember =
+      stringField(workspace ?? {}, "owner_id") === user.id ||
+      (await hasRow(client, "workspace_members", {
+        user_id: user.id,
+        workspace_id: workspaceId,
+      })) ||
+      (await hasRow(client, "team_members", {
+        user_id: user.id,
+        workspace_id: workspaceId,
+      }));
+    if (!isWorkspaceMember) {
+      return false;
+    }
   }
 
   const hasAsset = await hasRow(client, "assets", {
@@ -172,18 +193,13 @@ export async function getDailyAnalysisCountWithSupabase(
   options: SupabaseRecorderOptions = {},
 ) {
   const client = options.client ?? createTrustedSupabaseServerClient(options.env);
-  const result = await client
-    .from("usage_events")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", input.userId)
-    .eq("event_type", "analysis.completed")
-    .gte("created_at", input.since.toISOString());
+  const counts = await Promise.all(
+    DAILY_ANALYSIS_USAGE_EVENT_TYPES.map((eventType) =>
+      getDailyUsageCountForEventType(client, input, eventType),
+    ),
+  );
 
-  if (result.error) {
-    throw new ApiError("INTERNAL_ERROR", "Failed to read usage events.");
-  }
-
-  return result.count ?? 0;
+  return Math.max(...counts);
 }
 
 export function createSupabaseAuditRecorder(
@@ -263,6 +279,25 @@ async function hasRow(
   query: Record<string, unknown>,
 ) {
   return Boolean(await findSingleRow(client, table, query));
+}
+
+async function getDailyUsageCountForEventType(
+  client: SupabaseInsertClient,
+  input: DailyAnalysisCountInput,
+  eventType: (typeof DAILY_ANALYSIS_USAGE_EVENT_TYPES)[number],
+) {
+  const result = await client
+    .from("usage_events")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", input.userId)
+    .eq("event_type", eventType)
+    .gte("created_at", input.since.toISOString());
+
+  if (result.error) {
+    throw new ApiError("INTERNAL_ERROR", "Failed to read usage events.");
+  }
+
+  return result.count ?? 0;
 }
 
 function stringField(row: Record<string, unknown>, field: string) {
