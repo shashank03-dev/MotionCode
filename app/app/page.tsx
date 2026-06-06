@@ -36,102 +36,20 @@ const intentColors: Record<string, string> = {
   loop: "#10b981",
 };
 
-const ANIMATION_PROMPT = (frameCount: number) => `
-You are a frontend animation engineer analyzing ${frameCount} frames.
+async function analyzeFrames(frames: string[]): Promise<AnalysisResult> {
+  const response = await fetch("/api/analyze", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ frames, frameCount: frames.length }),
+  });
 
-Analyze the motion and respond with ONLY this JSON structure.
-No markdown. No backticks. No explanation. Raw JSON only.
-Keep EVERY code value under 15 lines maximum. Be extremely concise.
+  const data = await response.json();
 
-{
-  "intent": "morph",
-  "element": "button",
-  "duration_ms": 400,
-  "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
-  "description": "One sentence description max",
-  "performance_score": 92,
-  "gpu_accelerated": true,
-  "accessibility_note": "Add prefers-reduced-motion fallback",
-  "css": ".el{animation:mc 400ms cubic-bezier(0.4,0,0.2,1) forwards}@keyframes mc{0%{transform:scale(1)}100%{transform:scale(0.95)}}@media(prefers-reduced-motion:reduce){.el{animation:none}}",
-  "gsap": "gsap.to('.el',{duration:0.4,ease:'power2.inOut',scale:0.95})",
-  "framer_motion": "const v={initial:{scale:1},animate:{scale:0.95},transition:{duration:0.4}};",
-  "react_spring": "const s=useSpring({from:{scale:1},to:{scale:0.95},config:{duration:400}});"
-}
-
-CRITICAL RULES:
-- Each code value must be a single minified string under 15 lines
-- No multiline strings — use \\n if needed but keep it short
-- description must be ONE sentence only
-- Return NOTHING except the JSON object`
-
-// ── FREE: Gemini Flash ──────────────────────────
-async function analyzeWithGeminiFree(frames: string[]): Promise<any> {
-  // Uses Flash model — cheaper, faster
-  return callGemini(frames, "gemini-2.5-flash")
-}
-
-// ── PRO: Gemini Pro ─────────────────────────────
-async function analyzeWithGeminiPro(frames: string[]): Promise<any> {
-  // Uses Pro model — better quality
-  return callGemini(frames, "gemini-2.5-pro")
-}
-
-async function callGemini(frames: string[], model: string): Promise<any> {
-  const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY
-
-  const imageParts = frames.map((b64) => ({
-    inline_data: { mime_type: "image/jpeg", data: b64 }
-  }))
-
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: ANIMATION_PROMPT(frames.length) },
-            ...imageParts
-          ]
-        }],
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 8192,
-        }
-      })
-    }
-  )
-
-  const data = await response.json()
-  if (!response.ok) throw new Error(data.error?.message || "Gemini error")
-
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? ""
-
-  // Strip everything before first { and after last }
-  const firstBrace = text.indexOf('{')
-  const lastBrace = text.lastIndexOf('}')
-
-  if (firstBrace === -1 || lastBrace === -1) {
-    throw new Error("No JSON found in response")
+  if (!response.ok) {
+    throw new Error(data.error || "Analysis failed");
   }
 
-  const clean = text.slice(firstBrace, lastBrace + 1)
-
-  // Try to parse, if it fails try to recover truncated JSON
-  let parsed
-  try {
-    parsed = JSON.parse(clean)
-  } catch {
-    // JSON was truncated — add closing braces and try again
-    const recovered = clean
-      .replace(/,\s*$/, '')  // remove trailing comma
-      .replace(/:\s*"[^"]*$/, ': ""')  // close open string
-      + '}'  // close the object
-    parsed = JSON.parse(recovered)
-  }
-
-  return parsed
+  return data;
 }
 
 function prettifyCode(code: string, tab: string): string {
@@ -432,15 +350,11 @@ export default function AnimationConverter() {
     setError(null)
 
     try {
-      let parsed: any
+      setStatusMessage("Analyzing motion...")
+      const parsed = await analyzeFrames(frames)
 
-      if (userPlan === 'pro') {
-        setStatusMessage("Analyzing with Gemini 2.5 Pro...")
-        parsed = await analyzeWithGeminiPro(frames)
-      } else {
-        setStatusMessage("Analyzing with Gemini Flash...")
-        parsed = await analyzeWithGeminiFree(frames)
-        incrementUsage() // track usage after success
+      if (userPlan === 'free') {
+        incrementUsage()
       }
 
       setResult(parsed)
