@@ -46,7 +46,7 @@ const sections = [
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-[#10120d]">
+    <div className="min-h-screen bg-[#080808]">
       <SiteHeader />
       <LegalPage
         title="Terms"

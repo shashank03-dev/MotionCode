@@ -1,42 +1,58 @@
 import Link from "next/link";
-import { ArrowRight, Code2 } from "lucide-react";
 
 const primaryLinks = [
   { href: "/examples", label: "Examples" },
-  { href: "/#pricing", label: "Pricing" },
+  { href: "/pricing", label: "Pricing" },
   { href: "/support", label: "Support" },
 ];
 
-const footerLinks = [
-  { href: "/examples", label: "Examples" },
-  { href: "/app", label: "App" },
-  { href: "/#pricing", label: "Pricing" },
-  { href: "/support", label: "Support" },
-  { href: "/privacy", label: "Privacy" },
-  { href: "/terms", label: "Terms" },
+const footerGroups = [
+  {
+    title: "Product",
+    links: [
+      { href: "/app", label: "Converter" },
+      { href: "/examples", label: "Examples" },
+      { href: "/pricing", label: "Pricing" },
+      { href: "/support", label: "Support" },
+    ],
+  },
+  {
+    title: "Account",
+    links: [
+      { href: "/account", label: "Account" },
+      { href: "/billing", label: "Billing" },
+      { href: "/dashboard", label: "Dashboard" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { href: "/privacy", label: "Privacy" },
+      { href: "/terms", label: "Terms" },
+    ],
+  },
 ];
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#10120d]/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-[#1a1a1a] bg-[#080808]/95 backdrop-blur-md">
       <nav
         aria-label="Primary navigation"
-        className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+        className="mx-auto flex h-14 w-full items-center justify-between px-4 sm:px-6 lg:px-10"
       >
         <Link
           href="/"
-          className="inline-flex items-center gap-2 font-mono text-sm font-bold uppercase tracking-[0.18em] text-[#fffbf4]"
+          className="font-mono text-base text-[#00ff88] transition-colors hover:text-[#fffbf4]"
         >
-          <Code2 className="size-5 text-[#9ef0c0]" aria-hidden="true" />
-          MotionCode
+          ⟨/⟩ MotionCode
         </Link>
 
-        <div className="hidden items-center gap-7 md:flex">
+        <div className="hidden items-center gap-6 md:flex">
           {primaryLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm text-[#d8cfbc]/75 hover:text-[#fffbf4]"
+              className="font-mono text-xs text-[#565449] transition-colors hover:text-[#fffbf4]"
             >
               {link.label}
             </Link>
@@ -45,10 +61,9 @@ export function SiteHeader() {
 
         <Link
           href="/app"
-          className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#9ef0c0]/40 bg-[#9ef0c0] px-4 text-sm font-semibold text-[#10120d] shadow-[0_0_24px_rgba(158,240,192,0.18)] hover:bg-[#c8ffd9]"
+          className="inline-flex h-9 items-center border border-[#00ff88] px-4 font-mono text-xs font-bold text-[#00ff88] transition-colors hover:bg-[#00ff88]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00ff88]"
         >
-          Open app
-          <ArrowRight className="size-4" aria-hidden="true" />
+          Try Free →
         </Link>
       </nav>
     </header>
@@ -57,32 +72,67 @@ export function SiteHeader() {
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-white/10 bg-[#0b0d09]">
-      <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1.2fr_2fr] lg:px-8">
-        <div>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 font-mono text-sm font-bold uppercase tracking-[0.18em] text-[#fffbf4]"
-          >
-            <Code2 className="size-5 text-[#9ef0c0]" aria-hidden="true" />
-            MotionCode
-          </Link>
-          <p className="mt-4 max-w-md text-sm leading-6 text-[#d8cfbc]/70">
-            A focused motion analysis tool for converting short animation
-            references into reviewable specs and starter snippets.
-          </p>
+    <footer className="border-t border-[#1a1a1a] bg-[#080808]">
+      <div className="mx-auto w-full px-4 pt-16 sm:px-6 lg:px-10">
+        <div className="grid gap-12 border-b border-[#1a1a1a] pb-14 md:grid-cols-[0.9fr_1.1fr]">
+          <div>
+            <Link
+              href="/"
+              className="font-mono text-lg text-[#00ff88] transition-colors hover:text-[#fffbf4]"
+            >
+              ⟨/⟩ MotionCode
+            </Link>
+            <p className="mt-2 max-w-sm text-sm leading-6 text-[#3a3a4a]">
+              Intelligence for motion.
+            </p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              {["4 frameworks", "< 30s analysis", "open beta"].map((badge) => (
+                <span
+                  key={badge}
+                  className="border border-[#1a1a1a] px-3 py-1.5 font-mono text-[11px] text-[#565449]"
+                >
+                  {badge}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-9 sm:grid-cols-3 md:justify-items-end">
+            {footerGroups.map((group) => (
+              <div key={group.title}>
+                <h2 className="mb-5 font-mono text-[10px] uppercase tracking-[0.2em] text-[#3a3a4a]">
+                  {group.title}
+                </h2>
+                <div className="grid gap-3">
+                  {group.links.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="text-sm text-[#3a3a4a] transition-colors hover:text-[#fffbf4]"
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-start gap-x-6 gap-y-3 md:justify-end">
-          {footerLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-sm text-[#d8cfbc]/70 hover:text-[#fffbf4]"
-            >
-              {link.label}
+        <div className="select-none py-10 text-center font-mono text-[clamp(48px,8vw,112px)] font-bold tracking-[0.3em] text-white/[0.04]">
+          MOTIONCODE
+        </div>
+
+        <div className="flex flex-col gap-5 border-t border-[#1a1a1a] py-6 text-sm text-[#1a1a1a] sm:flex-row sm:items-center sm:justify-between">
+          <p>© 2026 MotionCode. All rights reserved.</p>
+          <div className="flex gap-5 font-mono text-[11px] text-[#3a3a4a]">
+            <Link href="/privacy" className="hover:text-[#00ff88]">
+              Privacy
             </Link>
-          ))}
+            <Link href="/terms" className="hover:text-[#00ff88]">
+              Terms
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
