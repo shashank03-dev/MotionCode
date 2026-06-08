@@ -7,12 +7,14 @@ test.describe("application smoke", () => {
     await page.goto("/");
 
     await expect(
-      page.getByRole("heading", {
-        name: /MotionCode turns short animation clips/i,
-      }),
+      page.getByText("Turn any animation", { exact: true }),
     ).toBeVisible();
+    await expect(
+      page.getByText("into production", { exact: true }),
+    ).toBeVisible();
+    await expect(page.getByText("code.", { exact: true })).toBeVisible();
 
-    await page.getByRole("link", { name: /Open app/i }).first().click();
+    await page.getByRole("link", { name: /Start for free/i }).first().click();
     await expect(page).toHaveURL(/\/app$/, { timeout: 20_000 });
     await expect(page.getByText("</> MotionCode")).toBeVisible();
     await expect(page.getByText("Drop animation here")).toBeVisible();
