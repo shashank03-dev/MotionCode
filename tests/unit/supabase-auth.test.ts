@@ -108,6 +108,22 @@ describe("Supabase auth helpers", () => {
       "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
     ]);
   });
+
+  it("lets public routes render when Supabase public env is unavailable", async () => {
+    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+    delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    const createServerClient = vi.fn();
+    vi.doMock("@supabase/ssr", () => ({ createServerClient }));
+
+    const { proxy } = await import("@/proxy");
+    const request = new NextRequest("https://motioncode.test/");
+
+    const response = await proxy(request);
+
+    expect(response.status).toBe(200);
+    expect(createServerClient).not.toHaveBeenCalled();
+  });
 });
 
 describe("Supabase generated-style public write types", () => {

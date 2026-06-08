@@ -1,15 +1,20 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
-import { getSupabasePublicConfig } from "@/lib/supabase/config";
+import { getOptionalSupabasePublicConfig } from "@/lib/supabase/config";
 import type { Database } from "@/types/database";
 
 export async function proxy(request: NextRequest) {
-  const { url, publishableKey } = getSupabasePublicConfig();
+  const supabaseConfig = getOptionalSupabasePublicConfig();
   let supabaseResponse = NextResponse.next({
     request,
   });
 
+  if (!supabaseConfig) {
+    return supabaseResponse;
+  }
+
+  const { url, publishableKey } = supabaseConfig;
   const supabase = createServerClient<Database>(url, publishableKey, {
     cookies: {
       getAll() {

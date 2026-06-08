@@ -19,3 +19,16 @@ export function getSupabasePublicConfig(
 
   return { url, publishableKey };
 }
+
+export function getOptionalSupabasePublicConfig(
+  env: NodeJS.ProcessEnv = process.env,
+): SupabasePublicConfig | null {
+  const url = env.NEXT_PUBLIC_SUPABASE_URL;
+  const publishableKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !publishableKey) {
+    return null;
+  }
+
+  return { url, publishableKey };
+}
