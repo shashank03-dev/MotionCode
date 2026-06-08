@@ -171,9 +171,94 @@ export default function LandingPage() {
       if (heroGlowRef.current) {
         heroGlowRef.current.style.transform = `translate(calc(${e.clientX}px - 50%), calc(${e.clientY}px - 50%))`;
       }
+      if (navRef.current) {
+        const bounds = navRef.current.getBoundingClientRect();
+        const x = ((e.clientX - bounds.left) / bounds.width) * 100;
+        const y = ((e.clientY - bounds.top) / bounds.height) * 100;
+        navRef.current.style.setProperty("--glass-x", `${x.toFixed(2)}%`);
+        navRef.current.style.setProperty("--glass-y", `${y.toFixed(2)}%`);
+      }
     };
     window.addEventListener("mousemove", handleGlobalMouseMove);
     return () => window.removeEventListener("mousemove", handleGlobalMouseMove);
+  }, []);
+
+  useEffect(() => {
+    let rafId = 0;
+
+    const clamp = (value: number, min: number, max: number) =>
+      Math.min(Math.max(value, min), max);
+
+    const updateNavShape = () => {
+      const nav = navRef.current;
+      if (!nav) return;
+
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+
+      if (viewportWidth < 768) {
+        nav.style.setProperty("--motioncode-nav-width", "calc(100vw - 28px)");
+        nav.style.setProperty("--motioncode-nav-height", "58px");
+        nav.style.setProperty("--motioncode-nav-density", "0");
+        return;
+      }
+
+      const expandedWidth = Math.min(940, viewportWidth - 64);
+      const compactWidth = Math.max(720, expandedWidth - 188);
+      const heroProgress = clamp(window.scrollY / (viewportHeight * 0.76), 0, 1);
+
+      const sectionExpansion = ["features", "how-it-works", "pricing"].reduce(
+        (strongest, sectionId) => {
+          const section = document.getElementById(sectionId);
+          if (!section) return strongest;
+
+          const rect = section.getBoundingClientRect();
+          const sectionCenter = rect.top + rect.height / 2;
+          const distanceFromViewportCenter = Math.abs(
+            sectionCenter - viewportHeight / 2,
+          );
+          const closeness = clamp(
+            1 - distanceFromViewportCenter / (viewportHeight * 0.68),
+            0,
+            1,
+          );
+
+          return Math.max(strongest, closeness);
+        },
+        0,
+      );
+
+      const compactedWidth =
+        expandedWidth - (expandedWidth - compactWidth) * heroProgress;
+      const width = Math.min(
+        expandedWidth,
+        compactedWidth + sectionExpansion * 72,
+      );
+      const height = 56 - heroProgress * 7 + sectionExpansion * 3;
+      const density = clamp(heroProgress - sectionExpansion * 0.35, 0, 1);
+
+      nav.style.setProperty("--motioncode-nav-width", `${Math.round(width)}px`);
+      nav.style.setProperty(
+        "--motioncode-nav-height",
+        `${Math.round(height)}px`,
+      );
+      nav.style.setProperty("--motioncode-nav-density", density.toFixed(3));
+    };
+
+    const requestNavShapeUpdate = () => {
+      window.cancelAnimationFrame(rafId);
+      rafId = window.requestAnimationFrame(updateNavShape);
+    };
+
+    updateNavShape();
+    window.addEventListener("scroll", requestNavShapeUpdate, { passive: true });
+    window.addEventListener("resize", requestNavShapeUpdate);
+
+    return () => {
+      window.cancelAnimationFrame(rafId);
+      window.removeEventListener("scroll", requestNavShapeUpdate);
+      window.removeEventListener("resize", requestNavShapeUpdate);
+    };
   }, []);
 
   const handleMotionLabPointer = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -227,11 +312,29 @@ export default function LandingPage() {
         { opacity: 1, duration: 1, delay: 0.6, ease: "power2.out" }
       );
 
+      const terminalLines = heroTermLinesRef.current.filter(Boolean);
+      gsap.set(terminalLines, { autoAlpha: 1, y: 0 });
+
       gsap.fromTo(
-        heroTermLinesRef.current,
-        { opacity: 0 },
-        { opacity: 1, duration: 0.1, stagger: 0.8, delay: 0.8 }
+        ".motioncode-hero-field-line, .motioncode-hero-field-tick",
+        { opacity: 0, scaleX: 0.45, transformOrigin: "left center" },
+        {
+          opacity: 1,
+          scaleX: 1,
+          duration: 1.2,
+          stagger: 0.14,
+          delay: 0.35,
+          ease: "power2.out",
+        },
       );
+
+      gsap.to(".motioncode-hero-field-line-b", {
+        x: "-8%",
+        duration: 7,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut",
+      });
 
       if (heroSectionRef.current) {
         const heroChromeTimeline = gsap.timeline({
@@ -480,11 +583,9 @@ export default function LandingPage() {
 
       {/* SECTION 2 - HERO */}
       <section ref={heroSectionRef}
-               className="relative w-full flex flex-col items-start overflow-hidden"
+               className="motioncode-hero-section relative w-full overflow-hidden"
                style={{
-                 minHeight: "100vh",
-                 paddingLeft: "10vw",
-                 paddingTop: "22vh",
+                 minHeight: "100dvh",
                  borderBottom: "1px solid var(--border)"
                }}>
 
@@ -499,6 +600,23 @@ export default function LandingPage() {
           animation: "scan 6s ease-in-out infinite",
           pointerEvents: "none", zIndex: 1
         }} />
+
+        <div className="motioncode-hero-field" aria-hidden="true">
+          <span className="motioncode-hero-field-line motioncode-hero-field-line-a" />
+          <span className="motioncode-hero-field-line motioncode-hero-field-line-b" />
+          <span className="motioncode-hero-field-tick motioncode-hero-field-tick-a" />
+          <span className="motioncode-hero-field-tick motioncode-hero-field-tick-b" />
+          <span className="motioncode-hero-field-tick motioncode-hero-field-tick-c" />
+        </div>
+
+        <div className="motioncode-hero-microcopy motioncode-hero-microcopy-top" aria-hidden="true">
+          <span>capture grid</span>
+          <strong>08 frames</strong>
+        </div>
+        <div className="motioncode-hero-microcopy motioncode-hero-microcopy-bottom" aria-hidden="true">
+          <span>render path</span>
+          <strong>composite only</strong>
+        </div>
 
         <div
           ref={heroEyebrowRef}
@@ -565,26 +683,26 @@ export default function LandingPage() {
           </span>
         </div>
 
-        <div className="flex flex-col relative z-10" style={{ pointerEvents: "none" }}>
-          <div style={{ overflow: "hidden" }}>
-            <div ref={el => { heroLinesRef.current[0] = el; }} style={{ pointerEvents: "none", fontFamily: "var(--font-mono)", fontSize: "clamp(44px, 5.4vw, 86px)", fontWeight: "bold", color: "var(--text)", lineHeight: 1.1, willChange: "transform" }}>
+        <div className="motioncode-hero-headline flex flex-col relative z-10" style={{ pointerEvents: "none" }}>
+          <div className="motioncode-hero-line-mask">
+            <div ref={el => { heroLinesRef.current[0] = el; }} style={{ pointerEvents: "none", fontFamily: "var(--font-mono)", fontSize: "clamp(52px, 6.5vw, 112px)", fontWeight: "bold", color: "var(--text)", lineHeight: 1.02, willChange: "transform" }}>
               Turn any animation
             </div>
           </div>
-          <div style={{ overflow: "hidden" }}>
-            <div ref={el => { heroLinesRef.current[1] = el; }} style={{ pointerEvents: "none", fontFamily: "var(--font-mono)", fontSize: "clamp(44px, 5.4vw, 86px)", fontWeight: "bold", color: "var(--text)", lineHeight: 1.1, willChange: "transform" }}>
+          <div className="motioncode-hero-line-mask">
+            <div ref={el => { heroLinesRef.current[1] = el; }} style={{ pointerEvents: "none", fontFamily: "var(--font-mono)", fontSize: "clamp(52px, 6.5vw, 112px)", fontWeight: "bold", color: "var(--text)", lineHeight: 1.02, willChange: "transform" }}>
               into production
             </div>
           </div>
-          <div style={{ overflow: "hidden" }}>
-            <div ref={el => { heroLinesRef.current[2] = el; }} style={{ pointerEvents: "none", fontFamily: "var(--font-mono)", fontSize: "clamp(44px, 5.4vw, 86px)", fontWeight: "bold", color: "var(--accent)", lineHeight: 1.1, willChange: "transform" }}>
+          <div className="motioncode-hero-line-mask">
+            <div ref={el => { heroLinesRef.current[2] = el; }} style={{ pointerEvents: "none", fontFamily: "var(--font-mono)", fontSize: "clamp(52px, 6.5vw, 112px)", fontWeight: "bold", color: "var(--accent)", lineHeight: 1.02, willChange: "transform" }}>
               code.
             </div>
           </div>
         </div>
 
         <p ref={heroSubtextRef}
-           className="relative z-10 pointer-events-none"
+           className="motioncode-hero-subtext relative z-10 pointer-events-none"
            style={{
              fontFamily: "var(--font-body)",
              fontSize: "15px",
@@ -596,15 +714,16 @@ export default function LandingPage() {
           Upload a video. Get CSS, GSAP, and Framer Motion code instantly.
         </p>
 
-        <p className="motioncode-badge-copy relative z-10 pointer-events-none">
+        <p className="motioncode-badge-copy motioncode-hero-badges relative z-10 pointer-events-none">
           Move from <InlineMotionBadge tone="capture">frame capture</InlineMotionBadge>{" "}
           to <InlineMotionBadge tone="analyze" delay="0.35s">curve mapping</InlineMotionBadge>, then
           export <InlineMotionBadge tone="output" delay="0.7s">ship-ready code</InlineMotionBadge>{" "}
           with <InlineMotionBadge tone="quiet" variant="dot">reduced-motion checks</InlineMotionBadge>.
         </p>
 
-        <div className="flex flex-row gap-4 relative z-10" style={{ marginTop: "40px" }}>
+        <div className="motioncode-hero-actions flex flex-row gap-4 relative z-10" style={{ marginTop: "40px" }}>
           <Link href="/app"
+                className="motioncode-hero-action motioncode-hero-action-primary"
                 style={{
                   background: "var(--accent)",
                   color: "var(--bg)",
@@ -623,6 +742,7 @@ export default function LandingPage() {
             Start for free →
           </Link>
           <Link href="#features"
+                className="motioncode-hero-action motioncode-hero-action-secondary"
                 style={{
                   background: "transparent",
                   color: "var(--text)",
