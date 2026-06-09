@@ -3,6 +3,7 @@ import {
   type PlanEntitlements,
   type PlanTier,
 } from "@/lib/contracts/plans";
+import { isPaidCheckoutEnabled } from "@/lib/contracts/launch";
 
 import { ApiError } from "./apiErrors";
 import { createTrustedSupabaseServerClient } from "./audit";
@@ -57,6 +58,7 @@ export type ProfileEntitlementRow = {
   email?: string | null;
   id?: string;
   plan_tier?: unknown;
+  razorpay_customer_id?: string | null;
   stripe_customer_id?: string | null;
 };
 
@@ -64,7 +66,11 @@ export type SubscriptionEntitlementRow = {
   cancel_at_period_end?: boolean | null;
   created_at?: string | null;
   current_period_end?: string | null;
+  payment_provider?: "razorpay" | null;
   plan_tier?: unknown;
+  razorpay_customer_id?: string | null;
+  razorpay_payment_id?: string | null;
+  razorpay_subscription_id?: string | null;
   status?: string | null;
   stripe_customer_id?: string | null;
   stripe_subscription_id?: string | null;
@@ -163,8 +169,12 @@ function resolveTrustedPlanTier({
   if (subscription) {
     if (
       isPlanTier(subscription.plan_tier) &&
+      subscription.payment_provider === "razorpay" &&
+      typeof subscription.razorpay_subscription_id === "string" &&
+      subscription.razorpay_subscription_id.length > 0 &&
       subscription.status &&
-      ACTIVE_SUBSCRIPTION_STATUSES.has(subscription.status)
+      ACTIVE_SUBSCRIPTION_STATUSES.has(subscription.status) &&
+      isPaidCheckoutEnabled()
     ) {
       return { planTier: subscription.plan_tier, source: "subscription" };
     }
@@ -185,7 +195,9 @@ async function readProfile(
 ): Promise<ProfileEntitlementRow | null> {
   const result = await client
     .from("profiles")
-    .select("id,email,display_name,avatar_url,plan_tier,stripe_customer_id")
+    .select(
+      "id,email,display_name,avatar_url,plan_tier,stripe_customer_id,razorpay_customer_id",
+    )
     .eq("id", userId)
     .limit(1);
 
@@ -203,7 +215,7 @@ async function readLatestSubscription(
   const result = await client
     .from("subscriptions")
     .select(
-      "user_id,stripe_customer_id,stripe_subscription_id,status,plan_tier,current_period_end,cancel_at_period_end,created_at",
+      "user_id,payment_provider,stripe_customer_id,stripe_subscription_id,razorpay_customer_id,razorpay_subscription_id,razorpay_payment_id,status,plan_tier,current_period_end,cancel_at_period_end,created_at",
     )
     .eq("user_id", userId)
     .order("created_at", { ascending: false })

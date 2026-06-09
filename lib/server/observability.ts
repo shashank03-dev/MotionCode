@@ -34,8 +34,8 @@ export type AnalysisObservation = {
 export type BillingWebhookObservation = {
   eventId?: string | null;
   outcome: "processed" | "failed" | "rejected";
+  paymentEventType?: string | null;
   reason?: string | null;
-  stripeEventType?: string | null;
   userId?: string | null;
 };
 
@@ -104,8 +104,8 @@ export async function observeBillingWebhook(
 
   logger.log(observation.outcome === "processed" ? "info" : "warn", eventName, {
     eventId: observation.eventId,
+    paymentEventType: observation.paymentEventType,
     reason: observation.reason,
-    stripeEventType: observation.stripeEventType,
     userId: observation.userId,
   });
 
@@ -115,8 +115,8 @@ export async function observeBillingWebhook(
       properties: {
         eventId: observation.eventId,
         outcome: observation.outcome,
+        paymentEventType: observation.paymentEventType,
         reason: observation.reason,
-        stripeEventType: observation.stripeEventType,
       },
       userId: observation.userId,
     },

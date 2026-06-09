@@ -21,7 +21,7 @@
 ## Backup Operations
 
 - Enable Supabase automated backups and point-in-time recovery for production before accepting paid traffic.
-- Keep Vercel environment variables backed by the deployment provider; never commit service role, Stripe, Gemini, or webhook secrets.
+- Keep Vercel environment variables backed by the deployment provider; never commit service role, Razorpay, Gemini, OpenAI, or webhook secrets.
 - Store migration files in git and treat them as the source of schema history.
 - Run `supabase migration list --local` during release checks to verify local migration ordering.
 - Do not run `supabase db reset` in shared or production-like environments. It is approval-gated for this project.

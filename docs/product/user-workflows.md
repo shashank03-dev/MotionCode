@@ -1,5 +1,7 @@
 # MotionCode User Workflows
 
+MotionCode is in free beta. Free beta analysis uses Gemini only. Pro and Studio are early-access tracks; paid checkout and OpenAI-backed analysis stay disabled until the paid readiness gates are met.
+
 ## Analyze Motion
 
 1. User opens `/app`.
@@ -7,9 +9,18 @@
 3. Browser extracts representative JPEG frames.
 4. User starts analysis.
 5. `/api/analyze` verifies the Supabase user, plan entitlement, resource access, daily quota, and abuse controls.
-6. Gemini returns normalized motion output.
+6. Gemini returns normalized motion output. `/api/analyze` does not call OpenAI during beta.
 7. MotionCode records usage and audit events.
 8. User copies generated animation code.
+
+## Request Pro Or Studio Early Access
+
+1. User opens `/pricing`.
+2. Pro and Studio show early-access CTAs instead of paid checkout.
+3. User requests early access for Pro or Studio.
+4. `/api/early-access` verifies the Supabase user and persists the request.
+5. User can see their early-access status in account surfaces.
+6. Internal admins can see early-access demand in admin surfaces.
 
 ## Create Support Ticket
 

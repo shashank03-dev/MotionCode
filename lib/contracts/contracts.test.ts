@@ -45,7 +45,7 @@ describe("shared product contracts", () => {
     expect(APP_ERROR_CODES).toContain("BILLING_REQUIRED");
 
     expectTypeOf<AnalysisResult["model"]>().toEqualTypeOf<
-      "gemini-2.5-flash" | "gemini-2.5-pro"
+      "gemini-2.5-flash" | "gemini-2.5-pro" | "gpt-5.5"
     >();
     expectTypeOf<ApiResponse<{ id: string }>>().toMatchTypeOf<
       | { ok: true; data: { id: string } }

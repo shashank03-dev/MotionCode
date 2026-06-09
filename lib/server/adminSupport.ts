@@ -19,6 +19,10 @@ import {
   type SupportTicketStatus,
 } from "@/lib/contracts/adminSupport";
 import {
+  countRequestedEarlyAccessSignups,
+  listRecentEarlyAccessSignups,
+} from "@/lib/server/earlyAccessAdmin";
+import {
   createSupabaseAuditRecorder,
   type SupabaseInsertClient,
 } from "@/lib/server/audit";
@@ -67,7 +71,7 @@ type AdminProfileUpdateTable = {
 const SUPPORT_TICKET_COLUMNS =
   "id,user_id,assigned_admin_id,subject,body,status,priority,created_at,updated_at";
 const PROFILE_COLUMNS =
-  "id,email,display_name,plan_tier,stripe_customer_id,is_internal_admin,created_at,updated_at";
+  "id,email,display_name,plan_tier,stripe_customer_id,razorpay_customer_id,is_internal_admin,created_at,updated_at";
 const ADMIN_PLAN_OVERRIDE_COLUMNS =
   "id,user_id,created_by,plan_tier,reason,expires_at,created_at";
 
@@ -255,7 +259,7 @@ export async function listAdminUsers(
     ...toProfileSummary(profile),
     createdAt: profile.created_at,
     latestOverride: overrides.get(profile.id) ?? null,
-    stripeCustomerId: profile.stripe_customer_id,
+    billingCustomerId: profile.razorpay_customer_id ?? profile.stripe_customer_id,
     updatedAt: profile.updated_at,
   }));
 }
@@ -337,25 +341,31 @@ export async function getAdminDashboard(
     openTicketCount,
     pendingTicketCount,
     userCount,
+    earlyAccessRequestCount,
     recentTickets,
     recentUsers,
     recentAuditEvents,
+    recentEarlyAccessSignups,
   ] = await Promise.all([
     getSupportTicketCount(client, "open"),
     getSupportTicketCount(client, "pending"),
     getUserCount(client),
+    countRequestedEarlyAccessSignups(),
     listAdminSupportTickets(client, 8),
     listAdminUsers(client, 8),
     listRecentAuditEvents(client, 12),
+    listRecentEarlyAccessSignups(8),
   ]);
 
   return {
     counts: {
+      earlyAccessRequests: earlyAccessRequestCount,
       openTickets: openTicketCount,
       pendingTickets: pendingTicketCount,
       users: userCount,
     },
     recentAuditEvents,
+    recentEarlyAccessSignups,
     recentTickets,
     recentUsers,
   };

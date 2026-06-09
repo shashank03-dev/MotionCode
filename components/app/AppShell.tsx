@@ -234,7 +234,7 @@ export function AppShell() {
 
     if (userPlan === "free" && !canUseForFree()) {
       setError(
-        `Daily limit reached (${entitlements.dailyAnalyses}/day). Upgrade to Pro for more analyses.`,
+        `Daily limit reached (${entitlements.dailyAnalyses}/day). Join early access for higher beta capacity.`,
       );
       return;
     }

@@ -21,10 +21,12 @@ jobs:
       NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
       NEXT_PUBLIC_SUPABASE_ANON_KEY: test-anon-key
       NEXT_PUBLIC_SUPABASE_URL: https://motioncode-ci.supabase.co
-      STRIPE_PRO_PRICE_ID: price_pro_test
-      STRIPE_SECRET_KEY: sk_test_motioncode
-      STRIPE_STUDIO_PRICE_ID: price_studio_test
-      STRIPE_WEBHOOK_SECRET: whsec_motioncode
+      RAZORPAY_KEY_ID: rzp_test_motioncode
+      RAZORPAY_KEY_SECRET: razorpay_test_secret
+      RAZORPAY_PRO_PLAN_ID: plan_pro_test
+      RAZORPAY_STUDIO_PLAN_ID: plan_studio_test
+      RAZORPAY_SUBSCRIPTION_TOTAL_COUNT: "120"
+      RAZORPAY_WEBHOOK_SECRET: whsec_razorpay_motioncode
       SUPABASE_SERVICE_ROLE_KEY: test-service-role-key
     steps:
       - name: Checkout

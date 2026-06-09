@@ -52,7 +52,7 @@ describe("server observability hooks", () => {
     await observeBillingWebhook(
       {
         eventId: "evt_123",
-        stripeEventType: "customer.subscription.updated",
+        paymentEventType: "subscription.updated",
         outcome: "processed",
         userId: "user_123",
       },

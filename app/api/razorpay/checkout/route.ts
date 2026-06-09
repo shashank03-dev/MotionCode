@@ -1,20 +1,24 @@
 import { type PlanTier } from "@/lib/contracts/plans";
-import { getRequestAppOrigin } from "@/lib/server/appOrigin";
+import { isPaidCheckoutEnabled } from "@/lib/contracts/launch";
 import { apiError, apiSuccess, ApiError, isApiError } from "@/lib/server/apiErrors";
 import { getEntitlementSummary } from "@/lib/server/entitlements";
 import { observeAuthError } from "@/lib/server/observability";
-import { createCheckoutSession } from "@/lib/server/stripe";
+import { createRazorpayCheckoutSubscription } from "@/lib/server/razorpay";
 import { getCurrentUser } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  if (!isPaidCheckoutEnabled()) {
+    return apiError("FORBIDDEN", "Paid checkout is disabled during beta.");
+  }
+
   const user = await getCurrentUser();
   if (!user) {
     await observeAuthError({
-      action: "stripe_checkout",
+      action: "razorpay_checkout",
       reason: "missing_session",
-      route: "/api/stripe/checkout",
+      route: "/api/razorpay/checkout",
     });
 
     return apiError("UNAUTHENTICATED", "Sign in to start checkout.");
@@ -33,23 +37,17 @@ export async function POST(request: Request) {
 
   try {
     const summary = await getEntitlementSummary(user.id);
-    const customerId =
-      summary.profile?.stripe_customer_id ??
-      summary.subscription?.stripe_customer_id ??
-      null;
-    const url = await createCheckoutSession({
-      customerId,
+    const checkout = await createRazorpayCheckoutSubscription({
       email: summary.profile?.email ?? user.email ?? null,
-      origin: getRequestAppOrigin(request),
       planTier,
       userId: user.id,
     });
 
-    return apiSuccess({ url });
+    return apiSuccess(checkout);
   } catch (error) {
     const apiFailure = toApiFailure(
       error,
-      "Unable to create Stripe checkout.",
+      "Unable to create Razorpay checkout.",
     );
     return apiError(apiFailure.code, apiFailure.message, {
       status: apiFailure.status,
@@ -58,14 +56,6 @@ export async function POST(request: Request) {
 }
 
 async function readPlanTier(request: Request): Promise<PlanTier | null> {
-  const contentType = request.headers.get("content-type") ?? "";
-
-  if (contentType.includes("application/x-www-form-urlencoded")) {
-    const form = await request.formData();
-    const value = form.get("planTier");
-    return typeof value === "string" ? (value as PlanTier) : null;
-  }
-
   const body = (await request.json()) as { planTier?: unknown };
   return typeof body.planTier === "string" ? (body.planTier as PlanTier) : null;
 }

@@ -69,7 +69,7 @@ const EXPORT_STACK = [
 
 const LOGO_BRANDS = [
   { name: "Vercel", icon: "vercel" },
-  { name: "Stripe", icon: "stripe" },
+  { name: "Razorpay", icon: "razorpay" },
   { name: "Linear", icon: "linear" },
   { name: "Figma", icon: "figma" },
   { name: "Notion", icon: "notion" },
@@ -87,25 +87,28 @@ const PRICING_TIERS = [
     description: "Explore the converter, inspect generated snippets, and validate short UI motion references.",
     features: ["10 analyses per month", "CSS and GSAP draft output", "Community support"],
     cta: "Start preview",
+    href: "/app",
   },
   {
     id: "pro",
     name: "Pro",
-    price: "$19",
-    period: "per editor",
-    description: "For designers and frontend engineers turning motion references into reusable production code.",
-    features: ["Unlimited exports", "Priority frame analysis", "CSS, GSAP, and Framer Motion bundles", "Versioned motion specs"],
-    cta: "Choose Pro",
+    price: "Early",
+    period: "access",
+    description: "For beta users who want priority access when Pro opens.",
+    features: ["Priority beta queue", "Gemini-only analysis during beta", "CSS, GSAP, and Framer Motion bundles", "Launch offer lock-in"],
+    cta: "Join Pro early access",
+    href: "/pricing",
     featured: true,
   },
   {
     id: "studio",
     name: "Studio",
-    price: "$79",
-    period: "per workspace",
-    description: "For teams that need shared review, reusable motion systems, and tighter design handoff.",
-    features: ["Shared team review queues", "Private motion library", "Design token mapping", "Concierge onboarding"],
-    cta: "Book Studio",
+    price: "Early",
+    period: "access",
+    description: "For teams that want first access to Studio workflows.",
+    features: ["Shared team interest list", "Private motion library preview", "Design token mapping discovery", "Concierge onboarding when Studio opens"],
+    cta: "Join Studio early access",
+    href: "/pricing",
   },
 ];
 
@@ -1076,19 +1079,19 @@ export default function LandingPage() {
             <div key={ft.num}
                  ref={el => { leftCardsRef.current[i] = el; }}
                  data-testid="feature-card"
-                 data-active="false"
+                 data-active={i === 0 ? "true" : "false"}
                  className="motioncode-feature-card"
                  style={{
                    padding: "24px 28px",
                    border: "1px solid var(--border)",
-                   borderLeft: "1px solid var(--border)",
+                   borderLeft: i === 0 ? "3px solid #00ff88" : "1px solid var(--border)",
                    marginBottom: "10px",
                    borderRadius: "10px",
                    transition: "all 0.35s ease",
-                   opacity: 0.62,
-                   background: "rgba(18, 20, 15, 0.72)"
+                   opacity: i === 0 ? 1 : 0.62,
+                   background: i === 0 ? "rgba(216, 207, 188, 0.16)" : "rgba(18, 20, 15, 0.72)"
                  }}>
-              <div className="card-num" style={{ fontFamily: "var(--font-mono)", fontSize: "13px", color: "var(--accent)", letterSpacing: "1px", transition: "text-shadow 0.3s ease" }}>{ft.num}</div>
+              <div className="card-num" style={{ fontFamily: "var(--font-mono)", fontSize: "13px", color: "var(--accent)", letterSpacing: "1px", transition: "text-shadow 0.3s ease", textShadow: i === 0 ? "0 0 12px #00ff8860" : "none" }}>{ft.num}</div>
               <div className="motioncode-feature-card-title" style={{ fontFamily: "var(--font-mono)", fontSize: "18px", color: "var(--text)", fontWeight: 700, margin: "6px 0" }}>{ft.title}</div>
               <div className="motioncode-feature-card-desc" style={{ fontSize: "13px", lineHeight: 1.6 }}>{ft.desc}</div>
             </div>
@@ -1101,10 +1104,10 @@ export default function LandingPage() {
             <div key={ft.num}
                  ref={el => { rightPanelsRef.current[i] = el; }}
                  data-testid="feature-panel"
-                 data-active="false"
+                 data-active={i === 0 ? "true" : "false"}
                  style={{
                    position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px",
-                   opacity: 0, transform: "scale(1.05)", filter: "blur(8px)", transition: "opacity 0.25s ease, filter 0.25s ease, transform 0.25s ease", willChange: "transform"
+                   opacity: i === 0 ? 1 : 0, transform: i === 0 ? "scale(1)" : "scale(1.05)", filter: i === 0 ? "blur(0px)" : "blur(8px)", transition: "opacity 0.25s ease, filter 0.25s ease, transform 0.25s ease", willChange: "transform"
                  }}>
               <div style={{ fontFamily: "var(--font-mono)", fontSize: "160px", fontWeight: 800, color: "#ffffff08", userSelect: "none" }}>{ft.num}</div>
               <div className="feature-title" style={{ fontFamily: "var(--font-mono)", fontSize: "28px", color: "#e2e8f0", marginTop: "-30px", zIndex: 10, willChange: "transform" }}>{ft.title}</div>
@@ -1207,7 +1210,7 @@ export default function LandingPage() {
                   <li key={feature}>{feature}</li>
                 ))}
               </ul>
-              <Link href="/app" className="motioncode-pricing-cta">
+              <Link href={tier.href} className="motioncode-pricing-cta">
                 {tier.cta} →
               </Link>
             </article>

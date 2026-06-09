@@ -1,7 +1,9 @@
 import { z } from "zod";
 
 import {
+  ANALYSIS_MODELS,
   OUTPUT_FRAMEWORKS,
+  type AnalysisModel,
   type AnalysisResult,
   type GeneratedOutput,
   type MotionIntent,
@@ -15,7 +17,7 @@ import { getServerEnv } from "./env";
 const GEMINI_ENDPOINT_ROOT =
   "https://generativelanguage.googleapis.com/v1beta/models";
 
-const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"] as const;
+export const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"] as const;
 
 const MOTION_INTENTS: MotionIntent[] = [
   "entrance",
@@ -56,7 +58,7 @@ export const AnalysisResultSchema = z.object({
   createdAt: z.string().datetime(),
   frameCount: z.number().int().min(1),
   id: z.string().min(1),
-  model: z.enum(GEMINI_MODELS),
+  model: z.enum(ANALYSIS_MODELS),
   outputs: z.array(GeneratedOutputSchema).min(1),
   projectId: z.string().min(1),
   spec: MotionSpecSchema,
@@ -115,7 +117,7 @@ export type NormalizeAnalysisContext = {
   createdAt: string;
   frameCount: number;
   id: string;
-  model: GeminiModel;
+  model: AnalysisModel;
   projectId: string;
   versionId: string;
 };

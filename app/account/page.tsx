@@ -5,10 +5,12 @@ import {
   CreditCard,
   Download,
   Shield,
+  Sparkles,
   Trash2,
   UserRound,
 } from "lucide-react";
 
+import { getEarlyAccessForUser } from "@/lib/server/earlyAccessAdmin";
 import { getEntitlementSummary } from "@/lib/server/entitlements";
 import { getCurrentUser } from "@/lib/supabase/server";
 
@@ -21,6 +23,7 @@ export const dynamic = "force-dynamic";
 
 type AccountPageProps = {
   searchParams?: Promise<{
+    billing?: string;
     request?: string;
   }>;
 };
@@ -53,8 +56,11 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   }
 
   const summary = await getEntitlementSummary(user.id);
+  const earlyAccess = await getEarlyAccessForUser(user.id);
   const profile = summary.profile;
   const subscription = summary.subscription;
+  const paymentProvider = subscription?.payment_provider ?? null;
+  const subscriptionId = subscription?.razorpay_subscription_id;
   const entitlementRows = [
     ["Daily analyses", summary.entitlements.dailyAnalyses.toLocaleString()],
     [
@@ -110,6 +116,12 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
           </div>
         ) : null}
 
+        {resolvedSearchParams?.billing === "razorpay" ? (
+          <div className="border border-[var(--accent-border)] bg-[var(--accent-dim)] px-4 py-3 font-mono text-sm text-[var(--text)]">
+            Razorpay billing changes are handled through support.
+          </div>
+        ) : null}
+
         <section className="grid gap-4 md:grid-cols-3">
           <Metric
             icon={<Shield className="h-5 w-5" aria-hidden="true" />}
@@ -152,19 +164,19 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
           </Panel>
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-2">
+        <section className="grid gap-6 lg:grid-cols-3">
           <Panel
             icon={<CreditCard className="h-5 w-5" aria-hidden="true" />}
             title="Billing"
           >
             <dl className="grid gap-4 text-sm">
               <Detail
+                label="Provider"
+                value={paymentProvider ? titleCase(paymentProvider) : "None"}
+              />
+              <Detail
                 label="Subscription"
-                value={
-                  subscription?.stripe_subscription_id
-                    ? subscription.stripe_subscription_id
-                    : "No paid subscription"
-                }
+                value={subscriptionId ?? "No paid subscription"}
               />
               <Detail
                 label="Renewal"
@@ -181,11 +193,32 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
             </dl>
             <Link
               className="mt-6 inline-flex h-10 items-center gap-2 border border-[var(--accent-border)] bg-[var(--accent-dim)] px-4 font-mono text-sm text-[var(--text)]"
-              href="/billing"
+              href="/support"
             >
               <CreditCard className="h-4 w-4" aria-hidden="true" />
-              Open billing portal
+              Manage billing
             </Link>
+          </Panel>
+
+          <Panel
+            icon={<Sparkles className="h-5 w-5" aria-hidden="true" />}
+            title="Early access"
+          >
+            {earlyAccess.length ? (
+              <dl className="grid gap-4 text-sm">
+                {earlyAccess.map((signup) => (
+                  <Detail
+                    key={signup.desiredPlan}
+                    label={titleCase(signup.desiredPlan)}
+                    value={titleCase(signup.status)}
+                  />
+                ))}
+              </dl>
+            ) : (
+              <p className="text-sm leading-6 text-[var(--muted)]">
+                No early access request yet.
+              </p>
+            )}
           </Panel>
 
           <Panel

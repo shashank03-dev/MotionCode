@@ -163,6 +163,7 @@ function createDeps(options: { planTier?: PlanTier; userId?: string | null } = {
       workspaceId: WORKSPACE_ID,
     })),
     generateAnalysis: vi.fn(async () => generated),
+    generateOpenAiAnalysis: vi.fn(async () => generated),
     getDailyAnalysisCount: vi.fn(async () => 0),
     getCurrentUser: vi.fn(async () =>
       options.userId === null ? null : { id: options.userId ?? "user_123" },
@@ -433,6 +434,80 @@ describe("POST /api/analyze", () => {
         targetType: "analysis",
       }),
     );
+  });
+
+  it("uses OpenAI analysis output for pro subscribers when paid analysis is enabled", async () => {
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
+    const deps = createDeps({ planTier: "pro" });
+
+    const response = await handleAnalyzeRequest(
+      makeRequest(requestBody({ model: "gemini-2.5-pro" })),
+      {
+        ...deps,
+        isOpenAiAnalysisEnabled: () => true,
+      },
+    );
+    const json = (await response.json()) as ApiResponse<AnalysisResult>;
+
+    expect(response.status).toBe(200);
+    expect(json).toMatchObject({
+      data: {
+        model: "gpt-5.5",
+        outputs: generated.outputs,
+        spec,
+      },
+      ok: true,
+    });
+    expect(deps.generateAnalysis).not.toHaveBeenCalled();
+    expect(deps.generateOpenAiAnalysis).toHaveBeenCalledWith({
+      frames: [VALID_JPEG_BASE64],
+      model: "gpt-5.5",
+    });
+    expect(deps.usage.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "analysis.started",
+        model: "gpt-5.5",
+        planTier: "pro",
+      }),
+    );
+    expect(deps.audit.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "analysis.completed",
+        metadata: expect.objectContaining({
+          model: "gpt-5.5",
+          planTier: "pro",
+        }),
+      }),
+    );
+  });
+
+  it("uses Gemini for paid-plan users while OpenAI analysis is disabled", async () => {
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
+    const deps = createDeps({ planTier: "pro" });
+
+    const response = await handleAnalyzeRequest(
+      makeRequest(requestBody({ model: "gemini-2.5-pro" })),
+      {
+        ...deps,
+        isOpenAiAnalysisEnabled: () => false,
+      },
+    );
+    const json = (await response.json()) as ApiResponse<AnalysisResult>;
+
+    expect(response.status).toBe(200);
+    expect(json).toMatchObject({
+      data: {
+        model: "gemini-2.5-pro",
+        outputs: generated.outputs,
+        spec,
+      },
+      ok: true,
+    });
+    expect(deps.generateAnalysis).toHaveBeenCalledWith({
+      frames: [VALID_JPEG_BASE64],
+      model: "gemini-2.5-pro",
+    });
+    expect(deps.generateOpenAiAnalysis).not.toHaveBeenCalled();
   });
 
   it("records usage and audit events with the authorized project workspace when the client omits it", async () => {
@@ -940,5 +1015,88 @@ describe("Gemini analysis normalization", () => {
         implementation_notes: "not-an-array",
       }),
     ).toThrow(expect.objectContaining({ code: "SCHEMA_FAILED" }));
+  });
+});
+
+describe("OpenAI analysis generation", () => {
+  it("posts JPEG frames to the Responses API and normalizes output_text", async () => {
+    process.env.OPENAI_API_KEY = "server-openai-key";
+    const rawAnalysis = {
+      accessibility_note: "Add a reduced-motion fallback.",
+      css: ".el{opacity:1}",
+      delay_ms: 50,
+      description: "Card fades in.",
+      duration_ms: 300,
+      easing: "ease-out",
+      element: "card",
+      framer_motion: "const v={animate:{opacity:1}}",
+      gpu_accelerated: true,
+      gsap: "gsap.to('.el',{opacity:1})",
+      implementation_notes: ["Avoid layout properties."],
+      intent: "entrance",
+      keyframes_detected: 1,
+      loops: false,
+      performance_score: 88,
+      react_spring: "const s=useSpring({opacity:1})",
+    };
+    const fetcher = vi.fn(async () =>
+      new Response(JSON.stringify({ output_text: JSON.stringify(rawAnalysis) }), {
+        headers: { "content-type": "application/json" },
+        status: 200,
+      }),
+    );
+
+    const { analyzeFramesWithOpenAI } = await import("@/lib/server/openai");
+
+    const result = await analyzeFramesWithOpenAI(
+      {
+        frames: [VALID_JPEG_BASE64],
+        model: "gpt-5.5",
+      },
+      { fetch: fetcher as unknown as typeof fetch },
+    );
+
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://api.openai.com/v1/responses",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: "Bearer server-openai-key",
+          "Content-Type": "application/json",
+        }),
+        method: "POST",
+      }),
+    );
+
+    const [, requestInit] = fetcher.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    const payload = JSON.parse(String(requestInit?.body)) as {
+      input: Array<{ content: Array<Record<string, unknown>> }>;
+      model: string;
+      text: { format: { name: string; type: string } };
+    };
+    expect(payload.model).toBe("gpt-5.5");
+    expect(payload).not.toHaveProperty("temperature");
+    expect(payload.text.format).toMatchObject({
+      name: "motion_analysis",
+      type: "json_schema",
+    });
+    expect(payload.input[0]?.content).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          text: expect.stringContaining("analyzing 1 JPEG frames"),
+          type: "input_text",
+        }),
+        expect.objectContaining({
+          image_url: `data:image/jpeg;base64,${VALID_JPEG_BASE64}`,
+          type: "input_image",
+        }),
+      ]),
+    );
+    expect(result.spec.description).toBe("Card fades in.");
+    expect(result.outputs).toEqual(
+      expect.arrayContaining([expect.objectContaining({ framework: "css" })]),
+    );
   });
 });

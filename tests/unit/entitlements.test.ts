@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { PLAN_ENTITLEMENTS } from "@/lib/contracts/plans";
 import type { EntitlementsSupabaseClient } from "@/lib/server/entitlements";
@@ -8,6 +8,13 @@ import {
 } from "@/lib/server/entitlements";
 
 type Row = Record<string, unknown>;
+
+const ORIGINAL_ENV = { ...process.env };
+
+afterEach(() => {
+  process.env = { ...ORIGINAL_ENV };
+  vi.restoreAllMocks();
+});
 
 function createEntitlementsClient(rowsByTable: Record<string, Row[]>) {
   return {
@@ -59,6 +66,11 @@ function createFilter(rows: Row[]) {
   return filter;
 }
 
+function enablePaidCheckout() {
+  process.env.MOTIONCODE_LAUNCH_PHASE = "paid";
+  process.env.MOTIONCODE_ENABLE_PAID_CHECKOUT = "true";
+}
+
 describe("entitlement resolution", () => {
   it("uses an active admin override ahead of subscription and profile tiers", async () => {
     const client = createEntitlementsClient({
@@ -100,6 +112,7 @@ describe("entitlement resolution", () => {
   });
 
   it("uses the latest active subscription when no active override exists", async () => {
+    enablePaidCheckout();
     const client = createEntitlementsClient({
       admin_plan_overrides: [
         {
@@ -113,7 +126,9 @@ describe("entitlement resolution", () => {
       subscriptions: [
         {
           created_at: "2026-06-06T11:00:00.000Z",
+          payment_provider: "razorpay",
           plan_tier: "pro",
+          razorpay_subscription_id: "sub_123",
           status: "active",
           user_id: "user_123",
         },
@@ -143,6 +158,114 @@ describe("entitlement resolution", () => {
     expect(summary.usage.dailyAnalyses.limit).toBe(
       PLAN_ENTITLEMENTS.pro.dailyAnalyses,
     );
+  });
+
+  it("does not grant paid access from legacy non-Razorpay subscription rows", async () => {
+    const client = createEntitlementsClient({
+      admin_plan_overrides: [],
+      profiles: [{ id: "user_123", plan_tier: "free" }],
+      subscriptions: [
+        {
+          created_at: "2026-06-06T11:00:00.000Z",
+          payment_provider: "razorpay",
+          plan_tier: "pro",
+          status: "active",
+          stripe_subscription_id: "sub_legacy",
+          user_id: "user_123",
+        },
+      ],
+      usage_events: [],
+    });
+
+    const summary = await getEntitlementSummary("user_123", {
+      client,
+      now: new Date("2026-06-06T12:00:00.000Z"),
+    });
+
+    expect(summary.planTier).toBe("free");
+    expect(summary.source).toBe("default");
+  });
+
+  it("uses an active Razorpay subscription as a trusted paid entitlement", async () => {
+    enablePaidCheckout();
+    const client = createEntitlementsClient({
+      admin_plan_overrides: [],
+      profiles: [{ id: "user_123", plan_tier: "free" }],
+      subscriptions: [
+        {
+          created_at: "2026-06-06T11:00:00.000Z",
+          payment_provider: "razorpay",
+          plan_tier: "pro",
+          razorpay_subscription_id: "sub_123",
+          status: "active",
+          user_id: "user_123",
+        },
+      ],
+      usage_events: [],
+    });
+
+    const summary = await getEntitlementSummary("user_123", {
+      client,
+      now: new Date("2026-06-06T12:00:00.000Z"),
+    });
+
+    expect(summary.planTier).toBe("pro");
+    expect(summary.source).toBe("subscription");
+    expect(summary.subscription?.payment_provider).toBe("razorpay");
+  });
+
+  it("does not grant paid access from active Razorpay subscriptions during beta", async () => {
+    process.env.MOTIONCODE_LAUNCH_PHASE = "beta";
+    process.env.MOTIONCODE_ENABLE_PAID_CHECKOUT = "true";
+    const client = createEntitlementsClient({
+      admin_plan_overrides: [],
+      profiles: [{ id: "user_123", plan_tier: "free" }],
+      subscriptions: [
+        {
+          created_at: "2026-06-06T11:00:00.000Z",
+          payment_provider: "razorpay",
+          plan_tier: "pro",
+          razorpay_subscription_id: "sub_123",
+          status: "active",
+          user_id: "user_123",
+        },
+      ],
+      usage_events: [],
+    });
+
+    const summary = await getEntitlementSummary("user_123", {
+      client,
+      now: new Date("2026-06-06T12:00:00.000Z"),
+    });
+
+    expect(summary.planTier).toBe("free");
+    expect(summary.source).toBe("default");
+  });
+
+  it("does not grant paid access from Razorpay authorization before activation", async () => {
+    const client = createEntitlementsClient({
+      admin_plan_overrides: [],
+      profiles: [{ id: "user_123", plan_tier: "free" }],
+      subscriptions: [
+        {
+          created_at: "2026-06-06T11:00:00.000Z",
+          payment_provider: "razorpay",
+          plan_tier: "pro",
+          razorpay_subscription_id: "sub_123",
+          status: "authenticated",
+          user_id: "user_123",
+        },
+      ],
+      usage_events: [],
+    });
+
+    const summary = await getEntitlementSummary("user_123", {
+      client,
+      now: new Date("2026-06-06T12:00:00.000Z"),
+    });
+
+    expect(summary.planTier).toBe("free");
+    expect(summary.source).toBe("default");
   });
 
   it("does not trust client-controlled user metadata for plan tier", async () => {

@@ -78,14 +78,17 @@ test.describe("marketing surface", () => {
     await expect(pricing.getByRole("heading", { name: /^Pro$/i })).toBeVisible();
     await expect(pricing.getByRole("heading", { name: /^Studio$/i })).toBeVisible();
     await expect(pricing.getByTestId("price-preview")).toContainText("$0");
-    await expect(pricing.getByTestId("price-pro")).toContainText("$19");
-    await expect(pricing.getByTestId("price-studio")).toContainText("$79");
+    await expect(pricing.getByTestId("price-pro")).toContainText("Early");
+    await expect(pricing.getByTestId("price-studio")).toContainText("Early");
     await expect(pricing.getByTestId("price-pro")).toHaveCSS(
       "animation-name",
       /price/i,
     );
-    await expect(pricing.getByText("Unlimited exports")).toBeVisible();
-    await expect(pricing.getByText("Shared team review queues")).toBeVisible();
+    await expect(pricing.getByText("Priority beta queue")).toBeVisible();
+    await expect(pricing.getByText("Shared team interest list")).toBeVisible();
+    await expect(
+      pricing.getByRole("link", { name: /Join Pro early access/i }),
+    ).toHaveAttribute("href", "/pricing");
 
     const proCard = pricing.getByTestId("pricing-card-pro");
     await proCard.hover();
@@ -113,7 +116,7 @@ test.describe("marketing surface", () => {
 
     for (const brand of [
       "Vercel",
-      "Stripe",
+      "Razorpay",
       "Linear",
       "Figma",
       "Notion",

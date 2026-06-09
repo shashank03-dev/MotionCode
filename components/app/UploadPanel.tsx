@@ -352,7 +352,7 @@ export function UploadPanel({
                   textDecoration: "none",
                 }}
               >
-                Upgrade to Pro
+                Join early access
               </Link>
             </div>
           )}
@@ -373,7 +373,7 @@ export function UploadPanel({
               fontSize: 11,
             }}
           >
-            Pro analysis enabled.
+            Early access analysis enabled.
           </div>
         </div>
       )}

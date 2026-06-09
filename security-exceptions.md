@@ -1,10 +1,12 @@
 # MotionCode Security Exceptions
 
+MotionCode is in free beta. Free beta analysis uses Gemini only. Pro and Studio are early-access tracks; paid checkout and OpenAI-backed analysis stay disabled until the paid readiness gates are met.
+
 ## Open Exceptions
 
-### Legacy `/app` Client Analysis Path
+### Paid Checkout And OpenAI Gates
 
-The current `/app` client still contains a legacy direct Gemini call path. GA should use `/api/analyze`, which keeps `GEMINI_API_KEY` server-side and records usage/audit events. Treat browser-exposed AI keys as disallowed for production.
+Pro and Studio are early-access tracks during beta. `MOTIONCODE_ENABLE_PAID_CHECKOUT` and `MOTIONCODE_ENABLE_OPENAI_ANALYSIS` must remain `false` or unset until paid readiness gates pass. Razorpay checkout and OpenAI-backed analysis should not be exercised in beta traffic.
 
 ### Plan Override Expiry
 
@@ -17,7 +19,10 @@ Server allowlist env vars can grant admin access even when a profile row is miss
 ## Accepted Controls
 
 - Admin API/UI checks are server-side.
+- `/app` submits analysis through `/api/analyze`; it does not call Gemini directly from the browser.
 - Support ticket creation sets owner from verified Supabase auth.
+- Early-access requests are persisted for verified users and visible to internal admins.
 - Support operator updates use trusted server credentials after admin verification.
 - Plan overrides write audit events.
+- Launch controls default to beta and keep paid checkout/OpenAI analysis disabled unless explicitly enabled.
 - Destructive Supabase actions require exact approval.

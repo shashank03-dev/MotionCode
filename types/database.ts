@@ -28,6 +28,7 @@ export type Database = {
           avatar_url: string | null;
           plan_tier: PlanTier;
           stripe_customer_id: string | null;
+          razorpay_customer_id: string | null;
           is_internal_admin: boolean;
           onboarding_completed_at: Timestamp | null;
           deleted_at: Timestamp | null;
@@ -41,6 +42,7 @@ export type Database = {
           avatar_url?: string | null;
           plan_tier?: PlanTier;
           stripe_customer_id?: string | null;
+          razorpay_customer_id?: string | null;
           is_internal_admin?: boolean;
           onboarding_completed_at?: Timestamp | null;
           deleted_at?: Timestamp | null;
@@ -53,6 +55,7 @@ export type Database = {
           avatar_url: string | null;
           plan_tier: PlanTier;
           stripe_customer_id: string | null;
+          razorpay_customer_id: string | null;
           is_internal_admin: boolean;
           onboarding_completed_at: Timestamp | null;
           deleted_at: Timestamp | null;
@@ -252,8 +255,12 @@ export type Database = {
         {
           id: string;
           user_id: string;
+          payment_provider: "razorpay";
           stripe_customer_id: string;
           stripe_subscription_id: string;
+          razorpay_customer_id: string | null;
+          razorpay_subscription_id: string | null;
+          razorpay_payment_id: string | null;
           status: string;
           plan_tier: PlanTier;
           current_period_end: Timestamp | null;
@@ -264,8 +271,12 @@ export type Database = {
         {
           id?: string;
           user_id: string;
+          payment_provider?: "razorpay";
           stripe_customer_id: string;
           stripe_subscription_id: string;
+          razorpay_customer_id?: string | null;
+          razorpay_subscription_id?: string | null;
+          razorpay_payment_id?: string | null;
           status: string;
           plan_tier: PlanTier;
           current_period_end?: Timestamp | null;
@@ -276,8 +287,45 @@ export type Database = {
         Partial<{
           status: string;
           plan_tier: PlanTier;
+          payment_provider: "razorpay";
+          stripe_customer_id: string;
+          stripe_subscription_id: string;
+          razorpay_customer_id: string | null;
+          razorpay_subscription_id: string | null;
+          razorpay_payment_id: string | null;
           current_period_end: Timestamp | null;
           cancel_at_period_end: boolean;
+          updated_at: Timestamp;
+        }>
+      >;
+      early_access_signups: TableDefinition<
+        {
+          id: string;
+          user_id: string;
+          email: string | null;
+          desired_plan: "pro" | "studio";
+          status: "requested" | "invited" | "converted" | "closed";
+          source: string;
+          notes: string | null;
+          created_at: Timestamp;
+          updated_at: Timestamp;
+        },
+        {
+          id?: string;
+          user_id: string;
+          email?: string | null;
+          desired_plan: "pro" | "studio";
+          status?: "requested" | "invited" | "converted" | "closed";
+          source?: string;
+          notes?: string | null;
+          created_at?: Timestamp;
+          updated_at?: Timestamp;
+        },
+        Partial<{
+          email: string | null;
+          status: "requested" | "invited" | "converted" | "closed";
+          source: string;
+          notes: string | null;
           updated_at: Timestamp;
         }>
       >;

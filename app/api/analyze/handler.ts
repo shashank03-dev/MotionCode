@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import type { User } from "@supabase/supabase-js";
 import { z } from "zod";
 
+import { isOpenAiAnalysisEnabled as getOpenAiAnalysisGate } from "@/lib/contracts/launch";
 import {
   PLAN_ENTITLEMENTS,
   type PlanTier,
@@ -25,8 +26,14 @@ import {
   type GeminiAnalysis,
   type GeminiAnalyzeInput,
 } from "@/lib/server/gemini";
+import {
+  analyzeFramesWithOpenAI,
+  DEFAULT_OPENAI_ANALYSIS_MODEL,
+  type OpenAIAnalyzeInput,
+} from "@/lib/server/openai";
 import { observeAnalysis, observeAuthError } from "@/lib/server/observability";
 import { getCurrentUser as getSupabaseCurrentUser } from "@/lib/supabase/server";
+import type { AnalysisModel } from "@/lib/contracts/motion";
 
 import {
   AnalyzeRequestSchema,
@@ -56,10 +63,12 @@ export type AnalyzeRouteDeps = {
     requestBody: AnalyzeRequestBody,
   ) => Promise<AnalysisAuthorizationDecision>;
   generateAnalysis?: (input: GeminiAnalyzeInput) => Promise<GeminiAnalysis>;
+  generateOpenAiAnalysis?: (input: OpenAIAnalyzeInput) => Promise<GeminiAnalysis>;
   getCurrentUser?: () => Promise<CurrentUser | null>;
   getDailyAnalysisCount?: (input: DailyAnalysisCountInput) => Promise<number>;
   getPlanTier?: (user: CurrentUser) => Promise<PlanTier>;
   idGenerator?: () => string;
+  isOpenAiAnalysisEnabled?: () => boolean;
   now?: () => Date;
   usage?: UsageEventRecorder;
 };
@@ -159,6 +168,12 @@ export async function handleAnalyzeRequest(
     );
   }
 
+  const analysisProvider = resolveAnalysisProvider({
+    planTier,
+    requestBody,
+    resolvedDeps,
+  });
+
   const preflight = await runPreflightChecks({
     entitlements,
     requestBody,
@@ -168,7 +183,7 @@ export async function handleAnalyzeRequest(
   if (!preflight.ok) {
     await observeAnalysis({
       frameCount: requestBody.frames.length,
-      model: requestBody.model,
+      model: analysisProvider.model,
       outcome: "rejected",
       planTier,
       projectId: requestBody.projectId,
@@ -192,7 +207,7 @@ export async function handleAnalyzeRequest(
   if (!abuseDecision.ok) {
     await observeAnalysis({
       frameCount: requestBody.frames.length,
-      model: requestBody.model,
+      model: analysisProvider.model,
       outcome: "rejected",
       planTier,
       projectId: requestBody.projectId,
@@ -212,7 +227,7 @@ export async function handleAnalyzeRequest(
     await resolvedDeps.usage.record({
       eventType: "analysis.started",
       frameCount: requestBody.frames.length,
-      model: requestBody.model,
+      model: analysisProvider.model,
       planTier,
       projectId: requestBody.projectId,
       userId: user.id,
@@ -221,7 +236,7 @@ export async function handleAnalyzeRequest(
   } catch {
     await observeAnalysis({
       frameCount: requestBody.frames.length,
-      model: requestBody.model,
+      model: analysisProvider.model,
       outcome: "failed",
       planTier,
       projectId: requestBody.projectId,
@@ -238,7 +253,7 @@ export async function handleAnalyzeRequest(
   await observeAnalysis({
     analysisId,
     frameCount: requestBody.frames.length,
-    model: requestBody.model,
+    model: analysisProvider.model,
     outcome: "started",
     planTier,
     projectId: requestBody.projectId,
@@ -246,8 +261,9 @@ export async function handleAnalyzeRequest(
     workspaceId: canonicalWorkspaceId,
   });
 
-  const generatedResult = await runGeminiAnalysis({
+  const generatedResult = await runModelAnalysis({
     analysisId,
+    analysisProvider,
     createdAt,
     planTier,
     requestBody,
@@ -265,7 +281,7 @@ export async function handleAnalyzeRequest(
       resolvedDeps.usage.record({
         eventType: "analysis.completed",
         frameCount: requestBody.frames.length,
-        model: requestBody.model,
+        model: analysisProvider.model,
         planTier,
         projectId: requestBody.projectId,
         userId: user.id,
@@ -276,7 +292,7 @@ export async function handleAnalyzeRequest(
         eventType: "analysis.completed",
         metadata: {
           frameCount: requestBody.frames.length,
-          model: requestBody.model,
+          model: analysisProvider.model,
           planTier,
           projectId: requestBody.projectId,
         },
@@ -293,6 +309,7 @@ export async function handleAnalyzeRequest(
     );
     await recordFailureAuditSafely(resolvedDeps.audit, {
       analysisId,
+      analysisModel: analysisProvider.model,
       planTier,
       reason: persistenceError.code,
       requestBody,
@@ -302,7 +319,7 @@ export async function handleAnalyzeRequest(
     await observeAnalysis({
       analysisId,
       frameCount: requestBody.frames.length,
-      model: requestBody.model,
+      model: analysisProvider.model,
       outcome: "failed",
       planTier,
       projectId: requestBody.projectId,
@@ -319,7 +336,7 @@ export async function handleAnalyzeRequest(
   await observeAnalysis({
     analysisId,
     frameCount: requestBody.frames.length,
-    model: requestBody.model,
+    model: analysisProvider.model,
     outcome: "completed",
     planTier,
     projectId: requestBody.projectId,
@@ -341,11 +358,15 @@ function resolveAnalyzeDeps(
     authorizeAnalysisRequest:
       deps.authorizeAnalysisRequest ?? authorizeAnalysisRequestWithSupabase,
     generateAnalysis: deps.generateAnalysis ?? analyzeFramesWithGemini,
+    generateOpenAiAnalysis:
+      deps.generateOpenAiAnalysis ?? analyzeFramesWithOpenAI,
     getCurrentUser: deps.getCurrentUser ?? getSupabaseCurrentUser,
     getDailyAnalysisCount:
       deps.getDailyAnalysisCount ?? getDailyAnalysisCountWithSupabase,
     getPlanTier: deps.getPlanTier ?? resolvePlanTierForUser,
     idGenerator: deps.idGenerator ?? randomUUID,
+    isOpenAiAnalysisEnabled:
+      deps.isOpenAiAnalysisEnabled ?? (() => getOpenAiAnalysisGate()),
     now: deps.now ?? (() => new Date()),
     usage: deps.usage ?? createSupabaseUsageEventRecorder(),
   };
@@ -473,8 +494,44 @@ async function runPreflightChecks({
   }
 }
 
-async function runGeminiAnalysis({
+type ResolvedAnalysisProvider = {
+  generate: () => Promise<GeminiAnalysis>;
+  model: AnalysisModel;
+};
+
+function resolveAnalysisProvider({
+  planTier,
+  requestBody,
+  resolvedDeps,
+}: {
+  planTier: PlanTier;
+  requestBody: AnalyzeRequestBody;
+  resolvedDeps: ResolvedAnalyzeRouteDeps;
+}): ResolvedAnalysisProvider {
+  if (planTier === "free" || !resolvedDeps.isOpenAiAnalysisEnabled()) {
+    return {
+      generate: () =>
+        resolvedDeps.generateAnalysis({
+          frames: requestBody.frames,
+          model: requestBody.model,
+        }),
+      model: requestBody.model,
+    };
+  }
+
+  return {
+    generate: () =>
+      resolvedDeps.generateOpenAiAnalysis({
+        frames: requestBody.frames,
+        model: DEFAULT_OPENAI_ANALYSIS_MODEL,
+      }),
+    model: DEFAULT_OPENAI_ANALYSIS_MODEL,
+  };
+}
+
+async function runModelAnalysis({
   analysisId,
+  analysisProvider,
   createdAt,
   planTier,
   requestBody,
@@ -483,6 +540,7 @@ async function runGeminiAnalysis({
   workspaceId,
 }: {
   analysisId: string;
+  analysisProvider: ResolvedAnalysisProvider;
   createdAt: string;
   planTier: PlanTier;
   requestBody: AnalyzeRequestBody;
@@ -494,16 +552,13 @@ async function runGeminiAnalysis({
   | { ok: false; response: Response }
 > {
   try {
-    const generated = await resolvedDeps.generateAnalysis({
-      frames: requestBody.frames,
-      model: requestBody.model,
-    });
+    const generated = await analysisProvider.generate();
     const result = parseAnalysisResultSchema({
       assetId: requestBody.assetId,
       createdAt,
       frameCount: requestBody.frames.length,
       id: analysisId,
-      model: requestBody.model,
+      model: analysisProvider.model,
       outputs: generated.outputs,
       projectId: requestBody.projectId,
       spec: generated.spec,
@@ -522,6 +577,7 @@ async function runGeminiAnalysis({
     resolvedDeps.abuseGuard.recordModelFailure(user.id);
     await recordFailureAuditSafely(resolvedDeps.audit, {
       analysisId,
+      analysisModel: analysisProvider.model,
       planTier,
       reason: apiFailure.code,
       requestBody,
@@ -531,7 +587,7 @@ async function runGeminiAnalysis({
     await observeAnalysis({
       analysisId,
       frameCount: requestBody.frames.length,
-      model: requestBody.model,
+      model: analysisProvider.model,
       outcome: "failed",
       planTier,
       projectId: requestBody.projectId,
@@ -581,6 +637,7 @@ async function recordFailureAuditSafely(
   audit: AuditRecorder,
   {
     analysisId,
+    analysisModel,
     planTier,
     reason,
     requestBody,
@@ -588,6 +645,7 @@ async function recordFailureAuditSafely(
     workspaceId,
   }: {
     analysisId: string;
+    analysisModel: AnalysisModel;
     planTier: PlanTier;
     reason: string;
     requestBody: AnalyzeRequestBody;
@@ -601,7 +659,7 @@ async function recordFailureAuditSafely(
       eventType: "analysis.failed",
       metadata: {
         frameCount: requestBody.frames.length,
-        model: requestBody.model,
+        model: analysisModel,
         planTier,
         reason,
       },

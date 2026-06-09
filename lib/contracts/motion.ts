@@ -5,7 +5,14 @@ export const OUTPUT_FRAMEWORKS = [
   "react-spring",
 ] as const;
 
+export const ANALYSIS_MODELS = [
+  "gemini-2.5-flash",
+  "gemini-2.5-pro",
+  "gpt-5.5",
+] as const;
+
 export type OutputFramework = (typeof OUTPUT_FRAMEWORKS)[number];
+export type AnalysisModel = (typeof ANALYSIS_MODELS)[number];
 
 export type MotionIntent =
   | "entrance"
@@ -45,7 +52,7 @@ export type AnalysisResult = {
   assetId: string;
   projectId: string;
   versionId: string;
-  model: "gemini-2.5-flash" | "gemini-2.5-pro";
+  model: AnalysisModel;
   frameCount: number;
   spec: MotionSpec;
   outputs: GeneratedOutput[];
