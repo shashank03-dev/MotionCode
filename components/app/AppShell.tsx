@@ -259,7 +259,7 @@ export function AppShell({
 
     if (userPlan === "free" && !canUseFree) {
       setError(
-        `Daily limit reached (${entitlements.dailyAnalyses}/day). Join early access for higher beta capacity.`,
+        `Daily limit reached (${entitlements.dailyAnalyses}/day). Upgrade with Razorpay for higher capacity.`,
       );
       return;
     }

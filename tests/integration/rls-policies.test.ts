@@ -207,27 +207,6 @@ describe("Supabase data foundation migration", () => {
     );
   });
 
-  it("stores early access requests behind user-scoped RLS", () => {
-    const insertPolicy = policyBlock(sql, "Users can request own early access");
-
-    expect(sql).toMatch(
-      /create table if not exists public\.early_access_signups/i,
-    );
-    expect(sql).toMatch(
-      /alter table public\.early_access_signups\s+enable row level security/i,
-    );
-    expect(sql).toMatch(/auth\.uid\(\) = user_id/i);
-    expect(sql).toMatch(
-      /unique\s*\(\s*user_id\s*,\s*desired_plan\s*\)/i,
-    );
-    expect(sql).toMatch(
-      /grant insert \(user_id, email, desired_plan, source, notes\) on public\.early_access_signups to authenticated;/i,
-    );
-    expect(sql).not.toMatch(
-      /grant\s+insert\s+on[^;]*public\.early_access_signups[^;]*to authenticated;/i,
-    );
-    expect(insertPolicy).toMatch(/status = 'requested'/i);
-  });
 
   it("prevents profile billing identity spoofing through client inserts", () => {
     expect(sql).toMatch(

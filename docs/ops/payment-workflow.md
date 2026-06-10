@@ -9,6 +9,7 @@
 5. Razorpay webhooks keep `subscriptions` and `profiles.plan_tier` in sync for later updates, cancellations, and status changes.
 6. Processed webhook event IDs are recorded in `billing_webhook_events` so duplicate deliveries do not sync twice.
 7. Application authorization reads only active admin overrides or trusted Razorpay subscription rows through `getEntitlementSummary`.
+8. Razorpay test-mode checkout can run in beta, but test-mode subscriptions are not trusted as paid entitlements.
 
 ## Required Environment Variables
 
@@ -18,6 +19,8 @@
 - `RAZORPAY_PRO_PLAN_ID`
 - `RAZORPAY_STUDIO_PLAN_ID`
 - `RAZORPAY_SUBSCRIPTION_TOTAL_COUNT`
+- `MOTIONCODE_ENABLE_PAID_CHECKOUT`
+- `MOTIONCODE_ENABLE_RAZORPAY_TEST_CHECKOUT` for test-mode checkout only
 
 ## Razorpay Production Setup
 

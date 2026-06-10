@@ -64,22 +64,12 @@ export type AdminAuditEventDTO = {
   createdAt: string;
 };
 
-export type AdminEarlyAccessSignupDTO = {
-  createdAt: string;
-  desiredPlan: "pro" | "studio";
-  email: string | null;
-  status: "requested" | "invited" | "converted" | "closed";
-  userId: string;
-};
-
 export type AdminDashboardDTO = {
   counts: {
-    earlyAccessRequests: number;
     openTickets: number;
     pendingTickets: number;
     users: number;
   };
-  recentEarlyAccessSignups: AdminEarlyAccessSignupDTO[];
   recentAuditEvents: AdminAuditEventDTO[];
   recentTickets: AdminSupportTicketDTO[];
   recentUsers: AdminUserDTO[];

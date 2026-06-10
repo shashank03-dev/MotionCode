@@ -2,50 +2,38 @@ import Link from "next/link";
 import { Check, Sparkles } from "lucide-react";
 
 import { SiteFooter, SiteHeader } from "@/components/marketing";
-import { EarlyAccessButton } from "@/components/pricing/EarlyAccessButton";
-import { isPaidCheckoutEnabled } from "@/lib/contracts/launch";
 import { PLAN_ENTITLEMENTS, type PlanTier } from "@/lib/contracts/plans";
 
 import { CheckoutButton } from "./CheckoutButton";
 
 export const dynamic = "force-dynamic";
 
-const BETA_PLAN_COPY: Record<
+const PLAN_COPY: Record<
   PlanTier,
   {
     cta: string;
     description: string;
+    period: string;
     price: string;
   }
 > = {
   free: {
     cta: "Start free",
     description: "For testing the motion analysis workflow.",
-    price: "$0",
+    period: "preview",
+    price: "₹0",
   },
   pro: {
-    cta: "Join early access",
-    description: "For early users who want priority access when Pro opens.",
-    price: "Early",
-  },
-  studio: {
-    cta: "Join early access",
-    description: "For teams that want first access to Studio workflows.",
-    price: "Early",
-  },
-};
-
-const PAID_PLAN_COPY: Record<PlanTier, (typeof BETA_PLAN_COPY)[PlanTier]> = {
-  free: BETA_PLAN_COPY.free,
-  pro: {
-    cta: "Upgrade",
+    cta: "Pay with Razorpay",
     description: "For individual production motion work.",
-    price: "$19",
+    period: "/ month",
+    price: "₹100",
   },
   studio: {
-    cta: "Upgrade",
+    cta: "Pay with Razorpay",
     description: "For teams managing shared animation systems.",
-    price: "$79",
+    period: "/ month",
+    price: "₹500",
   },
 };
 
@@ -59,8 +47,6 @@ const FEATURE_LABELS: Array<[keyof typeof PLAN_ENTITLEMENTS.free, string]> = [
 ];
 
 export default function PricingPage() {
-  const paidCheckoutEnabled = isPaidCheckoutEnabled();
-
   return (
     <div className="min-h-screen bg-[#080808] text-[#fffbf4]">
       <SiteHeader />
@@ -75,9 +61,8 @@ export default function PricingPage() {
                 Access tiers for motion analysis.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-8 text-[#565449] sm:text-lg">
-                {paidCheckoutEnabled
-                  ? "Start free, then upgrade when production work needs more analyses, saved projects, or shared workspace access."
-                  : "MotionCode is in free beta. Pro and Studio are early-access tracks while paid checkout stays closed."}
+                Start free, then upgrade through Razorpay when production work
+                needs more analyses, saved projects, or shared workspace access.
               </p>
             </div>
             <Link
@@ -93,11 +78,7 @@ export default function PricingPage() {
           <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
             <div className="grid gap-4 lg:grid-cols-3">
               {(["free", "pro", "studio"] as const).map((tier) => (
-                <PlanColumn
-                  key={tier}
-                  paidCheckoutEnabled={paidCheckoutEnabled}
-                  tier={tier}
-                />
+                <PlanColumn key={tier} tier={tier} />
               ))}
             </div>
           </div>
@@ -109,13 +90,11 @@ export default function PricingPage() {
 }
 
 function PlanColumn({
-  paidCheckoutEnabled,
   tier,
 }: {
-  paidCheckoutEnabled: boolean;
   tier: PlanTier;
 }) {
-  const copy = (paidCheckoutEnabled ? PAID_PLAN_COPY : BETA_PLAN_COPY)[tier];
+  const copy = PLAN_COPY[tier];
   const entitlements = PLAN_ENTITLEMENTS[tier];
   const isFeatured = tier === "studio";
 
@@ -145,9 +124,7 @@ function PlanColumn({
       </p>
       <div className="mt-6 flex items-end gap-2">
         <span className="font-mono text-4xl text-[#fffbf4]">{copy.price}</span>
-        <span className="pb-1 text-sm text-[#565449]">
-          {tier === "free" || paidCheckoutEnabled ? "/ month" : "access"}
-        </span>
+        <span className="pb-1 text-sm text-[#565449]">{copy.period}</span>
       </div>
       <div className="mt-6">
         {tier === "free" ? (
@@ -157,12 +134,10 @@ function PlanColumn({
           >
             {copy.cta}
           </Link>
-        ) : paidCheckoutEnabled ? (
+        ) : (
           <div className="[&_button]:!h-11 [&_button]:!w-full [&_button]:!rounded-none [&_button]:!border-[#00ff88]/60 [&_button]:!bg-[#00ff88]/10 [&_button]:!font-mono [&_button]:!text-xs [&_button]:!font-bold [&_button]:!text-[#00ff88] [&_button:hover]:!bg-[#00ff88]/15 [&_p]:!text-[#ffd1d1]">
             <CheckoutButton planTier={tier} />
           </div>
-        ) : (
-          <EarlyAccessButton planTier={tier} />
         )}
       </div>
       <ul className="mt-8 flex flex-1 flex-col gap-4 text-sm text-[#d8cfbc]/75">

@@ -2,9 +2,9 @@
 
 MotionCode turns short UI motion references into implementation-ready animation specs and starter code. The web app extracts representative frames from uploaded video or GIF files, sends those frames to the server-side AI analysis API, and returns normalized motion specs plus CSS, GSAP, Framer Motion, and React Spring examples.
 
-MotionCode is in free beta. Free beta analysis uses Gemini only. Pro and Studio are early-access tracks; paid checkout and OpenAI-backed analysis stay disabled until the paid readiness gates are met.
+MotionCode is in free beta for analysis usage. Pro and Studio upgrades run through Razorpay Checkout; test-mode checkout can be enabled during beta with `MOTIONCODE_ENABLE_RAZORPAY_TEST_CHECKOUT=true`, while paid entitlements are trusted only in paid launch mode with live Razorpay keys.
 
-The product surface is intentionally conservative: it links the app, examples, support, privacy, terms, and pricing without claiming unsupported integrations, partner logos, or guaranteed output quality.
+The product surface is intentionally conservative: it links the app, pricing, support, privacy, and terms without claiming unsupported integrations, partner logos, or guaranteed output quality.
 
 ## Free Beta Web Product Scope
 
@@ -12,12 +12,12 @@ The product surface is intentionally conservative: it links the app, examples, s
 - Motion analysis workspace at `/app`.
 - Server-side analysis endpoint at `/api/analyze` with Supabase auth, entitlement checks, abuse controls, Gemini-only beta analysis, usage events, and audit events.
 - Public free beta accounts are limited to one Gemini analysis per day. Internal admin or allowlisted testing accounts keep three analyses per day during beta.
-- Supabase data foundation for profiles, workspaces, projects, assets, analyses, generated outputs, billing records, early-access requests, support tickets, audit events, and admin plan overrides.
-- Pricing page with Pro and Studio early-access CTAs instead of paid checkout.
+- Supabase data foundation for profiles, workspaces, projects, assets, analyses, generated outputs, billing records, support tickets, audit events, and admin plan overrides.
+- Pricing page with Pro and Studio Razorpay checkout CTAs.
 - User support center at `/support` with ticket creation and account-scoped ticket history.
 - Internal admin support queue at `/admin` and admin users/plan overrides at `/admin/users`.
-- Gemini/Supabase environment wiring for beta deployment, with Razorpay and OpenAI paths gated off until paid readiness.
-- Examples, privacy, terms, loading, error, not-found, and Open Graph routes.
+- Gemini/Supabase environment wiring for beta deployment, with Razorpay test checkout gated separately from trusted paid entitlements.
+- Privacy, terms, loading, error, not-found, and Open Graph routes.
 
 ## Local Setup
 
@@ -46,7 +46,8 @@ Use `payment.ini.example` as an operator checklist for payment/auth placeholders
 Required for the server runtime:
 
 - `MOTIONCODE_LAUNCH_PHASE`: Launch mode. Defaults to `beta` when unset; use `paid` only after paid readiness is approved.
-- `MOTIONCODE_ENABLE_PAID_CHECKOUT`: Enables paid checkout only when set to `true`. Must be `false` or unset during beta.
+- `MOTIONCODE_ENABLE_PAID_CHECKOUT`: Enables paid checkout only when set to `true`. In beta, use it only with `MOTIONCODE_ENABLE_RAZORPAY_TEST_CHECKOUT=true`.
+- `MOTIONCODE_ENABLE_RAZORPAY_TEST_CHECKOUT`: Allows Razorpay test keys in beta for checkout smoke testing. Keep it `false` for live production.
 - `MOTIONCODE_ENABLE_OPENAI_ANALYSIS`: Enables OpenAI-backed analysis only when set to `true`. Must be `false` or unset during beta.
 - `NEXT_PUBLIC_SITE_URL`: Public site URL, usually `http://localhost:3000` locally.
 - `NEXT_PUBLIC_SUPABASE_URL`: Supabase project URL.
@@ -81,12 +82,12 @@ Internal admin access is server-checked with `profiles.is_internal_admin` or the
 
 ## Paid Checkout Setup
 
-Paid checkout is disabled during free beta. Keep `MOTIONCODE_ENABLE_PAID_CHECKOUT` `false` or unset in beta environments.
-
-1. Create Pro and Studio recurring subscription plans in Razorpay only for paid-readiness validation.
+1. Create Pro and Studio recurring subscription plans in Razorpay.
 2. Set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `RAZORPAY_PRO_PLAN_ID`, `RAZORPAY_STUDIO_PLAN_ID`, and `RAZORPAY_SUBSCRIPTION_TOTAL_COUNT` in paid-readiness environments.
-3. Configure the Razorpay webhook URL as `/api/razorpay/webhook`.
-4. Confirm checkout verification and subscription webhooks update `subscriptions.plan_tier` and `profiles.plan_tier` before enabling the paid launch phase.
+3. For local or Vercel test-mode checkout, set `MOTIONCODE_ENABLE_PAID_CHECKOUT=true` and `MOTIONCODE_ENABLE_RAZORPAY_TEST_CHECKOUT=true` with `rzp_test_*` keys.
+4. Configure the Razorpay webhook URL as `/api/razorpay/webhook`.
+5. Confirm checkout verification and subscription webhooks update `subscriptions.plan_tier` and `profiles.plan_tier`.
+6. For live production, switch to `rzp_live_*` keys, set `MOTIONCODE_LAUNCH_PHASE=paid`, keep `MOTIONCODE_ENABLE_PAID_CHECKOUT=true`, and keep `MOTIONCODE_ENABLE_RAZORPAY_TEST_CHECKOUT=false`.
 
 ## AI Provider Setup
 
@@ -114,10 +115,10 @@ Use targeted tests while developing, then run `npm run typecheck` and `npm run b
 - Deploy on Vercel with Node.js runtime support for API routes.
 - Configure all required environment variables in the deployment project.
 - Leave `MOTIONCODE_LAUNCH_PHASE` unset or set to `beta` for beta deployment.
-- Keep `MOTIONCODE_ENABLE_PAID_CHECKOUT` and `MOTIONCODE_ENABLE_OPENAI_ANALYSIS` `false` or unset during beta.
+- Enable Razorpay test checkout in beta only with test keys; use live keys only after switching `MOTIONCODE_LAUNCH_PHASE=paid`.
 - Keep Supabase service role, Razorpay secrets, Gemini key, and OpenAI key server-only.
 - Run migrations before promoting a deployment that depends on new tables or policies.
-- Verify `/pricing` early-access CTAs, `/api/analyze` Gemini-only beta behavior, early-access request visibility in admin, `/support`, `/admin`, and `/admin/users` against a staging Supabase project before beta promotion.
+- Verify `/pricing` Razorpay CTAs, `/api/analyze` Gemini-only beta behavior, `/support`, `/admin`, and `/admin/users` against a staging Supabase project before beta promotion.
 - Follow `launch-checklist.md`, `admin-support.md`, and `incident-response.md` for operating procedures.
 
 ## Documentation

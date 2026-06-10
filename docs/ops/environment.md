@@ -1,13 +1,14 @@
 # MotionCode Environment Operations
 
-MotionCode is in free beta. Free beta analysis uses Gemini only. Pro and Studio are early-access tracks; paid checkout and OpenAI-backed analysis stay disabled until the paid readiness gates are met.
+MotionCode is in free beta for analysis usage. Pro and Studio upgrades run through Razorpay Checkout; test-mode checkout can be enabled during beta without trusting test subscriptions as paid entitlements.
 
 ## Launch Control Variables
 
 | Variable | Scope | Purpose |
 | --- | --- | --- |
 | `MOTIONCODE_LAUNCH_PHASE` | Server only | Launch mode. Defaults to `beta` when unset; use `paid` only after paid readiness is approved. |
-| `MOTIONCODE_ENABLE_PAID_CHECKOUT` | Server only | Enables paid checkout only when set to `true`. Must be `false` or unset during beta. |
+| `MOTIONCODE_ENABLE_PAID_CHECKOUT` | Server only | Enables paid checkout only when set to `true`. In beta, use only with Razorpay test checkout enabled. |
+| `MOTIONCODE_ENABLE_RAZORPAY_TEST_CHECKOUT` | Server only | Allows `rzp_test_*` Razorpay keys for local or staging checkout smoke tests. Keep `false` for live production. |
 | `MOTIONCODE_ENABLE_OPENAI_ANALYSIS` | Server only | Enables OpenAI-backed analysis only when set to `true`. Must be `false` or unset during beta. |
 
 ## Required Runtime Variables
@@ -23,7 +24,7 @@ MotionCode is in free beta. Free beta analysis uses Gemini only. Pro and Studio 
 
 ## Paid-Readiness Billing Variables
 
-Paid checkout is disabled during free beta. Keep these values server-only and use them only in paid-readiness environments where `MOTIONCODE_ENABLE_PAID_CHECKOUT=true`.
+Keep these values server-only. Use Razorpay test-mode values only when `MOTIONCODE_ENABLE_RAZORPAY_TEST_CHECKOUT=true`; use live values only when `MOTIONCODE_LAUNCH_PHASE=paid`.
 
 | Variable | Scope | Purpose |
 | --- | --- | --- |
@@ -57,10 +58,10 @@ Apply migrations before using authenticated product flows. Never run `supabase d
 
 - Configure env vars in Vercel.
 - Leave `MOTIONCODE_LAUNCH_PHASE` unset or set to `beta` for beta deployment.
-- Keep `MOTIONCODE_ENABLE_PAID_CHECKOUT` and `MOTIONCODE_ENABLE_OPENAI_ANALYSIS` `false` or unset during beta.
+- Enable Razorpay checkout in beta only with `MOTIONCODE_ENABLE_RAZORPAY_TEST_CHECKOUT=true` and test keys.
 - Keep server-only secrets out of `NEXT_PUBLIC_` variables.
 - Do not expose AI provider keys as `NEXT_PUBLIC_` variables.
 - Apply Supabase migrations before deploying dependent code.
-- Verify auth cookies, Gemini-only `/api/analyze` behavior, support ticket creation, early-access request persistence/admin visibility, admin checks, plan overrides, and audit events in staging.
+- Verify auth cookies, Gemini-only `/api/analyze` behavior, support ticket creation, Razorpay test checkout, admin checks, plan overrides, and audit events in staging.
 - Verify public free accounts stop at one analysis per day, and internal admin or allowlisted testing accounts stop at three analyses per day.
 - Verify paid checkout/webhooks only after paid readiness gates pass.

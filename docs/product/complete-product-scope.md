@@ -4,7 +4,7 @@
 
 MotionCode helps frontend teams convert short motion references into implementation-ready animation code. Users upload a supported video or GIF, MotionCode samples frames in the browser, analyzes them through the server AI endpoint, and returns a normalized motion spec with code examples for CSS, GSAP, Framer Motion, and React Spring.
 
-MotionCode is in free beta. Free beta analysis uses Gemini only. Pro and Studio are early-access tracks; paid checkout and OpenAI-backed analysis stay disabled until the paid readiness gates are met.
+MotionCode is in free beta for analysis usage. Pro and Studio upgrades run through Razorpay Checkout; test-mode checkout can be enabled during beta without trusting test subscriptions as paid entitlements.
 
 ## Free Beta Web Scope
 
@@ -12,9 +12,9 @@ MotionCode is in free beta. Free beta analysis uses Gemini only. Pro and Studio 
 - Motion analysis tool at `/app`.
 - Authenticated server API at `/api/analyze` using Gemini-only beta analysis.
 - Public free beta quota is one Gemini analysis per day; internal admin or allowlisted testing accounts keep three daily analyses for staging and support verification.
-- Supabase-backed profiles, workspaces, projects, assets, analyses, generated outputs, usage events, subscriptions, early-access requests, support tickets, audit events, and admin plan overrides.
-- Free beta access plus Pro and Studio early-access tracks.
-- Pricing page early-access CTAs for Pro and Studio; no paid checkout during beta.
+- Supabase-backed profiles, workspaces, projects, assets, analyses, generated outputs, usage events, subscriptions, support tickets, audit events, and admin plan overrides.
+- Free beta access plus Pro and Studio Razorpay subscription tracks.
+- Pricing page Razorpay checkout CTAs for Pro and Studio.
 - User support center at `/support`.
 - Internal admin support queue at `/admin`.
 - Internal admin users and plan overrides at `/admin/users`.
@@ -29,7 +29,7 @@ MotionCode is in free beta. Free beta analysis uses Gemini only. Pro and Studio 
 ## Out Of Scope For Free Beta
 
 - Anonymous project storage.
-- Paid checkout or Razorpay subscription activation.
+- Live paid entitlement trust from Razorpay test-mode subscriptions.
 - OpenAI-backed analysis for Free, Pro, or Studio users.
 - Paid Pro or Studio entitlement activation outside admin-controlled testing.
 - Browser-exposed production AI keys.
@@ -40,12 +40,11 @@ MotionCode is in free beta. Free beta analysis uses Gemini only. Pro and Studio 
 ## Release Criteria
 
 - Required beta env vars configured in Vercel and staging.
-- `MOTIONCODE_LAUNCH_PHASE` is unset or `beta`; `MOTIONCODE_ENABLE_PAID_CHECKOUT` and `MOTIONCODE_ENABLE_OPENAI_ANALYSIS` are `false` or unset.
+- `MOTIONCODE_LAUNCH_PHASE` is unset or `beta`; Razorpay checkout uses test keys only with `MOTIONCODE_ENABLE_RAZORPAY_TEST_CHECKOUT=true`.
 - Supabase migrations applied and RLS tests passing.
 - `/api/analyze` smoke-tested as Gemini-only beta analysis with no OpenAI call.
 - Public free quota and internal testing quota are smoke-tested against staging auth.
-- `/pricing` confirms Pro and Studio early-access CTAs instead of checkout.
-- Early-access requests persist and are visible to admins.
+- `/pricing` confirms Pro and Studio Razorpay checkout CTAs.
 - `/support`, `/admin`, and `/admin/users` smoke-tested with real Supabase auth.
 - `npm run typecheck` and `npm run build` pass.
 - Known security exceptions reviewed before beta traffic and again before paid readiness.

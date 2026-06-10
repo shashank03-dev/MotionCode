@@ -9,21 +9,14 @@ afterEach(() => {
   process.env = { ...ORIGINAL_ENV };
 });
 
-describe("pricing page beta mode", () => {
-  it("shows early-access CTAs instead of Razorpay checkout", () => {
+describe("pricing page Razorpay checkout", () => {
+  it("renders Razorpay checkout CTAs for paid plans", () => {
     const renderedHtml = renderToStaticMarkup(<PricingPage />);
 
-    expect(renderedHtml).toContain("Join early access");
-    expect(renderedHtml).not.toContain("Pay with Razorpay");
-  });
-
-  it("can render Razorpay checkout only when paid checkout is explicitly enabled", () => {
-    process.env.MOTIONCODE_LAUNCH_PHASE = "paid";
-    process.env.MOTIONCODE_ENABLE_PAID_CHECKOUT = "true";
-
-    const renderedHtml = renderToStaticMarkup(<PricingPage />);
-
+    expect(renderedHtml).toContain("₹0");
+    expect(renderedHtml).toContain("₹100");
+    expect(renderedHtml).toContain("₹500");
     expect(renderedHtml).toContain("Pay with Razorpay");
-    expect(renderedHtml).not.toContain("Join early access");
+    expect(renderedHtml).not.toContain("signup queue");
   });
 });

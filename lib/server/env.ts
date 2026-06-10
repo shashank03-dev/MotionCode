@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { isPaidCheckoutEnabled, isRazorpayTestCheckoutEnabled } from "@/lib/contracts/launch";
+
 const ServerEnvSchema = z.object({
   GEMINI_API_KEY: z.string().min(1),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
@@ -101,8 +103,8 @@ export function getRazorpayBillingEnv(
   }
 
   if (
-    env.MOTIONCODE_LAUNCH_PHASE === "paid" &&
-    env.MOTIONCODE_ENABLE_PAID_CHECKOUT === "true" &&
+    isPaidCheckoutEnabled(env) &&
+    !isRazorpayTestCheckoutEnabled(env) &&
     !parsed.data.RAZORPAY_KEY_ID.startsWith("rzp_live_")
   ) {
     throw new Error("Invalid RAZORPAY_KEY_ID: paid checkout requires live keys");

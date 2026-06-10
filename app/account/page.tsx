@@ -10,7 +10,6 @@ import {
   UserRound,
 } from "lucide-react";
 
-import { getEarlyAccessForUser } from "@/lib/server/earlyAccessAdmin";
 import { getEntitlementSummary } from "@/lib/server/entitlements";
 import { getCurrentUser } from "@/lib/supabase/server";
 
@@ -56,7 +55,6 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   }
 
   const summary = await getEntitlementSummary(user.id);
-  const earlyAccess = await getEarlyAccessForUser(user.id);
   const profile = summary.profile;
   const subscription = summary.subscription;
   const paymentProvider = subscription?.payment_provider ?? null;
@@ -202,23 +200,18 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
 
           <Panel
             icon={<Sparkles className="h-5 w-5" aria-hidden="true" />}
-            title="Early access"
+            title="Upgrade"
           >
-            {earlyAccess.length ? (
-              <dl className="grid gap-4 text-sm">
-                {earlyAccess.map((signup) => (
-                  <Detail
-                    key={signup.desiredPlan}
-                    label={titleCase(signup.desiredPlan)}
-                    value={titleCase(signup.status)}
-                  />
-                ))}
-              </dl>
-            ) : (
-              <p className="text-sm leading-6 text-[var(--muted)]">
-                No early access request yet.
-              </p>
-            )}
+            <p className="text-sm leading-6 text-[var(--muted)]">
+              Pro and Studio subscriptions are handled through Razorpay Checkout.
+            </p>
+            <Link
+              className="mt-6 inline-flex h-10 items-center gap-2 border border-[var(--accent-border)] bg-[var(--accent-dim)] px-4 font-mono text-sm text-[var(--text)]"
+              href="/pricing"
+            >
+              <CreditCard className="h-4 w-4" aria-hidden="true" />
+              View paid plans
+            </Link>
           </Panel>
 
           <Panel

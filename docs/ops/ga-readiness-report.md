@@ -8,7 +8,7 @@ MotionCode is code-integrated for the planned GA product surface, but paid produ
 
 ## Completed Readiness Items
 
-- Public routes are implemented for `/`, `/examples`, `/pricing`, `/privacy`, `/terms`, and `/support`.
+- Public routes are implemented for `/`, `/pricing`, `/privacy`, `/terms`, and `/support`; `/examples` is intentionally removed.
 - The converter is available at `/app` and routes analysis through server-owned `/api/analyze`.
 - Authenticated product routes are implemented for dashboard, workspaces, projects, versions, billing, account, support, and share views.
 - Internal admin routes and APIs are implemented for support operations, user lookup, and plan overrides.

@@ -19,10 +19,6 @@ import {
   type SupportTicketStatus,
 } from "@/lib/contracts/adminSupport";
 import {
-  countRequestedEarlyAccessSignups,
-  listRecentEarlyAccessSignups,
-} from "@/lib/server/earlyAccessAdmin";
-import {
   createSupabaseAuditRecorder,
   type SupabaseInsertClient,
 } from "@/lib/server/audit";
@@ -341,31 +337,25 @@ export async function getAdminDashboard(
     openTicketCount,
     pendingTicketCount,
     userCount,
-    earlyAccessRequestCount,
     recentTickets,
     recentUsers,
     recentAuditEvents,
-    recentEarlyAccessSignups,
   ] = await Promise.all([
     getSupportTicketCount(client, "open"),
     getSupportTicketCount(client, "pending"),
     getUserCount(client),
-    countRequestedEarlyAccessSignups(),
     listAdminSupportTickets(client, 8),
     listAdminUsers(client, 8),
     listRecentAuditEvents(client, 12),
-    listRecentEarlyAccessSignups(8),
   ]);
 
   return {
     counts: {
-      earlyAccessRequests: earlyAccessRequestCount,
       openTickets: openTicketCount,
       pendingTickets: pendingTicketCount,
       users: userCount,
     },
     recentAuditEvents,
-    recentEarlyAccessSignups,
     recentTickets,
     recentUsers,
   };

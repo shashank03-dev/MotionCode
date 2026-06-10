@@ -1,6 +1,6 @@
 # MotionCode User Workflows
 
-MotionCode is in free beta. Free beta analysis uses Gemini only. Pro and Studio are early-access tracks; paid checkout and OpenAI-backed analysis stay disabled until the paid readiness gates are met.
+MotionCode is in free beta for analysis usage. Pro and Studio upgrades run through Razorpay Checkout; test-mode checkout can be enabled during beta without trusting test subscriptions as paid entitlements.
 
 ## Analyze Motion
 
@@ -14,14 +14,15 @@ MotionCode is in free beta. Free beta analysis uses Gemini only. Pro and Studio 
 8. MotionCode records usage and audit events.
 9. User copies generated animation code.
 
-## Request Pro Or Studio Early Access
+## Start Pro Or Studio Checkout
 
 1. User opens `/pricing`.
-2. Pro and Studio show early-access CTAs instead of paid checkout.
-3. User requests early access for Pro or Studio.
-4. `/api/early-access` verifies the Supabase user and persists the request.
-5. User can see their early-access status in account surfaces.
-6. Internal admins can see early-access demand in admin surfaces.
+2. Pro and Studio show Razorpay checkout CTAs.
+3. User clicks `Pay with Razorpay`.
+4. `/api/razorpay/checkout` verifies the Supabase user and creates a Razorpay subscription.
+5. Razorpay Checkout returns payment fields to the browser.
+6. `/api/razorpay/verify` verifies the signature before updating subscription state.
+7. Razorpay webhooks keep later subscription status changes in sync.
 
 ## Create Support Ticket
 

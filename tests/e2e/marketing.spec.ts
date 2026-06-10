@@ -7,6 +7,7 @@ test.describe("marketing surface", () => {
     await page.goto("/");
 
     const nav = page.locator("nav").first();
+    const initialNavBox = await nav.boundingBox();
     const navClassName = await nav.getAttribute("class");
     expect(navClassName).toContain("motioncode-march-nav");
     expect(navClassName).toMatch(/\brounded-/);
@@ -39,6 +40,7 @@ test.describe("marketing surface", () => {
     await expect(
       nav.getByRole("link", { name: /Try Free/i }),
     ).toHaveAttribute("href", "/app");
+    await expect(page.locator('a[href="/examples"]')).toHaveCount(0);
 
     const hero = page.locator("section").first();
 
@@ -77,18 +79,18 @@ test.describe("marketing surface", () => {
     await expect(pricing.getByRole("heading", { name: /^Preview$/i })).toBeVisible();
     await expect(pricing.getByRole("heading", { name: /^Pro$/i })).toBeVisible();
     await expect(pricing.getByRole("heading", { name: /^Studio$/i })).toBeVisible();
-    await expect(pricing.getByTestId("price-preview")).toContainText("$0");
-    await expect(pricing.getByTestId("price-pro")).toContainText("Early");
-    await expect(pricing.getByTestId("price-studio")).toContainText("Early");
+    await expect(pricing.getByTestId("price-preview")).toContainText("₹0");
+    await expect(pricing.getByTestId("price-pro")).toContainText("₹100");
+    await expect(pricing.getByTestId("price-studio")).toContainText("₹500");
     await expect(pricing.getByTestId("price-pro")).toHaveCSS(
       "animation-name",
       /price/i,
     );
-    await expect(pricing.getByText("Priority beta queue")).toBeVisible();
-    await expect(pricing.getByText("Shared team interest list")).toBeVisible();
+    await expect(pricing.getByText("Priority analysis queue")).toBeVisible();
+    await expect(pricing.getByText("Team workspaces")).toBeVisible();
     await expect(
-      pricing.getByRole("link", { name: /Join Pro early access/i }),
-    ).toHaveAttribute("href", "/pricing");
+      pricing.getByRole("button", { name: /Pay with Razorpay/i }).first(),
+    ).toBeVisible();
 
     const proCard = pricing.getByTestId("pricing-card-pro");
     await proCard.hover();
@@ -96,6 +98,13 @@ test.describe("marketing surface", () => {
 
     const finalCta = page.getByTestId("final-cta");
     await expect(finalCta.getByRole("heading", { name: /Start converting/i })).toBeVisible();
+
+    const scrolledNavBox = await nav.boundingBox();
+    expect(initialNavBox).not.toBeNull();
+    expect(scrolledNavBox).not.toBeNull();
+    expect(
+      Math.abs((scrolledNavBox?.height ?? 0) - (initialNavBox?.height ?? 0)),
+    ).toBeLessThanOrEqual(2);
 
     const sectionOrder = await page.evaluate(() => {
       const pricingTop = document.querySelector("#pricing")?.getBoundingClientRect().top ?? 0;
@@ -111,8 +120,10 @@ test.describe("marketing surface", () => {
     await page.goto("/");
 
     const logoStrip = page.getByTestId("logo-strip");
+    const marquee = logoStrip.locator(".motioncode-logo-marquee");
     const logos = logoStrip.locator("img");
     expect(await logos.count()).toBeGreaterThanOrEqual(8);
+    await expect(marquee).toHaveCSS("animation-play-state", "running");
 
     for (const brand of [
       "Vercel",
@@ -128,6 +139,9 @@ test.describe("marketing surface", () => {
       await expect(logo).toBeVisible();
       await expect(logo).toHaveAttribute("src", /cdn\.simpleicons\.org/);
     }
+
+    await logoStrip.hover();
+    await expect(marquee).toHaveCSS("animation-play-state", "paused");
 
     const footer = page.locator("footer");
     await expect(footer.getByText("MotionCode").first()).toBeVisible();
@@ -145,9 +159,8 @@ test.describe("marketing surface", () => {
     ).toHaveCSS("color", "rgb(255, 251, 244)");
   });
 
-  test("examples, support, privacy, and terms routes render", async ({ page }) => {
+  test("support, privacy, and terms routes render and examples is removed", async ({ page }) => {
     const routes = [
-      { path: "/examples", heading: /Sample motion specs and starter code/i },
       { path: "/support", heading: /Sign in required/i },
       { path: "/privacy", heading: /^Privacy$/i },
       { path: "/terms", heading: /^Terms$/i },
@@ -159,6 +172,11 @@ test.describe("marketing surface", () => {
         page.getByRole("heading", { name: route.heading }),
       ).toBeVisible();
     }
+
+    await page.goto("/examples");
+    await expect(
+      page.getByRole("heading", { name: /This page is not available/i }),
+    ).toBeVisible();
   });
 
   test("landing hero includes an interactive motion lab preview", async ({

@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const primaryLinks = [
-  { href: "/examples", label: "Examples" },
+  { href: "/#features", label: "Features" },
   { href: "/pricing", label: "Pricing" },
   { href: "/support", label: "Support" },
 ];
@@ -11,7 +11,7 @@ const footerGroups = [
     title: "Product",
     links: [
       { href: "/app", label: "Converter" },
-      { href: "/examples", label: "Examples" },
+      { href: "/#features", label: "Features" },
       { href: "/pricing", label: "Pricing" },
       { href: "/support", label: "Support" },
     ],

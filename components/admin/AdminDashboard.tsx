@@ -1,4 +1,4 @@
-import { Activity, LifeBuoy, Sparkles, Timer, Users } from "lucide-react";
+import { Activity, LifeBuoy, Timer, Users } from "lucide-react";
 
 import type { AdminDashboardDTO } from "@/lib/contracts/adminSupport";
 import { AdminSupportTickets } from "@/components/admin/AdminSupportTickets";
@@ -12,11 +12,9 @@ export function AdminDashboard({
   currentAdminId,
   dashboard,
 }: AdminDashboardProps) {
-  const recentEarlyAccessSignups = dashboard.recentEarlyAccessSignups ?? [];
-
   return (
     <div className="flex flex-col gap-6">
-      <section className="grid gap-3 md:grid-cols-4">
+      <section className="grid gap-3 md:grid-cols-3">
         <MetricCard
           icon={<LifeBuoy className="size-4" aria-hidden="true" />}
           label="Open Tickets"
@@ -31,11 +29,6 @@ export function AdminDashboard({
           icon={<Users className="size-4" aria-hidden="true" />}
           label="Users"
           value={dashboard.counts.users}
-        />
-        <MetricCard
-          icon={<Sparkles className="size-4" aria-hidden="true" />}
-          label="Early Access Requests"
-          value={dashboard.counts.earlyAccessRequests}
         />
       </section>
 
@@ -97,37 +90,6 @@ export function AdminDashboard({
         </div>
       </section>
 
-      <section className="rounded-lg border border-[var(--border)] bg-[#151913]">
-        <div className="flex items-center gap-2 border-b border-[var(--border)] p-4">
-          <Sparkles className="size-4 text-[#8fd6ff]" aria-hidden="true" />
-          <h2 className="text-lg font-semibold">Recent Early Access</h2>
-        </div>
-        <div className="divide-y divide-[var(--border)]">
-          {recentEarlyAccessSignups.map((signup) => (
-            <div
-              className="flex flex-wrap items-center justify-between gap-3 p-4 text-sm"
-              key={`${signup.userId}-${signup.desiredPlan}`}
-            >
-              <div className="min-w-0">
-                <p className="truncate font-medium text-[var(--text)]">
-                  {signup.email ?? signup.userId}
-                </p>
-                <p className="font-mono text-xs uppercase text-[#8fd6ff]">
-                  {signup.desiredPlan} / {signup.status}
-                </p>
-              </div>
-              <span className="text-xs text-[#b9c0ba]">
-                {formatDate(signup.createdAt)}
-              </span>
-            </div>
-          ))}
-          {recentEarlyAccessSignups.length === 0 ? (
-            <div className="p-4 text-sm text-[#b9c0ba]">
-              No early access requests yet.
-            </div>
-          ) : null}
-        </div>
-      </section>
     </div>
   );
 }

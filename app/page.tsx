@@ -6,6 +6,7 @@ import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Aurora, Magnet } from "@/components/react-bits";
+import { CheckoutButton } from "@/app/pricing/CheckoutButton";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -81,11 +82,30 @@ const LOGO_BRANDS = [
   { name: "Resend", icon: "resend" },
 ];
 
-const PRICING_TIERS = [
+type LandingPricingTierBase = {
+  cta: string;
+  description: string;
+  featured?: boolean;
+  features: string[];
+  name: string;
+  period: string;
+  price: string;
+};
+
+type LandingPricingTier =
+  | (LandingPricingTierBase & {
+      href: string;
+      id: "preview";
+    })
+  | (LandingPricingTierBase & {
+      id: "pro" | "studio";
+    });
+
+const PRICING_TIERS: LandingPricingTier[] = [
   {
     id: "preview",
     name: "Preview",
-    price: "$0",
+    price: "₹0",
     period: "during beta",
     description: "Explore the converter, inspect generated snippets, and validate short UI motion references.",
     features: ["10 analyses per month", "CSS and GSAP draft output", "Community support"],
@@ -95,23 +115,21 @@ const PRICING_TIERS = [
   {
     id: "pro",
     name: "Pro",
-    price: "Early",
-    period: "access",
-    description: "For beta users who want priority access when Pro opens.",
-    features: ["Priority beta queue", "Gemini-only analysis during beta", "CSS, GSAP, and Framer Motion bundles", "Launch offer lock-in"],
-    cta: "Join Pro early access",
-    href: "/pricing",
+    price: "₹100",
+    period: "/ month",
+    description: "For individual production motion work.",
+    features: ["Priority analysis queue", "CSS, GSAP, and Framer Motion bundles", "Saved projects", "Email support"],
+    cta: "Pay with Razorpay",
     featured: true,
   },
   {
     id: "studio",
     name: "Studio",
-    price: "Early",
-    period: "access",
-    description: "For teams that want first access to Studio workflows.",
-    features: ["Shared team interest list", "Private motion library preview", "Design token mapping discovery", "Concierge onboarding when Studio opens"],
-    cta: "Join Studio early access",
-    href: "/pricing",
+    price: "₹500",
+    period: "/ month",
+    description: "For teams managing shared animation systems.",
+    features: ["Team workspaces", "Private motion library", "Design token mapping", "Priority support"],
+    cta: "Pay with Razorpay",
   },
 ];
 
@@ -204,7 +222,6 @@ export default function LandingPage() {
 
       if (viewportWidth < 768) {
         nav.style.setProperty("--motioncode-nav-width", "calc(100vw - 28px)");
-        nav.style.setProperty("--motioncode-nav-height", "58px");
         nav.style.setProperty("--motioncode-nav-density", "0");
         return;
       }
@@ -240,14 +257,9 @@ export default function LandingPage() {
         expandedWidth,
         compactedWidth + sectionExpansion * 72,
       );
-      const height = 56 - heroProgress * 7 + sectionExpansion * 3;
       const density = clamp(heroProgress - sectionExpansion * 0.35, 0, 1);
 
       nav.style.setProperty("--motioncode-nav-width", `${Math.round(width)}px`);
-      nav.style.setProperty(
-        "--motioncode-nav-height",
-        `${Math.round(height)}px`,
-      );
       nav.style.setProperty("--motioncode-nav-density", density.toFixed(3));
     };
 
@@ -258,8 +270,13 @@ export default function LandingPage() {
 
     updateNavShape();
     const navScrollTrigger = ScrollTrigger.create({
-      start: 0,
-      end: "max",
+      trigger: document.documentElement,
+      start: "top top",
+      end: () =>
+        `+=${Math.max(
+          1,
+          document.documentElement.scrollHeight - window.innerHeight,
+        )}`,
       onUpdate: requestNavShapeUpdate,
     });
     window.addEventListener("resize", requestNavShapeUpdate);
@@ -573,6 +590,9 @@ export default function LandingPage() {
             wrapperClassName="motioncode-nav-brand-magnet"
           >
             <Link href="/" className="motioncode-nav-brand">
+              <span className="motioncode-nav-brand-glyph" aria-hidden="true">
+                ⟨/⟩
+              </span>
               <span className="motioncode-nav-brand-text">MotionCode</span>
             </Link>
           </Magnet>
@@ -1093,14 +1113,18 @@ export default function LandingPage() {
         <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "var(--muted)", letterSpacing: "3px", whiteSpace: "nowrap", marginBottom: "18px", opacity: 0.6 }}>
           TRUSTED BY DEVELOPERS AT
         </div>
-        <div className="flex whitespace-nowrap marquee-scroll w-full">
+        <div className="motioncode-logo-marquee">
           {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="motioncode-logo-track flex" style={{ gap: "56px", paddingRight: "56px" }}>
+            <div
+              key={i}
+              className="motioncode-logo-track"
+              aria-hidden={i === 1 ? true : undefined}
+            >
               {LOGO_BRANDS.map(brand => (
                 <span key={`${i}-${brand.name}`} className="motioncode-logo-mark">
                   <img
                     src={`https://cdn.simpleicons.org/${brand.icon}/D8CFBC`}
-                    alt={`${brand.name} logo`}
+                    alt={i === 0 ? `${brand.name} logo` : ""}
                     className="motioncode-logo-img"
                     loading="lazy"
                   />
@@ -1265,9 +1289,15 @@ export default function LandingPage() {
                   <li key={feature}>{feature}</li>
                 ))}
               </ul>
-              <Link href={tier.href} className="motioncode-pricing-cta">
-                {tier.cta} →
-              </Link>
+              {tier.id === "preview" ? (
+                <Link href={tier.href} className="motioncode-pricing-cta">
+                  {tier.cta} →
+                </Link>
+              ) : (
+                <div className="motioncode-pricing-checkout">
+                  <CheckoutButton planTier={tier.id} />
+                </div>
+              )}
             </article>
           ))}
         </div>
@@ -1309,7 +1339,7 @@ export default function LandingPage() {
               {[
                 ["Converter", "/app"],
                 ["Pricing", "#pricing"],
-                ["Examples", "/examples"],
+                ["Features", "#features"],
                 ["Support", "/support"],
               ].map(([label, href]) => (
                 <Link key={label} href={href} className="motioncode-footer-link">

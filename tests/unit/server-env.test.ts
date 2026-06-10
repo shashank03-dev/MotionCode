@@ -56,6 +56,18 @@ describe("server env loader", () => {
     expect(() => getServerEnv()).toThrow("Missing SUPABASE_SERVICE_ROLE_KEY");
   });
 
+  it("does not require Gemini when initializing trusted Supabase writes", async () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://motioncode.supabase.co";
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "server-only-placeholder";
+    delete process.env.GEMINI_API_KEY;
+
+    const { createTrustedSupabaseServerClient } = await import(
+      "@/lib/server/audit"
+    );
+
+    expect(() => createTrustedSupabaseServerClient()).not.toThrow();
+  });
+
   it("returns validated Razorpay billing env values", async () => {
     process.env.RAZORPAY_KEY_ID = "rzp_test_motioncode";
     process.env.RAZORPAY_KEY_SECRET = "razorpay_secret";
@@ -119,6 +131,24 @@ describe("server env loader", () => {
     expect(() => getRazorpayBillingEnv()).toThrow(
       "paid checkout requires live keys",
     );
+  });
+
+  it("allows Razorpay test keys only for explicit test checkout", async () => {
+    process.env.MOTIONCODE_LAUNCH_PHASE = "beta";
+    process.env.MOTIONCODE_ENABLE_PAID_CHECKOUT = "true";
+    process.env.MOTIONCODE_ENABLE_RAZORPAY_TEST_CHECKOUT = "true";
+    process.env.RAZORPAY_KEY_ID = "rzp_test_motioncode";
+    process.env.RAZORPAY_KEY_SECRET = "razorpay_secret";
+    process.env.RAZORPAY_PRO_PLAN_ID = "plan_pro";
+    process.env.RAZORPAY_STUDIO_PLAN_ID = "plan_studio";
+    process.env.RAZORPAY_SUBSCRIPTION_TOTAL_COUNT = "120";
+    process.env.RAZORPAY_WEBHOOK_SECRET = "whsec_razorpay";
+
+    const { getRazorpayBillingEnv } = await import("@/lib/server/env");
+
+    expect(getRazorpayBillingEnv()).toMatchObject({
+      keyId: "rzp_test_motioncode",
+    });
   });
 
   it("requires distinct Razorpay plan IDs", async () => {

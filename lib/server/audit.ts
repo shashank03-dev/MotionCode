@@ -4,7 +4,10 @@ import type { PlanTier } from "@/lib/contracts/plans";
 import type { Json } from "@/types/database";
 
 import { ApiError } from "./apiErrors";
-import { getServerEnv, type ServerEnv } from "./env";
+import {
+  getSupabaseAdminConfig,
+  type SupabaseAdminConfig,
+} from "./supabaseAdmin";
 
 export type AuditEventInput = {
   actorId: string | null;
@@ -38,10 +41,7 @@ export type UsageEventRecorder = {
   record: (event: UsageEventInput) => Promise<void>;
 };
 
-type TrustedSupabaseConfig = Pick<
-  ServerEnv,
-  "supabaseServiceRoleKey" | "supabaseUrl"
->;
+type TrustedSupabaseConfig = SupabaseAdminConfig;
 
 type SupabaseInsertResult = {
   error: { message?: string } | null;
@@ -140,7 +140,7 @@ export function createNoopUsageEventRecorder(): UsageEventRecorder {
 }
 
 export function createTrustedSupabaseServerClient(
-  env: TrustedSupabaseConfig = getServerEnv(),
+  env: TrustedSupabaseConfig = getSupabaseAdminConfig(),
 ): SupabaseUsageClient {
   return createClient(env.supabaseUrl, env.supabaseServiceRoleKey, {
     auth: {

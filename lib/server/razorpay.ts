@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-import { isPaidCheckoutEnabled } from "@/lib/contracts/launch";
+import { canTrustPaidBillingEntitlements } from "@/lib/contracts/launch";
 import { PLAN_TIERS, type PlanTier } from "@/lib/contracts/plans";
 
 import { apiError, apiSuccess, ApiError } from "./apiErrors";
@@ -432,7 +432,7 @@ async function syncRazorpaySubscription(
   const notesOnlyPlanTier = notesPlanTier(subscription);
   const billingPlanTier = trustedBillingPlanTier ?? "free";
   const trustedPlanTier = RAZORPAY_PAID_STATUSES.has(razorpayStatus) &&
-    isPaidCheckoutEnabled() &&
+    canTrustPaidBillingEntitlements() &&
     trustedBillingPlanTier
     ? billingPlanTier
     : "free";

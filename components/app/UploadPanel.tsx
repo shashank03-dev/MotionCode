@@ -352,7 +352,7 @@ export function UploadPanel({
                   textDecoration: "none",
                 }}
               >
-                Join early access
+                View paid plans
               </Link>
             </div>
           )}
@@ -373,7 +373,7 @@ export function UploadPanel({
               fontSize: 11,
             }}
           >
-            Early access analysis enabled.
+            Extended analysis enabled.
           </div>
         </div>
       )}

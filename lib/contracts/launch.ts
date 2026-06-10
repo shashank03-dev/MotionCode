@@ -8,14 +8,26 @@ export function getLaunchPhase(env: EnvLike = process.env): LaunchPhase {
   return env.MOTIONCODE_LAUNCH_PHASE === "paid" ? "paid" : "beta";
 }
 
-export function isEarlyAccessEnabled(env: EnvLike = process.env) {
+export function isBetaInternalTestingEnabled(env: EnvLike = process.env) {
   return getLaunchPhase(env) === "beta";
 }
 
 export function isPaidCheckoutEnabled(env: EnvLike = process.env) {
   return (
+    env.MOTIONCODE_ENABLE_PAID_CHECKOUT === "true" &&
+    (getLaunchPhase(env) === "paid" || isRazorpayTestCheckoutEnabled(env))
+  );
+}
+
+export function isRazorpayTestCheckoutEnabled(env: EnvLike = process.env) {
+  return env.MOTIONCODE_ENABLE_RAZORPAY_TEST_CHECKOUT === "true";
+}
+
+export function canTrustPaidBillingEntitlements(env: EnvLike = process.env) {
+  return (
     getLaunchPhase(env) === "paid" &&
-    env.MOTIONCODE_ENABLE_PAID_CHECKOUT === "true"
+    env.MOTIONCODE_ENABLE_PAID_CHECKOUT === "true" &&
+    !isRazorpayTestCheckoutEnabled(env)
   );
 }
 

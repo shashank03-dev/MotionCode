@@ -1,5 +1,4 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { createElement } from "react";
 import { describe, expect, it, vi, afterEach } from "vitest";
 
 const ORIGINAL_ENV = { ...process.env };
@@ -10,7 +9,6 @@ afterEach(() => {
   vi.restoreAllMocks();
   vi.doUnmock("@/lib/supabase/server");
   vi.doUnmock("@/lib/server/entitlements");
-  vi.doUnmock("@/lib/server/earlyAccessAdmin");
   vi.doUnmock("next/navigation");
 });
 
@@ -62,8 +60,8 @@ describe("dashboard page route protection", () => {
   });
 });
 
-describe("account page early access status", () => {
-  it("shows the signed-in user's early access requests", async () => {
+describe("account page paid plans status", () => {
+  it("shows Razorpay upgrade guidance instead of signup queue requests", async () => {
     vi.doMock("@/lib/supabase/server", () => ({
       getCurrentUser: vi.fn(async () => ({
         email: "founder@example.com",
@@ -94,48 +92,14 @@ describe("account page early access status", () => {
         },
       })),
     }));
-    vi.doMock("@/lib/server/earlyAccessAdmin", () => ({
-      getEarlyAccessForUser: vi.fn(async () => [
-        {
-          createdAt: "2026-06-08T12:00:00.000Z",
-          desiredPlan: "pro",
-          status: "requested",
-        },
-      ]),
-    }));
-
     const { default: AccountPage } = await import("@/app/account/page");
     const renderedHtml = renderToStaticMarkup(
       await AccountPage({ searchParams: Promise.resolve({}) }),
     );
 
-    expect(renderedHtml).toContain("Early access");
-    expect(renderedHtml).toContain("Pro");
-    expect(renderedHtml).toContain("Requested");
-  });
-});
-
-describe("admin dashboard early access metric", () => {
-  it("shows early access request volume", async () => {
-    const { AdminDashboard } = await import("@/components/admin/AdminDashboard");
-    const renderedHtml = renderToStaticMarkup(
-      createElement(AdminDashboard, {
-        currentAdminId: "admin_123",
-        dashboard: {
-          counts: {
-            earlyAccessRequests: 4,
-            openTickets: 1,
-            pendingTickets: 2,
-            users: 3,
-          },
-          recentAuditEvents: [],
-          recentTickets: [],
-          recentUsers: [],
-        } as never,
-      }),
-    );
-
-    expect(renderedHtml).toContain("Early Access Requests");
-    expect(renderedHtml).toContain("4");
+    expect(renderedHtml).toContain("Upgrade");
+    expect(renderedHtml).toContain("Razorpay Checkout");
+    expect(renderedHtml).toContain("View paid plans");
+    expect(renderedHtml).not.toContain("Early access");
   });
 });

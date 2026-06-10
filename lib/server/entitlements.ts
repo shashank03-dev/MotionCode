@@ -3,7 +3,10 @@ import {
   type PlanEntitlements,
   type PlanTier,
 } from "@/lib/contracts/plans";
-import { isEarlyAccessEnabled, isPaidCheckoutEnabled } from "@/lib/contracts/launch";
+import {
+  canTrustPaidBillingEntitlements,
+  isBetaInternalTestingEnabled,
+} from "@/lib/contracts/launch";
 
 import { ApiError } from "./apiErrors";
 import { createTrustedSupabaseServerClient } from "./audit";
@@ -178,7 +181,7 @@ function resolveTrustedPlanTier({
       subscription.razorpay_subscription_id.length > 0 &&
       subscription.status &&
       ACTIVE_SUBSCRIPTION_STATUSES.has(subscription.status) &&
-      isPaidCheckoutEnabled()
+      canTrustPaidBillingEntitlements()
     ) {
       return { planTier: subscription.plan_tier, source: "subscription" };
     }
@@ -241,7 +244,7 @@ function isTrustedPaidSubscriptionRow(row: SubscriptionEntitlementRow) {
     row.razorpay_subscription_id.length > 0 &&
     typeof row.status === "string" &&
     ACTIVE_SUBSCRIPTION_STATUSES.has(row.status) &&
-    isPaidCheckoutEnabled()
+    canTrustPaidBillingEntitlements()
   );
 }
 
@@ -258,7 +261,7 @@ function resolveEffectiveEntitlements({
 
   if (
     planTier !== "free" ||
-    !isEarlyAccessEnabled() ||
+    !isBetaInternalTestingEnabled() ||
     !isInternalBetaTester({ profile, userId })
   ) {
     return entitlements;
