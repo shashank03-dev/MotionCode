@@ -21,7 +21,7 @@ export type PlanEntitlements = {
 export const PLAN_ENTITLEMENTS: Record<PlanTier, PlanEntitlements> = {
   free: {
     tier: "free",
-    dailyAnalyses: 3,
+    dailyAnalyses: 1,
     maxFramesPerAnalysis: 6,
     maxUploadBytes: 25 * 1024 * 1024,
     allowedModels: ["gemini-2.5-flash"],

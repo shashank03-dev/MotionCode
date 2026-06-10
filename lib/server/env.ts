@@ -7,6 +7,29 @@ const ServerEnvSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
 });
 
+const RazorpayBillingEnvSchema = z.object({
+  RAZORPAY_KEY_ID: z.string()
+    .regex(/^rzp_(test|live)_[A-Za-z0-9_]+$/)
+    .refine(isNotPlaceholder),
+  RAZORPAY_KEY_SECRET: z.string().min(8).refine(isNotPlaceholder),
+  RAZORPAY_PRO_PLAN_ID: z.string()
+    .regex(/^plan_[A-Za-z0-9_]+$/)
+    .refine(isNotPlaceholder),
+  RAZORPAY_STUDIO_PLAN_ID: z.string()
+    .regex(/^plan_[A-Za-z0-9_]+$/)
+    .refine(isNotPlaceholder),
+  RAZORPAY_SUBSCRIPTION_TOTAL_COUNT: z.coerce.number().int().positive(),
+  RAZORPAY_WEBHOOK_SECRET: z.string().min(8).refine(isNotPlaceholder),
+}).superRefine((value, context) => {
+  if (value.RAZORPAY_PRO_PLAN_ID === value.RAZORPAY_STUDIO_PLAN_ID) {
+    context.addIssue({
+      code: "custom",
+      message: "Pro and Studio Razorpay plans must be distinct.",
+      path: ["RAZORPAY_STUDIO_PLAN_ID"],
+    });
+  }
+});
+
 export type ServerEnv = {
   geminiApiKey: string;
   supabasePublishableKey: string;
@@ -14,11 +37,29 @@ export type ServerEnv = {
   supabaseUrl: string;
 };
 
+export type RazorpayBillingEnv = {
+  keyId: string;
+  keySecret: string;
+  proPlanId: string;
+  studioPlanId: string;
+  subscriptionTotalCount: number;
+  webhookSecret: string;
+};
+
 const REQUIRED_ENV_KEYS = [
   "GEMINI_API_KEY",
   "NEXT_PUBLIC_SUPABASE_ANON_KEY",
   "NEXT_PUBLIC_SUPABASE_URL",
   "SUPABASE_SERVICE_ROLE_KEY",
+] as const;
+
+const REQUIRED_RAZORPAY_ENV_KEYS = [
+  "RAZORPAY_KEY_ID",
+  "RAZORPAY_KEY_SECRET",
+  "RAZORPAY_PRO_PLAN_ID",
+  "RAZORPAY_STUDIO_PLAN_ID",
+  "RAZORPAY_SUBSCRIPTION_TOTAL_COUNT",
+  "RAZORPAY_WEBHOOK_SECRET",
 ] as const;
 
 export function getServerEnv(env: NodeJS.ProcessEnv = process.env): ServerEnv {
@@ -41,4 +82,42 @@ export function getServerEnv(env: NodeJS.ProcessEnv = process.env): ServerEnv {
     supabaseServiceRoleKey: parsed.data.SUPABASE_SERVICE_ROLE_KEY,
     supabaseUrl: parsed.data.NEXT_PUBLIC_SUPABASE_URL,
   };
+}
+
+export function getRazorpayBillingEnv(
+  env: NodeJS.ProcessEnv = process.env,
+): RazorpayBillingEnv {
+  for (const key of REQUIRED_RAZORPAY_ENV_KEYS) {
+    if (!env[key]) {
+      throw new Error(`Missing ${key}`);
+    }
+  }
+
+  const parsed = RazorpayBillingEnvSchema.safeParse(env);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const key = issue?.path.join(".") || "Razorpay billing env";
+    throw new Error(`Invalid ${key}: ${issue?.message ?? "unknown error"}`);
+  }
+
+  if (
+    env.MOTIONCODE_LAUNCH_PHASE === "paid" &&
+    env.MOTIONCODE_ENABLE_PAID_CHECKOUT === "true" &&
+    !parsed.data.RAZORPAY_KEY_ID.startsWith("rzp_live_")
+  ) {
+    throw new Error("Invalid RAZORPAY_KEY_ID: paid checkout requires live keys");
+  }
+
+  return {
+    keyId: parsed.data.RAZORPAY_KEY_ID,
+    keySecret: parsed.data.RAZORPAY_KEY_SECRET,
+    proPlanId: parsed.data.RAZORPAY_PRO_PLAN_ID,
+    studioPlanId: parsed.data.RAZORPAY_STUDIO_PLAN_ID,
+    subscriptionTotalCount: parsed.data.RAZORPAY_SUBSCRIPTION_TOTAL_COUNT,
+    webhookSecret: parsed.data.RAZORPAY_WEBHOOK_SECRET,
+  };
+}
+
+function isNotPlaceholder(value: string) {
+  return !/(^your[-_])|[_-]your[_-]|placeholder|replace|example/i.test(value);
 }

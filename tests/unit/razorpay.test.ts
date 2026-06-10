@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ApiResponse } from "@/lib/contracts/errors";
 import type { RazorpayWebhookSupabaseClient } from "@/lib/server/razorpay";
@@ -14,7 +14,7 @@ const ORIGINAL_ENV = { ...process.env };
 
 type Operation = {
   table: string;
-  type: "insert" | "select" | "update" | "upsert";
+  type: "delete" | "insert" | "select" | "update" | "upsert";
   values?: Record<string, unknown>;
   filters?: Record<string, unknown>;
 };
@@ -25,8 +25,36 @@ function createRazorpayClient(
   const operations: Operation[] = [];
   const client = {
     from: vi.fn((table: string) => ({
+      delete: vi.fn(() => {
+        const filters: Record<string, unknown> = {};
+        const filter = {
+          eq: vi.fn(async (column: string, value: unknown) => {
+            filters[column] = value;
+            operations.push({ filters, table, type: "delete" });
+            return { error: null };
+          }),
+        };
+
+        return filter;
+      }),
       insert: vi.fn(async (values: Record<string, unknown>) => {
         operations.push({ table, type: "insert", values });
+        if (
+          table === "billing_webhook_events" &&
+          (rowsByTable.billing_webhook_events ?? []).some(
+            (row) =>
+              row.provider === values.provider &&
+              row.event_id === values.event_id,
+          )
+        ) {
+          return {
+            error: {
+              code: "23505",
+              message: "duplicate key value violates unique constraint",
+            },
+          };
+        }
+
         return { error: null };
       }),
       select: vi.fn(() => {
@@ -73,6 +101,30 @@ function createRazorpayClient(
 function sign(message: string, secret: string) {
   return createHmac("sha256", secret).update(message).digest("hex");
 }
+
+function setRazorpayTestEnv(overrides: Partial<NodeJS.ProcessEnv> = {}) {
+  Object.assign(process.env, {
+    RAZORPAY_KEY_ID: "rzp_test_key",
+    RAZORPAY_KEY_SECRET: "rzp_test_secret",
+    RAZORPAY_PRO_PLAN_ID: "plan_pro",
+    RAZORPAY_STUDIO_PLAN_ID: "plan_studio",
+    RAZORPAY_SUBSCRIPTION_TOTAL_COUNT: "120",
+    RAZORPAY_WEBHOOK_SECRET: "whsec_razorpay",
+    ...overrides,
+  });
+}
+
+function enablePaidRazorpayCheckout() {
+  setRazorpayTestEnv({
+    MOTIONCODE_ENABLE_PAID_CHECKOUT: "true",
+    MOTIONCODE_LAUNCH_PHASE: "paid",
+    RAZORPAY_KEY_ID: "rzp_live_key",
+  });
+}
+
+beforeEach(() => {
+  setRazorpayTestEnv();
+});
 
 afterEach(() => {
   process.env = { ...ORIGINAL_ENV };
@@ -152,19 +204,22 @@ describe("Razorpay checkout creation", () => {
           plan_tier: "pro",
           razorpay_subscription_id: "sub_123",
           status: "incomplete",
-          stripe_customer_id: "razorpay_customer:sub_123",
-          stripe_subscription_id: "razorpay_subscription:sub_123",
           user_id: "user_123",
         }),
       }),
     );
+    const subscriptionUpsert = operations.find(
+      (operation) =>
+        operation.table === "subscriptions" && operation.type === "upsert",
+    );
+    expect(subscriptionUpsert?.values).not.toHaveProperty("stripe_customer_id");
+    expect(subscriptionUpsert?.values).not.toHaveProperty("stripe_subscription_id");
   });
 });
 
 describe("Razorpay checkout verification", () => {
   it("verifies the checkout signature against the trusted subscription and grants entitlements", async () => {
-    process.env.MOTIONCODE_LAUNCH_PHASE = "paid";
-    process.env.MOTIONCODE_ENABLE_PAID_CHECKOUT = "true";
+    enablePaidRazorpayCheckout();
     process.env.RAZORPAY_KEY_SECRET = "rzp_test_secret";
     const { client, operations } = createRazorpayClient({
       subscriptions: [
@@ -355,13 +410,25 @@ describe("Razorpay webhook route handler", () => {
     );
     expect(operations).toContainEqual(
       expect.objectContaining({
+        table: "subscriptions",
+        type: "upsert",
+        values: expect.objectContaining({
+          plan_tier: "free",
+          razorpay_subscription_id: "sub_123",
+          status: "active",
+        }),
+      }),
+    );
+    expect(operations).toContainEqual(
+      expect.objectContaining({
         table: "audit_events",
         type: "insert",
         values: expect.objectContaining({
           actor_id: "user_123",
           event_type: "billing.razorpay.subscription.activated",
           metadata: expect.objectContaining({
-            planTier: "pro",
+            notesPlanTier: "pro",
+            planTier: "free",
             profilePlanTier: "free",
             razorpayEventId: "evt_razorpay_active",
             razorpayStatus: "active",
@@ -370,6 +437,237 @@ describe("Razorpay webhook route handler", () => {
         }),
       }),
     );
+  });
+
+  it("uses Razorpay plan IDs ahead of subscription notes when resolving paid tier", async () => {
+    enablePaidRazorpayCheckout();
+    process.env.RAZORPAY_PRO_PLAN_ID = "plan_pro";
+    process.env.RAZORPAY_STUDIO_PLAN_ID = "plan_studio";
+    process.env.RAZORPAY_WEBHOOK_SECRET = "whsec_razorpay";
+    const { client, operations } = createRazorpayClient({});
+    const rawBody = JSON.stringify({
+      event: "subscription.activated",
+      payload: {
+        subscription: {
+          entity: {
+            current_end: 1_780_000_000,
+            customer_id: "cust_123",
+            id: "sub_123",
+            notes: { planTier: "studio", userId: "user_123" },
+            plan_id: "plan_pro",
+            status: "active",
+          },
+        },
+      },
+    });
+    const request = new Request("https://motioncode.test/api/razorpay/webhook", {
+      body: rawBody,
+      headers: {
+        "x-razorpay-event-id": "evt_razorpay_plan_id",
+        "x-razorpay-signature": sign(rawBody, "whsec_razorpay"),
+      },
+      method: "POST",
+    });
+
+    const response = await handleRazorpayWebhookRequest(request, { client });
+    const json = (await response.json()) as ApiResponse<{ received: true }>;
+
+    expect(response.status).toBe(200);
+    expect(json).toEqual({ data: { received: true }, ok: true });
+    expect(operations).toContainEqual(
+      expect.objectContaining({
+        table: "profiles",
+        type: "update",
+        values: expect.objectContaining({
+          plan_tier: "pro",
+          razorpay_customer_id: "cust_123",
+        }),
+      }),
+    );
+    expect(operations).toContainEqual(
+      expect.objectContaining({
+        table: "audit_events",
+        type: "insert",
+        values: expect.objectContaining({
+          metadata: expect.objectContaining({
+            planTier: "pro",
+            profilePlanTier: "pro",
+            razorpayEventId: "evt_razorpay_plan_id",
+          }),
+        }),
+      }),
+    );
+  });
+
+  it("does not grant paid entitlements from notes without a trusted plan source", async () => {
+    enablePaidRazorpayCheckout();
+    process.env.RAZORPAY_PRO_PLAN_ID = "plan_pro";
+    process.env.RAZORPAY_STUDIO_PLAN_ID = "plan_studio";
+    process.env.RAZORPAY_WEBHOOK_SECRET = "whsec_razorpay";
+    const { client, operations } = createRazorpayClient({});
+    const rawBody = JSON.stringify({
+      event: "subscription.activated",
+      payload: {
+        subscription: {
+          entity: {
+            current_end: 1_780_000_000,
+            customer_id: "cust_123",
+            id: "sub_untrusted",
+            notes: { planTier: "studio", userId: "user_123" },
+            status: "active",
+          },
+        },
+      },
+    });
+    const request = new Request("https://motioncode.test/api/razorpay/webhook", {
+      body: rawBody,
+      headers: {
+        "x-razorpay-event-id": "evt_razorpay_notes_only",
+        "x-razorpay-signature": sign(rawBody, "whsec_razorpay"),
+      },
+      method: "POST",
+    });
+
+    const response = await handleRazorpayWebhookRequest(request, { client });
+    const json = (await response.json()) as ApiResponse<{ received: true }>;
+
+    expect(response.status).toBe(200);
+    expect(json).toEqual({ data: { received: true }, ok: true });
+    expect(operations).toContainEqual(
+      expect.objectContaining({
+        table: "profiles",
+        type: "update",
+        values: expect.objectContaining({
+          plan_tier: "free",
+          razorpay_customer_id: "cust_123",
+        }),
+      }),
+    );
+    expect(operations).toContainEqual(
+      expect.objectContaining({
+        table: "audit_events",
+        type: "insert",
+        values: expect.objectContaining({
+          metadata: expect.objectContaining({
+            notesPlanTier: "studio",
+            planTier: "free",
+            profilePlanTier: "free",
+            razorpayEventId: "evt_razorpay_notes_only",
+          }),
+        }),
+      }),
+    );
+  });
+
+  it("skips duplicate webhook event IDs without syncing again", async () => {
+    process.env.RAZORPAY_WEBHOOK_SECRET = "whsec_razorpay";
+    const { client, operations } = createRazorpayClient({
+      billing_webhook_events: [
+        {
+          event_id: "evt_duplicate",
+          processed_at: "2026-06-10T10:00:00.000Z",
+          provider: "razorpay",
+        },
+      ],
+    });
+    const rawBody = JSON.stringify({
+      event: "subscription.activated",
+      payload: {
+        subscription: {
+          entity: {
+            id: "sub_123",
+            notes: { planTier: "pro", userId: "user_123" },
+            status: "active",
+          },
+        },
+      },
+    });
+    const request = new Request("https://motioncode.test/api/razorpay/webhook", {
+      body: rawBody,
+      headers: {
+        "x-razorpay-event-id": "evt_duplicate",
+        "x-razorpay-signature": sign(rawBody, "whsec_razorpay"),
+      },
+      method: "POST",
+    });
+
+    const response = await handleRazorpayWebhookRequest(request, { client });
+    const json = (await response.json()) as ApiResponse<{
+      duplicate: true;
+      received: true;
+    }>;
+
+    expect(response.status).toBe(200);
+    expect(json).toEqual({
+      data: { duplicate: true, received: true },
+      ok: true,
+    });
+    expect(
+      operations.some(
+        (operation) =>
+          operation.table === "profiles" && operation.type === "update",
+      ),
+    ).toBe(false);
+    expect(
+      operations.some(
+        (operation) =>
+          operation.table === "subscriptions" && operation.type === "upsert",
+      ),
+    ).toBe(false);
+  });
+
+  it("rejects duplicate webhook event IDs that are still being processed", async () => {
+    process.env.RAZORPAY_WEBHOOK_SECRET = "whsec_razorpay";
+    const { client, operations } = createRazorpayClient({
+      billing_webhook_events: [
+        {
+          event_id: "evt_pending",
+          processed_at: null,
+          provider: "razorpay",
+        },
+      ],
+    });
+    const rawBody = JSON.stringify({
+      event: "subscription.activated",
+      payload: {
+        subscription: {
+          entity: {
+            id: "sub_123",
+            notes: { planTier: "pro", userId: "user_123" },
+            status: "active",
+          },
+        },
+      },
+    });
+    const request = new Request("https://motioncode.test/api/razorpay/webhook", {
+      body: rawBody,
+      headers: {
+        "x-razorpay-event-id": "evt_pending",
+        "x-razorpay-signature": sign(rawBody, "whsec_razorpay"),
+      },
+      method: "POST",
+    });
+
+    const response = await handleRazorpayWebhookRequest(request, { client });
+    const json = (await response.json()) as ApiResponse<never>;
+
+    expect(response.status).toBe(409);
+    expect(json).toMatchObject({
+      code: "RATE_LIMITED",
+      ok: false,
+    });
+    expect(
+      operations.some(
+        (operation) =>
+          operation.table === "profiles" && operation.type === "update",
+      ),
+    ).toBe(false);
+    expect(
+      operations.some(
+        (operation) =>
+          operation.table === "subscriptions" && operation.type === "upsert",
+      ),
+    ).toBe(false);
   });
 
   it("rejects invalid webhook signatures without syncing", async () => {

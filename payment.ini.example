@@ -1,0 +1,22 @@
+; Payment and authorization placeholder checklist.
+; The Next.js runtime reads deployment environment variables, not this file.
+; Copy these names into .env.local, Vercel, or your secret manager.
+
+[launch]
+MOTIONCODE_LAUNCH_PHASE = beta
+MOTIONCODE_ENABLE_PAID_CHECKOUT = false
+MOTIONCODE_ENABLE_OPENAI_ANALYSIS = false
+NEXT_PUBLIC_SITE_URL = http://localhost:3000
+
+[supabase_auth]
+NEXT_PUBLIC_SUPABASE_URL = https://your-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY = your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY = your_supabase_service_role_key
+
+[razorpay]
+RAZORPAY_KEY_ID = rzp_test_your_key_id
+RAZORPAY_KEY_SECRET = your_razorpay_key_secret
+RAZORPAY_WEBHOOK_SECRET = your_razorpay_webhook_secret
+RAZORPAY_PRO_PLAN_ID = plan_your_pro_plan_id
+RAZORPAY_STUDIO_PLAN_ID = plan_your_studio_plan_id
+RAZORPAY_SUBSCRIPTION_TOTAL_COUNT = 120

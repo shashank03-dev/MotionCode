@@ -11,6 +11,7 @@ The product surface is intentionally conservative: it links the app, examples, s
 - Public marketing page at `/`.
 - Motion analysis workspace at `/app`.
 - Server-side analysis endpoint at `/api/analyze` with Supabase auth, entitlement checks, abuse controls, Gemini-only beta analysis, usage events, and audit events.
+- Public free beta accounts are limited to one Gemini analysis per day. Internal admin or allowlisted testing accounts keep three analyses per day during beta.
 - Supabase data foundation for profiles, workspaces, projects, assets, analyses, generated outputs, billing records, early-access requests, support tickets, audit events, and admin plan overrides.
 - Pricing page with Pro and Studio early-access CTAs instead of paid checkout.
 - User support center at `/support` with ticket creation and account-scoped ticket history.
@@ -37,6 +38,8 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+Use `payment.ini.example` as an operator checklist for payment/auth placeholders. The app still reads runtime values from environment variables.
 
 ## Environment Variables
 
@@ -92,6 +95,7 @@ Paid checkout is disabled during free beta. Keep `MOTIONCODE_ENABLE_PAID_CHECKOU
 3. Keep `MOTIONCODE_ENABLE_OPENAI_ANALYSIS` `false` or unset during beta.
 4. Create and configure `OPENAI_API_KEY` only for paid-readiness validation. `/api/analyze` must not call OpenAI while beta gates are off.
 5. Browser-exposed AI keys are not part of the security model; do not create `NEXT_PUBLIC_` Gemini or OpenAI variables.
+6. Keep public free beta capacity at one analysis per user per day while using the Gemini free tier. Use `profiles.is_internal_admin`, `MOTIONCODE_INTERNAL_ADMIN_EMAILS`, or `MOTIONCODE_INTERNAL_ADMIN_USER_IDS` only for internal testing accounts that need three analyses per day.
 
 ## Test Commands
 

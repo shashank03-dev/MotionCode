@@ -3,10 +3,11 @@ import {
   type PlanEntitlements,
   type PlanTier,
 } from "@/lib/contracts/plans";
-import { isPaidCheckoutEnabled } from "@/lib/contracts/launch";
+import { isEarlyAccessEnabled, isPaidCheckoutEnabled } from "@/lib/contracts/launch";
 
 import { ApiError } from "./apiErrors";
 import { createTrustedSupabaseServerClient } from "./audit";
+import { isAllowlistedInternalAdmin } from "./internalAdmin";
 import {
   getActivePlanOverride,
   isPlanTier,
@@ -57,9 +58,9 @@ export type ProfileEntitlementRow = {
   display_name?: string | null;
   email?: string | null;
   id?: string;
+  is_internal_admin?: boolean | null;
   plan_tier?: unknown;
   razorpay_customer_id?: string | null;
-  stripe_customer_id?: string | null;
 };
 
 export type SubscriptionEntitlementRow = {
@@ -72,8 +73,6 @@ export type SubscriptionEntitlementRow = {
   razorpay_payment_id?: string | null;
   razorpay_subscription_id?: string | null;
   status?: string | null;
-  stripe_customer_id?: string | null;
-  stripe_subscription_id?: string | null;
   user_id?: string;
 };
 
@@ -103,6 +102,7 @@ const ACTIVE_SUBSCRIPTION_STATUSES = new Set([
   "past_due",
   "trialing",
 ]);
+const INTERNAL_BETA_FREE_DAILY_ANALYSES = 3;
 
 export async function resolvePlanTierForUser(
   user: CurrentUser,
@@ -127,7 +127,11 @@ export async function getEntitlementSummary(
       getDailyAnalysisUsage(client, userId, now),
     ]);
   const resolved = resolveTrustedPlanTier({ override, profile, subscription });
-  const entitlements = PLAN_ENTITLEMENTS[resolved.planTier];
+  const entitlements = resolveEffectiveEntitlements({
+    planTier: resolved.planTier,
+    profile,
+    userId,
+  });
 
   return {
     entitlements,
@@ -182,8 +186,8 @@ function resolveTrustedPlanTier({
     return { planTier: "free", source: "default" };
   }
 
-  if (profile && isPlanTier(profile.plan_tier)) {
-    return { planTier: profile.plan_tier, source: "profile" };
+  if (profile?.plan_tier === "free") {
+    return { planTier: "free", source: "profile" };
   }
 
   return { planTier: "free", source: "default" };
@@ -196,7 +200,7 @@ async function readProfile(
   const result = await client
     .from("profiles")
     .select(
-      "id,email,display_name,avatar_url,plan_tier,stripe_customer_id,razorpay_customer_id",
+      "id,email,display_name,avatar_url,plan_tier,is_internal_admin,razorpay_customer_id",
     )
     .eq("id", userId)
     .limit(1);
@@ -215,17 +219,87 @@ async function readLatestSubscription(
   const result = await client
     .from("subscriptions")
     .select(
-      "user_id,payment_provider,stripe_customer_id,stripe_subscription_id,razorpay_customer_id,razorpay_subscription_id,razorpay_payment_id,status,plan_tier,current_period_end,cancel_at_period_end,created_at",
+      "user_id,payment_provider,razorpay_customer_id,razorpay_subscription_id,razorpay_payment_id,status,plan_tier,current_period_end,cancel_at_period_end,created_at",
     )
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
-    .limit(1);
+    .limit(25);
 
   if (result.error) {
     throw new ApiError("INTERNAL_ERROR", "Failed to read subscription.");
   }
 
-  return (result.data?.[0] as SubscriptionEntitlementRow | undefined) ?? null;
+  const rows = (result.data ?? []) as SubscriptionEntitlementRow[];
+  return rows.find(isTrustedPaidSubscriptionRow) ?? rows[0] ?? null;
+}
+
+function isTrustedPaidSubscriptionRow(row: SubscriptionEntitlementRow) {
+  return (
+    isPlanTier(row.plan_tier) &&
+    row.payment_provider === "razorpay" &&
+    typeof row.razorpay_subscription_id === "string" &&
+    row.razorpay_subscription_id.length > 0 &&
+    typeof row.status === "string" &&
+    ACTIVE_SUBSCRIPTION_STATUSES.has(row.status) &&
+    isPaidCheckoutEnabled()
+  );
+}
+
+function resolveEffectiveEntitlements({
+  planTier,
+  profile,
+  userId,
+}: {
+  planTier: PlanTier;
+  profile: ProfileEntitlementRow | null;
+  userId: string;
+}): PlanEntitlements {
+  const entitlements = PLAN_ENTITLEMENTS[planTier];
+
+  if (
+    planTier !== "free" ||
+    !isEarlyAccessEnabled() ||
+    !isInternalBetaTester({ profile, userId })
+  ) {
+    return entitlements;
+  }
+
+  return {
+    ...entitlements,
+    dailyAnalyses: Math.max(
+      entitlements.dailyAnalyses,
+      INTERNAL_BETA_FREE_DAILY_ANALYSES,
+    ),
+  };
+}
+
+function isInternalBetaTester({
+  profile,
+  userId,
+}: {
+  profile: ProfileEntitlementRow | null;
+  userId: string;
+}) {
+  if (profile?.is_internal_admin) {
+    return true;
+  }
+
+  const allowlistProfile: Parameters<
+    typeof isAllowlistedInternalAdmin
+  >[0]["profile"] = profile
+    ? {
+        email: String(profile.email ?? ""),
+        id: profile.id ?? userId,
+      }
+    : null;
+
+  return isAllowlistedInternalAdmin({
+    profile: allowlistProfile,
+    user: {
+      email: profile?.email ?? undefined,
+      id: userId,
+    },
+  });
 }
 
 async function getDailyAnalysisUsage(

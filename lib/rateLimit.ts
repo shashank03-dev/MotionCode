@@ -36,12 +36,12 @@ export function incrementUsage(): void {
   }
 }
 
-export function canUseForFree(): boolean {
-  return getUsage().count < FREE_LIMIT
+export function canUseForFree(limit = FREE_LIMIT): boolean {
+  return getUsage().count < limit
 }
 
-export function usagesLeft(): number {
-  return Math.max(0, FREE_LIMIT - getUsage().count)
+export function usagesLeft(limit = FREE_LIMIT): number {
+  return Math.max(0, limit - getUsage().count)
 }
 
 function today(): string {

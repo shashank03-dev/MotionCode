@@ -12,14 +12,19 @@ import {
   authorizeAnalysisRequestWithSupabase,
   createSupabaseAuditRecorder,
   createSupabaseUsageEventRecorder,
-  getDailyAnalysisCountWithSupabase,
+  reserveDailyAnalysisUsageWithSupabase,
   type AnalysisAuthorizationDecision,
   type AuditRecorder,
+  type DailyAnalysisReservationInput,
   type UsageEventRecorder,
 } from "@/lib/server/audit";
 import { apiError, apiSuccess, ApiError, isApiError } from "@/lib/server/apiErrors";
 import { getDefaultAnalyzeAbuseGuard, type AnalyzeAbuseGuard } from "@/lib/server/abuse";
-import { resolvePlanTierForUser } from "@/lib/server/entitlements";
+import {
+  getEntitlementSummary as getEntitlementSummaryForUser,
+  resolvePlanTierForUser,
+  type EntitlementSummary,
+} from "@/lib/server/entitlements";
 import {
   AnalysisResultSchema,
   analyzeFramesWithGemini,
@@ -50,10 +55,10 @@ type CurrentUser = {
   id: string;
 };
 
-export type DailyAnalysisCountInput = {
-  since: Date;
-  userId: string;
-};
+type AnalyzeEntitlementSummary = Pick<
+  EntitlementSummary,
+  "entitlements" | "planTier"
+>;
 
 export type AnalyzeRouteDeps = {
   abuseGuard?: AnalyzeAbuseGuard;
@@ -65,11 +70,16 @@ export type AnalyzeRouteDeps = {
   generateAnalysis?: (input: GeminiAnalyzeInput) => Promise<GeminiAnalysis>;
   generateOpenAiAnalysis?: (input: OpenAIAnalyzeInput) => Promise<GeminiAnalysis>;
   getCurrentUser?: () => Promise<CurrentUser | null>;
-  getDailyAnalysisCount?: (input: DailyAnalysisCountInput) => Promise<number>;
+  getEntitlementSummary?: (
+    user: CurrentUser,
+  ) => Promise<AnalyzeEntitlementSummary>;
   getPlanTier?: (user: CurrentUser) => Promise<PlanTier>;
   idGenerator?: () => string;
   isOpenAiAnalysisEnabled?: () => boolean;
   now?: () => Date;
+  reserveDailyAnalysisUsage?: (
+    input: DailyAnalysisReservationInput,
+  ) => Promise<boolean>;
   usage?: UsageEventRecorder;
 };
 
@@ -148,8 +158,8 @@ export async function handleAnalyzeRequest(
   }
 
   const requestBody = parsed.data;
-  const planTier = await resolvedDeps.getPlanTier(user);
-  const entitlements = PLAN_ENTITLEMENTS[planTier];
+  const entitlementSummary = await resolvedDeps.getEntitlementSummary(user);
+  const { entitlements, planTier } = entitlementSummary;
 
   if (!entitlements.allowedModels.includes(requestBody.model)) {
     await observeAnalysis({
@@ -175,7 +185,6 @@ export async function handleAnalyzeRequest(
   });
 
   const preflight = await runPreflightChecks({
-    entitlements,
     requestBody,
     resolvedDeps,
     user,
@@ -223,29 +232,17 @@ export async function handleAnalyzeRequest(
     );
   }
 
-  try {
-    await resolvedDeps.usage.record({
-      eventType: "analysis.started",
-      frameCount: requestBody.frames.length,
-      model: analysisProvider.model,
-      planTier,
-      projectId: requestBody.projectId,
-      userId: user.id,
-      workspaceId: canonicalWorkspaceId,
-    });
-  } catch {
-    await observeAnalysis({
-      frameCount: requestBody.frames.length,
-      model: analysisProvider.model,
-      outcome: "failed",
-      planTier,
-      projectId: requestBody.projectId,
-      reason: "usage_reservation_failed",
-      userId: user.id,
-      workspaceId: canonicalWorkspaceId,
-    });
-
-    return apiError("INTERNAL_ERROR", "Failed to reserve analysis usage.");
+  const reservation = await reserveAnalysisUsage({
+    analysisProvider,
+    entitlements,
+    planTier,
+    requestBody,
+    resolvedDeps,
+    user,
+    workspaceId: canonicalWorkspaceId,
+  });
+  if (!reservation.ok) {
+    return reservation.response;
   }
 
   const analysisId = resolvedDeps.idGenerator();
@@ -361,14 +358,34 @@ function resolveAnalyzeDeps(
     generateOpenAiAnalysis:
       deps.generateOpenAiAnalysis ?? analyzeFramesWithOpenAI,
     getCurrentUser: deps.getCurrentUser ?? getSupabaseCurrentUser,
-    getDailyAnalysisCount:
-      deps.getDailyAnalysisCount ?? getDailyAnalysisCountWithSupabase,
+    getEntitlementSummary:
+      deps.getEntitlementSummary ?? createDefaultEntitlementSummaryResolver(deps),
     getPlanTier: deps.getPlanTier ?? resolvePlanTierForUser,
     idGenerator: deps.idGenerator ?? randomUUID,
     isOpenAiAnalysisEnabled:
       deps.isOpenAiAnalysisEnabled ?? (() => getOpenAiAnalysisGate()),
     now: deps.now ?? (() => new Date()),
+    reserveDailyAnalysisUsage:
+      deps.reserveDailyAnalysisUsage ?? reserveDailyAnalysisUsageWithSupabase,
     usage: deps.usage ?? createSupabaseUsageEventRecorder(),
+  };
+}
+
+function createDefaultEntitlementSummaryResolver(deps: AnalyzeRouteDeps) {
+  return async (user: CurrentUser): Promise<AnalyzeEntitlementSummary> => {
+    if (deps.getPlanTier) {
+      const planTier = await deps.getPlanTier(user);
+      return {
+        entitlements: PLAN_ENTITLEMENTS[planTier],
+        planTier,
+      };
+    }
+
+    const summary = await getEntitlementSummaryForUser(user.id);
+    return {
+      entitlements: summary.entitlements,
+      planTier: summary.planTier,
+    };
   };
 }
 
@@ -434,12 +451,10 @@ async function readBoundedBodyText(request: Request) {
 }
 
 async function runPreflightChecks({
-  entitlements,
   requestBody,
   resolvedDeps,
   user,
 }: {
-  entitlements: (typeof PLAN_ENTITLEMENTS)[PlanTier];
   requestBody: AnalyzeRequestBody;
   resolvedDeps: ResolvedAnalyzeRouteDeps;
   user: CurrentUser;
@@ -462,21 +477,6 @@ async function runPreflightChecks({
       };
     }
 
-    const dailyCount = await resolvedDeps.getDailyAnalysisCount({
-      since: startOfUtcDay(resolvedDeps.now()),
-      userId: user.id,
-    });
-
-    if (dailyCount >= entitlements.dailyAnalyses) {
-      return {
-        ok: false,
-        response: apiError(
-          "QUOTA_EXCEEDED",
-          `Your plan allows ${entitlements.dailyAnalyses} analyses per day.`,
-        ),
-      };
-    }
-
     return { ok: true, workspaceId: authorization.workspaceId };
   } catch (error) {
     const apiFailure = toApiError(
@@ -490,6 +490,77 @@ async function runPreflightChecks({
       response: apiError(apiFailure.code, apiFailure.message, {
         status: apiFailure.status,
       }),
+    };
+  }
+}
+
+async function reserveAnalysisUsage({
+  analysisProvider,
+  entitlements,
+  planTier,
+  requestBody,
+  resolvedDeps,
+  user,
+  workspaceId,
+}: {
+  analysisProvider: ResolvedAnalysisProvider;
+  entitlements: (typeof PLAN_ENTITLEMENTS)[PlanTier];
+  planTier: PlanTier;
+  requestBody: AnalyzeRequestBody;
+  resolvedDeps: ResolvedAnalyzeRouteDeps;
+  user: CurrentUser;
+  workspaceId: string | null;
+}): Promise<{ ok: true } | { ok: false; response: Response }> {
+  try {
+    const reserved = await resolvedDeps.reserveDailyAnalysisUsage({
+      dailyLimit: entitlements.dailyAnalyses,
+      eventType: "analysis.started",
+      frameCount: requestBody.frames.length,
+      model: analysisProvider.model,
+      planTier,
+      projectId: requestBody.projectId,
+      since: startOfUtcDay(resolvedDeps.now()),
+      userId: user.id,
+      workspaceId,
+    });
+
+    if (!reserved) {
+      await observeAnalysis({
+        frameCount: requestBody.frames.length,
+        model: analysisProvider.model,
+        outcome: "rejected",
+        planTier,
+        projectId: requestBody.projectId,
+        reason: "QUOTA_EXCEEDED",
+        userId: user.id,
+        workspaceId,
+      });
+
+      return {
+        ok: false,
+        response: apiError(
+          "QUOTA_EXCEEDED",
+          formatDailyAnalysisLimitMessage(entitlements.dailyAnalyses),
+        ),
+      };
+    }
+
+    return { ok: true };
+  } catch {
+    await observeAnalysis({
+      frameCount: requestBody.frames.length,
+      model: analysisProvider.model,
+      outcome: "failed",
+      planTier,
+      projectId: requestBody.projectId,
+      reason: "usage_reservation_failed",
+      userId: user.id,
+      workspaceId,
+    });
+
+    return {
+      ok: false,
+      response: apiError("INTERNAL_ERROR", "Failed to reserve analysis usage."),
     };
   }
 }
@@ -688,4 +759,9 @@ function retryHeaders(retryAfterMs: number | undefined): ResponseInit {
       "Retry-After": String(Math.ceil(retryAfterMs / 1000)),
     },
   };
+}
+
+function formatDailyAnalysisLimitMessage(limit: number) {
+  const noun = limit === 1 ? "analysis" : "analyses";
+  return `Your plan allows ${limit} ${noun} per day.`;
 }

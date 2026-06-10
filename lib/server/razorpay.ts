@@ -5,10 +5,11 @@ import { PLAN_TIERS, type PlanTier } from "@/lib/contracts/plans";
 
 import { apiError, apiSuccess, ApiError } from "./apiErrors";
 import { createTrustedSupabaseServerClient } from "./audit";
+import { getRazorpayBillingEnv } from "./env";
 import { observeBillingWebhook } from "./observability";
 
 type DbResult = {
-  error: { message?: string } | null;
+  error: { code?: string; message?: string } | null;
 };
 
 type DbSelectResult = DbResult & {
@@ -26,6 +27,9 @@ type RazorpayFilter = {
 
 export type RazorpayWebhookSupabaseClient = {
   from: (table: string) => {
+    delete: () => {
+      eq: (column: string, value: unknown) => PromiseLike<DbResult>;
+    };
     insert: (values: Record<string, unknown>) => PromiseLike<DbResult>;
     select: (columns?: string) => RazorpayFilter;
     update: (values: Record<string, unknown>) => {
@@ -105,7 +109,7 @@ export async function createRazorpayCheckoutSubscription(
   input: RazorpayCheckoutInput,
   deps: RazorpayDeps = {},
 ): Promise<RazorpayCheckoutPayload> {
-  const keyId = requireEnv("RAZORPAY_KEY_ID");
+  const billingEnv = getRazorpayBillingEnv();
   const subscription = await createRazorpaySubscription(input, deps.fetchRazorpay);
   const subscriptionId = getString(subscription.id);
 
@@ -130,10 +134,6 @@ export async function createRazorpayCheckoutSubscription(
     razorpay_payment_id: null,
     razorpay_subscription_id: subscriptionId,
     status,
-    stripe_customer_id: legacyBillingCustomerPlaceholder(
-      customerId ?? subscriptionId,
-    ),
-    stripe_subscription_id: legacyBillingSubscriptionPlaceholder(subscriptionId),
     user_id: input.userId,
   });
   await recordBillingAudit(client, {
@@ -151,7 +151,7 @@ export async function createRazorpayCheckoutSubscription(
 
   return {
     description: `${titleCase(input.planTier)} subscription`,
-    keyId,
+    keyId: billingEnv.keyId,
     name: "MotionCode",
     prefill: input.email ? { email: input.email } : {},
     subscriptionId,
@@ -177,7 +177,7 @@ export async function verifyRazorpayCheckoutPayment(
   if (
     !verifyRazorpayCheckoutSignature({
       paymentId: input.paymentId,
-      secret: requireEnv("RAZORPAY_KEY_SECRET"),
+      secret: getRazorpayBillingEnv().keySecret,
       signature: input.signature,
       subscriptionId: trustedSubscriptionId,
     })
@@ -217,7 +217,7 @@ export async function handleRazorpayWebhookRequest(
   const isValid = (deps.verifyWebhookSignature ?? verifyRazorpayWebhookSignature)(
     rawBody,
     signature,
-    requireEnv("RAZORPAY_WEBHOOK_SECRET"),
+    getRazorpayBillingEnv().webhookSecret,
   );
 
   if (!isValid) {
@@ -237,11 +237,51 @@ export async function handleRazorpayWebhookRequest(
   }
 
   const eventId = request.headers.get("x-razorpay-event-id");
+  const client = getWebhookClient(deps.client);
+  const eventClaim = eventId
+    ? await claimBillingWebhookEvent(client, {
+        eventId,
+        eventType: event.event ?? null,
+      })
+    : "untracked";
+  if (eventClaim === "processed") {
+    await observeBillingWebhook({
+      eventId,
+      outcome: "processed",
+      paymentEventType: event.event,
+      reason: "duplicate_event",
+      userId: razorpayEventUserId(event),
+    });
+
+    return apiSuccess({ duplicate: true as const, received: true as const });
+  }
+  if (eventClaim === "in_progress") {
+    await observeBillingWebhook({
+      eventId,
+      outcome: "rejected",
+      paymentEventType: event.event,
+      reason: "event_already_processing",
+      userId: razorpayEventUserId(event),
+    });
+
+    return apiError(
+      "RATE_LIMITED",
+      "Razorpay webhook event is already being processed.",
+      { status: 409 },
+    );
+  }
+
   try {
     if (deps.syncEvent) {
       await deps.syncEvent(event, { eventId });
     } else {
       await syncRazorpayWebhookEvent(event, { eventId }, deps);
+    }
+    if (eventClaim === "claimed" && eventId) {
+      await markBillingWebhookEventProcessed(client, {
+        eventId,
+        eventType: event.event ?? null,
+      });
     }
   } catch (error) {
     await observeBillingWebhook({
@@ -250,6 +290,10 @@ export async function handleRazorpayWebhookRequest(
       paymentEventType: event.event,
       userId: razorpayEventUserId(event),
     });
+
+    if (eventClaim === "claimed" && eventId) {
+      await releaseBillingWebhookEventClaim(client, eventId);
+    }
 
     if (error instanceof ApiError) {
       return apiError(error.code, error.message, { status: error.status });
@@ -289,7 +333,8 @@ async function createRazorpaySubscription(
   input: RazorpayCheckoutInput,
   fetchRazorpay: typeof fetch = fetch,
 ) {
-  const planId = getRazorpayPlanId(input.planTier);
+  const billingEnv = getRazorpayBillingEnv();
+  const planId = getRazorpayPlanId(input.planTier, billingEnv);
   const response = await fetchRazorpay(
     "https://api.razorpay.com/v1/subscriptions",
     {
@@ -301,10 +346,10 @@ async function createRazorpaySubscription(
         },
         plan_id: planId,
         quantity: 1,
-        total_count: getRazorpaySubscriptionTotalCount(),
+        total_count: billingEnv.subscriptionTotalCount,
       }),
       headers: {
-        Authorization: getRazorpayAuthorizationHeader(),
+        Authorization: getRazorpayAuthorizationHeader(billingEnv),
         "content-type": "application/json",
       },
       method: "POST",
@@ -322,13 +367,14 @@ async function createRazorpaySubscription(
 }
 
 async function retrieveRazorpaySubscription(subscriptionId: string) {
+  const billingEnv = getRazorpayBillingEnv();
   const response = await fetch(
     `https://api.razorpay.com/v1/subscriptions/${encodeURIComponent(
       subscriptionId,
     )}`,
     {
       headers: {
-        Authorization: getRazorpayAuthorizationHeader(),
+        Authorization: getRazorpayAuthorizationHeader(billingEnv),
       },
       method: "GET",
     },
@@ -376,29 +422,30 @@ async function syncRazorpaySubscription(
     );
   }
 
-  const planTier =
-    notesPlanTier(subscription) ??
+  const existingPlanTier = isPlanTier(existing?.plan_tier)
+    ? existing.plan_tier
+    : null;
+  const trustedBillingPlanTier =
     planIdPlanTier(subscription.plan_id) ??
     options.fallbackPlanTier ??
-    (isPlanTier(existing?.plan_tier) ? existing.plan_tier : "free");
-  const trustedPlanTier = RAZORPAY_PAID_STATUSES.has(razorpayStatus)
-    && isPaidCheckoutEnabled()
-    ? planTier
+    existingPlanTier;
+  const notesOnlyPlanTier = notesPlanTier(subscription);
+  const billingPlanTier = trustedBillingPlanTier ?? "free";
+  const trustedPlanTier = RAZORPAY_PAID_STATUSES.has(razorpayStatus) &&
+    isPaidCheckoutEnabled() &&
+    trustedBillingPlanTier
+    ? billingPlanTier
     : "free";
 
   await upsertSubscription(client, {
     cancel_at_period_end: isEndedRazorpayStatus(status),
     current_period_end: timestampToIso(subscription.current_end ?? null),
     payment_provider: "razorpay",
-    plan_tier: planTier,
+    plan_tier: trustedPlanTier,
     razorpay_customer_id: customerId,
     razorpay_payment_id: options.paymentId ?? null,
     razorpay_subscription_id: subscriptionId,
     status,
-    stripe_customer_id: legacyBillingCustomerPlaceholder(
-      customerId ?? subscriptionId,
-    ),
-    stripe_subscription_id: legacyBillingSubscriptionPlaceholder(subscriptionId),
     user_id: userId,
   });
   await updateProfileBilling(client, userId, {
@@ -410,7 +457,9 @@ async function syncRazorpaySubscription(
     eventType: options.eventType,
     metadata: {
       paymentProvider: "razorpay",
-      planTier,
+      billingPlanTier,
+      notesPlanTier: notesOnlyPlanTier,
+      planTier: trustedPlanTier,
       profilePlanTier: trustedPlanTier,
       razorpayCustomerId: customerId,
       razorpayEventId: options.eventId,
@@ -495,6 +544,79 @@ async function recordBillingAudit(
   }
 }
 
+async function claimBillingWebhookEvent(
+  client: RazorpayWebhookSupabaseClient,
+  event: { eventId: string; eventType: string | null },
+): Promise<"claimed" | "in_progress" | "processed"> {
+  const result = await client.from("billing_webhook_events").insert({
+    event_id: event.eventId,
+    event_type: event.eventType,
+    processed_at: null,
+    provider: "razorpay",
+  });
+
+  if (isUniqueViolation(result.error)) {
+    const existing = await findBillingWebhookEvent(client, event.eventId);
+    return stringField(existing, "processed_at") ? "processed" : "in_progress";
+  }
+
+  if (result.error) {
+    throw new ApiError("INTERNAL_ERROR", "Failed to claim billing webhook event.");
+  }
+
+  return "claimed";
+}
+
+async function findBillingWebhookEvent(
+  client: RazorpayWebhookSupabaseClient,
+  eventId: string,
+) {
+  const result = await client
+    .from("billing_webhook_events")
+    .select("event_id,processed_at")
+    .eq("provider", "razorpay")
+    .eq("event_id", eventId)
+    .limit(1);
+
+  if (result.error) {
+    throw new ApiError("INTERNAL_ERROR", "Failed to read billing webhook event.");
+  }
+
+  return result.data?.[0] ?? null;
+}
+
+async function markBillingWebhookEventProcessed(
+  client: RazorpayWebhookSupabaseClient,
+  event: { eventId: string; eventType: string | null },
+) {
+  const result = await client.from("billing_webhook_events").update({
+    event_type: event.eventType,
+    processed_at: new Date().toISOString(),
+  }).eq("event_id", event.eventId);
+
+  if (result.error) {
+    throw new ApiError("INTERNAL_ERROR", "Failed to mark billing webhook event.");
+  }
+}
+
+async function releaseBillingWebhookEventClaim(
+  client: RazorpayWebhookSupabaseClient,
+  eventId: string,
+) {
+  const result = await client
+    .from("billing_webhook_events")
+    .delete()
+    .eq("event_id", eventId);
+
+  if (result.error) {
+    await observeBillingWebhook({
+      eventId,
+      outcome: "failed",
+      reason: "release_claim_failed",
+    });
+  }
+}
+
 function verifyRazorpayCheckoutSignature({
   paymentId,
   secret,
@@ -528,12 +650,15 @@ function verifySignature(message: string, signature: string, secret: string) {
   );
 }
 
-function getRazorpayPlanId(planTier: Exclude<PlanTier, "free">) {
+function getRazorpayPlanId(
+  planTier: Exclude<PlanTier, "free">,
+  billingEnv = getRazorpayBillingEnv(),
+) {
   if (planTier === "pro") {
-    return requireEnv("RAZORPAY_PRO_PLAN_ID");
+    return billingEnv.proPlanId;
   }
 
-  return requireEnv("RAZORPAY_STUDIO_PLAN_ID");
+  return billingEnv.studioPlanId;
 }
 
 function planIdPlanTier(planId: string | null | undefined): PlanTier | null {
@@ -541,30 +666,23 @@ function planIdPlanTier(planId: string | null | undefined): PlanTier | null {
     return null;
   }
 
-  if (planId === process.env.RAZORPAY_PRO_PLAN_ID) {
+  const billingEnv = getRazorpayBillingEnv();
+  if (planId === billingEnv.proPlanId) {
     return "pro";
   }
 
-  if (planId === process.env.RAZORPAY_STUDIO_PLAN_ID) {
+  if (planId === billingEnv.studioPlanId) {
     return "studio";
   }
 
   return null;
 }
 
-function getRazorpaySubscriptionTotalCount() {
-  const rawValue = requireEnv("RAZORPAY_SUBSCRIPTION_TOTAL_COUNT");
-  const value = Number.parseInt(rawValue, 10);
-  if (!Number.isInteger(value) || value < 1) {
-    throw new Error("RAZORPAY_SUBSCRIPTION_TOTAL_COUNT must be a positive integer.");
-  }
-
-  return value;
-}
-
-function getRazorpayAuthorizationHeader() {
+function getRazorpayAuthorizationHeader(
+  billingEnv = getRazorpayBillingEnv(),
+) {
   const token = Buffer.from(
-    `${requireEnv("RAZORPAY_KEY_ID")}:${requireEnv("RAZORPAY_KEY_SECRET")}`,
+    `${billingEnv.keyId}:${billingEnv.keySecret}`,
   ).toString("base64");
 
   return `Basic ${token}`;
@@ -623,14 +741,6 @@ function normalizeRazorpayStatus(status: string) {
   return "incomplete";
 }
 
-function legacyBillingCustomerPlaceholder(id: string) {
-  return `razorpay_customer:${id}`;
-}
-
-function legacyBillingSubscriptionPlaceholder(subscriptionId: string) {
-  return `razorpay_subscription:${subscriptionId}`;
-}
-
 function isPlanTier(value: unknown): value is PlanTier {
   return PLAN_TIERS.includes(value as PlanTier);
 }
@@ -654,11 +764,7 @@ function titleCase(value: string) {
   return value.slice(0, 1).toUpperCase() + value.slice(1);
 }
 
-function requireEnv(key: string) {
-  const value = process.env[key];
-  if (!value) {
-    throw new Error(`Missing ${key}`);
-  }
-
-  return value;
+function isUniqueViolation(error: { message?: string } | null) {
+  const code = (error as { code?: string } | null)?.code;
+  return code === "23505" || /duplicate key/i.test(error?.message ?? "");
 }

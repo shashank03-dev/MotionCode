@@ -35,10 +35,13 @@ yarn-error.log*
 .env.production
 .env*.local
 !.env.local.example
+payment.ini
 
 # vercel
 .vercel
+supabase/.temp/
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.gstack/

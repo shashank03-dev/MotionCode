@@ -29,6 +29,11 @@ export type UsageEventInput = {
   workspaceId?: string | null;
 };
 
+export type DailyAnalysisReservationInput = UsageEventInput & {
+  dailyLimit: number;
+  since: Date;
+};
+
 export type UsageEventRecorder = {
   record: (event: UsageEventInput) => Promise<void>;
 };
@@ -39,6 +44,11 @@ type TrustedSupabaseConfig = Pick<
 >;
 
 type SupabaseInsertResult = {
+  error: { message?: string } | null;
+};
+
+type SupabaseRpcResult<T> = {
+  data?: T | null;
   error: { message?: string } | null;
 };
 
@@ -72,6 +82,13 @@ type SupabaseFilterBuilder = {
 
 export type SupabaseInsertClient = {
   from: (table: string) => SupabaseInsertBuilder;
+};
+
+export type SupabaseUsageClient = SupabaseInsertClient & {
+  rpc: (
+    functionName: string,
+    args: Record<string, unknown>,
+  ) => PromiseLike<SupabaseRpcResult<unknown>> | SupabaseRpcResult<unknown>;
 };
 
 type SupabaseRecorderOptions = {
@@ -124,13 +141,13 @@ export function createNoopUsageEventRecorder(): UsageEventRecorder {
 
 export function createTrustedSupabaseServerClient(
   env: TrustedSupabaseConfig = getServerEnv(),
-): SupabaseInsertClient {
+): SupabaseUsageClient {
   return createClient(env.supabaseUrl, env.supabaseServiceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
     },
-  }) as unknown as SupabaseInsertClient;
+  }) as unknown as SupabaseUsageClient;
 }
 
 export async function authorizeAnalysisRequestWithSupabase(
@@ -212,6 +229,31 @@ export async function getDailyAnalysisCountWithSupabase(
   );
 
   return Math.max(...counts);
+}
+
+export async function reserveDailyAnalysisUsageWithSupabase(
+  input: DailyAnalysisReservationInput,
+  options: SupabaseRecorderOptions = {},
+) {
+  const client = (options.client ??
+    createTrustedSupabaseServerClient(options.env)) as SupabaseUsageClient;
+  const result = await client.rpc("reserve_analysis_usage_event", {
+    p_daily_limit: input.dailyLimit,
+    p_event_type: input.eventType,
+    p_frame_count: input.frameCount ?? null,
+    p_model: input.model ?? null,
+    p_period_start: input.since.toISOString(),
+    p_plan_tier: input.planTier,
+    p_project_id: input.projectId ?? null,
+    p_user_id: input.userId,
+    p_workspace_id: input.workspaceId ?? null,
+  });
+
+  if (result.error) {
+    throw new ApiError("INTERNAL_ERROR", "Failed to reserve analysis usage.");
+  }
+
+  return result.data === true;
 }
 
 export function createSupabaseAuditRecorder(

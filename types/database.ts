@@ -27,7 +27,6 @@ export type Database = {
           display_name: string | null;
           avatar_url: string | null;
           plan_tier: PlanTier;
-          stripe_customer_id: string | null;
           razorpay_customer_id: string | null;
           is_internal_admin: boolean;
           onboarding_completed_at: Timestamp | null;
@@ -41,7 +40,6 @@ export type Database = {
           display_name?: string | null;
           avatar_url?: string | null;
           plan_tier?: PlanTier;
-          stripe_customer_id?: string | null;
           razorpay_customer_id?: string | null;
           is_internal_admin?: boolean;
           onboarding_completed_at?: Timestamp | null;
@@ -54,7 +52,6 @@ export type Database = {
           display_name: string | null;
           avatar_url: string | null;
           plan_tier: PlanTier;
-          stripe_customer_id: string | null;
           razorpay_customer_id: string | null;
           is_internal_admin: boolean;
           onboarding_completed_at: Timestamp | null;
@@ -256,8 +253,6 @@ export type Database = {
           id: string;
           user_id: string;
           payment_provider: "razorpay";
-          stripe_customer_id: string;
-          stripe_subscription_id: string;
           razorpay_customer_id: string | null;
           razorpay_subscription_id: string | null;
           razorpay_payment_id: string | null;
@@ -272,8 +267,6 @@ export type Database = {
           id?: string;
           user_id: string;
           payment_provider?: "razorpay";
-          stripe_customer_id: string;
-          stripe_subscription_id: string;
           razorpay_customer_id?: string | null;
           razorpay_subscription_id?: string | null;
           razorpay_payment_id?: string | null;
@@ -288,14 +281,36 @@ export type Database = {
           status: string;
           plan_tier: PlanTier;
           payment_provider: "razorpay";
-          stripe_customer_id: string;
-          stripe_subscription_id: string;
           razorpay_customer_id: string | null;
           razorpay_subscription_id: string | null;
           razorpay_payment_id: string | null;
           current_period_end: Timestamp | null;
           cancel_at_period_end: boolean;
           updated_at: Timestamp;
+        }>
+      >;
+      billing_webhook_events: TableDefinition<
+        {
+          id: string;
+          provider: "razorpay";
+          event_id: string;
+          event_type: string | null;
+          processed_at: Timestamp;
+          created_at: Timestamp;
+        },
+        {
+          id?: string;
+          provider?: "razorpay";
+          event_id: string;
+          event_type?: string | null;
+          processed_at?: Timestamp;
+          created_at?: Timestamp;
+        },
+        Partial<{
+          provider: "razorpay";
+          event_id: string;
+          event_type: string | null;
+          processed_at: Timestamp;
         }>
       >;
       early_access_signups: TableDefinition<
@@ -456,7 +471,22 @@ export type Database = {
       >;
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      reserve_analysis_usage_event: {
+        Args: {
+          p_daily_limit: number;
+          p_event_type: string;
+          p_frame_count?: number | null;
+          p_model?: string | null;
+          p_period_start: Timestamp;
+          p_plan_tier: string;
+          p_project_id?: string | null;
+          p_user_id: string;
+          p_workspace_id?: string | null;
+        };
+        Returns: boolean;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

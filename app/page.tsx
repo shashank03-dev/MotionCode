@@ -5,8 +5,11 @@ import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { Aurora, Magnet } from "@/components/react-bits";
 
-const GLITCH_CHARS = "!<>-_\\/[]{}—=+*^?#________";
+gsap.registerPlugin(ScrollTrigger);
+
+const GLITCH_CHARS = "!<>-_\\/[]{}-=+*^?#________";
 const scrambleText = (element: HTMLElement | null, finalString: string, goingOut: boolean = false) => {
   if (!element) return;
   let iteration = 0;
@@ -47,7 +50,7 @@ const scrambleText = (element: HTMLElement | null, finalString: string, goingOut
 
 const FEATURES_DATA = [
   { num: "01", title: "Upload Any Format", desc: "Drag in MP4, GIF, WebM, or Lottie files. Our engine handles any animation source with frame-perfect accuracy.", code: "// 8 frames extracted\n> format: MP4 → JPEG\n> resolution: 1920×1080" },
-  { num: "02", title: "AI Frame Analysis", desc: "Neural networks decompose motion into discrete keyframes, easing curves, and transform paths — automatically.", code: "// motion analyzed\n> keyframes: 12\n> easing: cubic-bezier(...)" },
+  { num: "02", title: "AI Frame Analysis", desc: "Neural networks decompose motion into discrete keyframes, easing curves, and transform paths automatically.", code: "// motion analyzed\n> keyframes: 12\n> easing: cubic-bezier(...)" },
   { num: "03", title: "Multi-Framework Output", desc: "Get production-ready CSS, GSAP, and Framer Motion code. Copy, paste, ship.", code: "// output ready\n> CSS  ✓\n> GSAP  ✓\n> Framer ✓" },
   { num: "04", title: "Performance Scorer", desc: "Every generated animation is benchmarked for jank, repaints, and composite layer usage with a 0-100 score.", code: "// perf score\n> GPU layers: yes\n> score: 94/100" },
   { num: "05", title: "Accessibility Audit", desc: "Automatic prefers-reduced-motion fallbacks and WCAG compliance checks on every export.", code: "// a11y check\n> reduced-motion: ✓\n> WCAG AA: pass" }
@@ -206,8 +209,8 @@ export default function LandingPage() {
         return;
       }
 
-      const expandedWidth = Math.min(940, viewportWidth - 64);
-      const compactWidth = Math.max(720, expandedWidth - 188);
+      const expandedWidth = Math.min(1020, viewportWidth - 64);
+      const compactWidth = Math.max(790, expandedWidth - 190);
       const heroProgress = clamp(window.scrollY / (viewportHeight * 0.76), 0, 1);
 
       const sectionExpansion = ["features", "how-it-works", "pricing"].reduce(
@@ -254,12 +257,16 @@ export default function LandingPage() {
     };
 
     updateNavShape();
-    window.addEventListener("scroll", requestNavShapeUpdate, { passive: true });
+    const navScrollTrigger = ScrollTrigger.create({
+      start: 0,
+      end: "max",
+      onUpdate: requestNavShapeUpdate,
+    });
     window.addEventListener("resize", requestNavShapeUpdate);
 
     return () => {
       window.cancelAnimationFrame(rafId);
-      window.removeEventListener("scroll", requestNavShapeUpdate);
+      navScrollTrigger.kill();
       window.removeEventListener("resize", requestNavShapeUpdate);
     };
   }, []);
@@ -299,8 +306,6 @@ export default function LandingPage() {
   };
 
   useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-
     const ctx = gsap.context(() => {
       // Setup Hero Animation
       gsap.fromTo(
@@ -562,25 +567,66 @@ export default function LandingPage() {
         }}
       >
         <div className="motioncode-nav-shell">
-          <Link href="/" className="motioncode-nav-brand">
-            <span className="motioncode-nav-brand-text">MotionCode</span>
-          </Link>
+          <Magnet
+            padding={30}
+            magnetStrength={9}
+            wrapperClassName="motioncode-nav-brand-magnet"
+          >
+            <Link href="/" className="motioncode-nav-brand">
+              <span className="motioncode-nav-brand-text">MotionCode</span>
+            </Link>
+          </Magnet>
 
           <div className="motioncode-nav-menu" aria-label="Landing sections">
-            <Link href="#features" className="motioncode-nav-link">
-              Features
-            </Link>
-            <Link href="#how-it-works" className="motioncode-nav-link">
-              How it Works
-            </Link>
-            <Link href="#pricing" className="motioncode-nav-link">
-              Pricing
-            </Link>
+            <Magnet
+              padding={24}
+              magnetStrength={10}
+              wrapperClassName="motioncode-nav-link-magnet"
+            >
+              <Link href="#features" className="motioncode-nav-link">
+                Features
+              </Link>
+            </Magnet>
+            <Magnet
+              padding={24}
+              magnetStrength={10}
+              wrapperClassName="motioncode-nav-link-magnet"
+            >
+              <Link href="#how-it-works" className="motioncode-nav-link">
+                How it Works
+              </Link>
+            </Magnet>
+            <Magnet
+              padding={24}
+              magnetStrength={10}
+              wrapperClassName="motioncode-nav-link-magnet"
+            >
+              <Link href="#pricing" className="motioncode-nav-link">
+                Pricing
+              </Link>
+            </Magnet>
           </div>
 
-          <Link href="/app" className="motioncode-nav-cta">
-            Try Free
-          </Link>
+          <div className="motioncode-nav-actions" aria-label="Account actions">
+            <Magnet
+              padding={36}
+              magnetStrength={8}
+              wrapperClassName="motioncode-nav-auth-magnet"
+            >
+              <Link href="/login" className="motioncode-nav-auth">
+                Sign in
+              </Link>
+            </Magnet>
+            <Magnet
+              padding={38}
+              magnetStrength={8}
+              wrapperClassName="motioncode-nav-cta-magnet"
+            >
+              <Link href="/app" className="motioncode-nav-cta">
+                Try Free
+              </Link>
+            </Magnet>
+          </div>
         </div>
       </nav>
 
@@ -591,6 +637,14 @@ export default function LandingPage() {
                  minHeight: "100dvh",
                  borderBottom: "1px solid var(--border)"
                }}>
+        <div className="motioncode-aurora-layer" aria-hidden="true">
+          <Aurora
+            colorStops={["#D8CFBC", "#00FF88", "#7C5CFF"]}
+            amplitude={1.25}
+            blend={0.46}
+            speed={0.62}
+          />
+        </div>
 
         <div style={{ position: "absolute", left: "20px", top: "50%", transform: "translateY(-50%)", writingMode: "vertical-rl", textOrientation: "mixed", fontFamily: "var(--font-mono)", fontSize: "9px", color: "#1a1a1a", letterSpacing: "3px" }}>
           01 /
@@ -1031,16 +1085,17 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
+
       </section>
 
       {/* SECTION 3 - LOGO STRIP */}
-      <section data-testid="logo-strip" className="motioncode-logo-strip" style={{ padding: "40px 0", borderBottom: "1px solid var(--border)", background: "var(--bg)", display: "flex", flexDirection: "column", alignItems: "center", overflow: "hidden" }}>
-        <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "var(--muted)", letterSpacing: "3px", whiteSpace: "nowrap", marginBottom: "32px", opacity: 0.6 }}>
+      <section data-testid="logo-strip" className="motioncode-logo-strip" style={{ padding: "28px 0", borderBottom: "1px solid var(--border)", background: "var(--bg)", display: "flex", flexDirection: "column", alignItems: "center", overflow: "hidden" }}>
+        <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "var(--muted)", letterSpacing: "3px", whiteSpace: "nowrap", marginBottom: "18px", opacity: 0.6 }}>
           TRUSTED BY DEVELOPERS AT
         </div>
         <div className="flex whitespace-nowrap marquee-scroll w-full">
           {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="motioncode-logo-track flex" style={{ gap: "72px", paddingRight: "72px" }}>
+            <div key={i} className="motioncode-logo-track flex" style={{ gap: "56px", paddingRight: "56px" }}>
               {LOGO_BRANDS.map(brand => (
                 <span key={`${i}-${brand.name}`} className="motioncode-logo-mark">
                   <img

@@ -14,7 +14,7 @@ Agent 9 owns admin/support implementation and ops documentation:
 
 - Do not run destructive Supabase SQL or CLI operations without exact approval.
 - Do not bypass the Supabase CLI guard.
-- Do not expose service role, Stripe, or Gemini secrets to browser code.
+- Do not expose service role, Razorpay, Gemini, or OpenAI secrets to browser code.
 - Do not claim unsupported media formats or editor/runtime features in docs.
 
 ## Handoff

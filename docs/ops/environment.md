@@ -41,7 +41,7 @@ Paid checkout is disabled during free beta. Keep these values server-only and us
 | `MOTIONCODE_INTERNAL_ADMIN_EMAILS` | Server only | Optional comma or whitespace-separated admin email allowlist. |
 | `MOTIONCODE_INTERNAL_ADMIN_USER_IDS` | Server only | Optional comma or whitespace-separated Supabase user ID allowlist. |
 
-Prefer `profiles.is_internal_admin` for durable admin access. Use allowlists for bootstrap and emergency access only.
+Prefer `profiles.is_internal_admin` for durable admin access. Use allowlists for bootstrap and emergency access only. During beta, internal admins and allowlisted accounts keep a three-analysis daily testing quota while public free accounts are limited to one analysis per day.
 
 ## Local Setup
 
@@ -62,4 +62,5 @@ Apply migrations before using authenticated product flows. Never run `supabase d
 - Do not expose AI provider keys as `NEXT_PUBLIC_` variables.
 - Apply Supabase migrations before deploying dependent code.
 - Verify auth cookies, Gemini-only `/api/analyze` behavior, support ticket creation, early-access request persistence/admin visibility, admin checks, plan overrides, and audit events in staging.
+- Verify public free accounts stop at one analysis per day, and internal admin or allowlisted testing accounts stop at three analyses per day.
 - Verify paid checkout/webhooks only after paid readiness gates pass.

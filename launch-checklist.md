@@ -40,6 +40,9 @@ MotionCode is in free beta. Free beta analysis uses Gemini only. Pro and Studio 
 - Paid checkout remains disabled during beta.
 - Razorpay checkout/webhook verification is deferred until paid readiness gates pass.
 - Gemini key is configured server-side for free beta analysis.
+- Public free users are limited to one Gemini analysis per day.
+- Internal admin or allowlisted testing users are limited to three Gemini analyses per day.
+- Gemini `429` quota errors show a daily AI quota message.
 - `/api/analyze` does not call OpenAI in beta.
 - OpenAI-backed analysis remains disabled until paid readiness gates pass.
 - No AI provider keys use `NEXT_PUBLIC_`.

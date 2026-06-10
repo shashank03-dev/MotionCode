@@ -11,6 +11,7 @@ MotionCode is in free beta. Free beta analysis uses Gemini only. Pro and Studio 
 - Public landing page at `/`.
 - Motion analysis tool at `/app`.
 - Authenticated server API at `/api/analyze` using Gemini-only beta analysis.
+- Public free beta quota is one Gemini analysis per day; internal admin or allowlisted testing accounts keep three daily analyses for staging and support verification.
 - Supabase-backed profiles, workspaces, projects, assets, analyses, generated outputs, usage events, subscriptions, early-access requests, support tickets, audit events, and admin plan overrides.
 - Free beta access plus Pro and Studio early-access tracks.
 - Pricing page early-access CTAs for Pro and Studio; no paid checkout during beta.
@@ -42,6 +43,7 @@ MotionCode is in free beta. Free beta analysis uses Gemini only. Pro and Studio 
 - `MOTIONCODE_LAUNCH_PHASE` is unset or `beta`; `MOTIONCODE_ENABLE_PAID_CHECKOUT` and `MOTIONCODE_ENABLE_OPENAI_ANALYSIS` are `false` or unset.
 - Supabase migrations applied and RLS tests passing.
 - `/api/analyze` smoke-tested as Gemini-only beta analysis with no OpenAI call.
+- Public free quota and internal testing quota are smoke-tested against staging auth.
 - `/pricing` confirms Pro and Studio early-access CTAs instead of checkout.
 - Early-access requests persist and are visible to admins.
 - `/support`, `/admin`, and `/admin/users` smoke-tested with real Supabase auth.

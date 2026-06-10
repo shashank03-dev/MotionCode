@@ -18,7 +18,11 @@ import { Scorecard } from "@/components/app/Scorecard";
 import { UploadPanel } from "@/components/app/UploadPanel";
 import type { ApiResponse } from "@/lib/contracts/errors";
 import type { AnalysisResult } from "@/lib/contracts/motion";
-import { PLAN_ENTITLEMENTS, type PlanTier } from "@/lib/contracts/plans";
+import {
+  PLAN_ENTITLEMENTS,
+  type PlanEntitlements,
+  type PlanTier,
+} from "@/lib/contracts/plans";
 import { extractFrames, isSupportedMediaFile } from "@/lib/extractFrames";
 import {
   CODE_TABS,
@@ -28,7 +32,7 @@ import {
 } from "@/lib/generatedCode";
 import type { MotionSpecEditableField } from "@/lib/motionSpecEditor";
 import { updateAnalysisResultSpec } from "@/lib/motionSpecEditor";
-import { canUseForFree, incrementUsage, usagesLeft } from "@/lib/rateLimit";
+import { incrementUsage, usagesLeft } from "@/lib/rateLimit";
 
 import type { AnalysisStage, ClientAnalysisIds, ScoreKey } from "./types";
 
@@ -51,7 +55,21 @@ const STATUS_MESSAGES = [
   "Almost there...",
 ];
 
-export function AppShell() {
+type AppShellProps = {
+  initialDailyAnalysisUsage?: {
+    limit: number;
+    remaining: number;
+    used: number;
+  };
+  initialEntitlements?: PlanEntitlements;
+  initialPlanTier?: PlanTier;
+};
+
+export function AppShell({
+  initialDailyAnalysisUsage,
+  initialEntitlements = DEFAULT_ENTITLEMENTS,
+  initialPlanTier = DEFAULT_ENTITLEMENTS.tier,
+}: AppShellProps = {}) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fileUrlRef = useRef<string | null>(null);
   const analysisIdsRef = useRef<ClientAnalysisIds>(createClientAnalysisIds());
@@ -59,8 +77,8 @@ export function AppShell() {
   const scannerTimerRef = useRef<number | null>(null);
   const statusTimerRef = useRef<number | null>(null);
 
-  const userPlan: PlanTier = DEFAULT_ENTITLEMENTS.tier;
-  const entitlements = PLAN_ENTITLEMENTS[userPlan];
+  const userPlan: PlanTier = initialPlanTier;
+  const entitlements = initialEntitlements;
 
   const [file, setFile] = useState<File | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
@@ -83,9 +101,16 @@ export function AppShell() {
   const [scannerIndex, setScannerIndex] = useState(0);
   const [statusBarMsgIndex, setStatusBarMsgIndex] = useState(0);
   const [progressWidth, setProgressWidth] = useState(0);
+  const [serverUsageRemaining, setServerUsageRemaining] = useState<
+    number | null
+  >(initialDailyAnalysisUsage?.remaining ?? null);
 
-  const canUseFree = userPlan !== "free" || canUseForFree();
-  const usageRemaining = usagesLeft();
+  const localUsageRemaining = usagesLeft(entitlements.dailyAnalyses);
+  const usageRemaining =
+    serverUsageRemaining === null
+      ? localUsageRemaining
+      : Math.min(localUsageRemaining, serverUsageRemaining);
+  const canUseFree = userPlan !== "free" || usageRemaining > 0;
 
   const stepsList = [
     `Extracting ${frames.length || DEFAULT_FRAME_COUNT} frames from video...`,
@@ -232,7 +257,7 @@ export function AppShell() {
       return;
     }
 
-    if (userPlan === "free" && !canUseForFree()) {
+    if (userPlan === "free" && !canUseFree) {
       setError(
         `Daily limit reached (${entitlements.dailyAnalyses}/day). Join early access for higher beta capacity.`,
       );
@@ -254,6 +279,9 @@ export function AppShell() {
 
       if (userPlan === "free") {
         incrementUsage();
+        setServerUsageRemaining((current) =>
+          current === null ? current : Math.max(0, current - 1),
+        );
       }
 
       setResult(analyzed);
@@ -266,7 +294,7 @@ export function AppShell() {
     } finally {
       setLoading(false);
     }
-  }, [entitlements.dailyAnalyses, frames, loading, userPlan]);
+  }, [canUseFree, entitlements.dailyAnalyses, frames, loading, userPlan]);
 
   const onDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();

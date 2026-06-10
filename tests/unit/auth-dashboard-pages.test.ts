@@ -74,7 +74,7 @@ describe("account page early access status", () => {
       getEntitlementSummary: vi.fn(async () => ({
         entitlements: {
           auditLogRetentionDays: 7,
-          dailyAnalyses: 3,
+          dailyAnalyses: 1,
           maxFramesPerAnalysis: 6,
           maxUploadBytes: 25 * 1024 * 1024,
           savedProjects: 5,
@@ -88,7 +88,7 @@ describe("account page early access status", () => {
         subscription: null,
         usage: {
           dailyAnalyses: {
-            limit: 3,
+            limit: 1,
             used: 1,
           },
         },

@@ -87,7 +87,6 @@ describe("entitlement resolution", () => {
           email: "dev@example.com",
           id: "user_123",
           plan_tier: "free",
-          stripe_customer_id: "cus_123",
         },
       ],
       subscriptions: [
@@ -160,7 +159,43 @@ describe("entitlement resolution", () => {
     );
   });
 
-  it("does not grant paid access from legacy non-Razorpay subscription rows", async () => {
+  it("keeps access from an older active subscription when a newer checkout is incomplete", async () => {
+    enablePaidCheckout();
+    const client = createEntitlementsClient({
+      admin_plan_overrides: [],
+      profiles: [{ id: "user_123", plan_tier: "free" }],
+      subscriptions: [
+        {
+          created_at: "2026-06-06T12:00:00.000Z",
+          payment_provider: "razorpay",
+          plan_tier: "studio",
+          razorpay_subscription_id: "sub_pending",
+          status: "incomplete",
+          user_id: "user_123",
+        },
+        {
+          created_at: "2026-06-06T11:00:00.000Z",
+          payment_provider: "razorpay",
+          plan_tier: "pro",
+          razorpay_subscription_id: "sub_active",
+          status: "active",
+          user_id: "user_123",
+        },
+      ],
+      usage_events: [],
+    });
+
+    const summary = await getEntitlementSummary("user_123", {
+      client,
+      now: new Date("2026-06-06T12:30:00.000Z"),
+    });
+
+    expect(summary.planTier).toBe("pro");
+    expect(summary.source).toBe("subscription");
+    expect(summary.subscription?.razorpay_subscription_id).toBe("sub_active");
+  });
+
+  it("does not grant paid access without a Razorpay subscription id", async () => {
     const client = createEntitlementsClient({
       admin_plan_overrides: [],
       profiles: [{ id: "user_123", plan_tier: "free" }],
@@ -170,10 +205,33 @@ describe("entitlement resolution", () => {
           payment_provider: "razorpay",
           plan_tier: "pro",
           status: "active",
-          stripe_subscription_id: "sub_legacy",
           user_id: "user_123",
         },
       ],
+      usage_events: [],
+    });
+
+    const summary = await getEntitlementSummary("user_123", {
+      client,
+      now: new Date("2026-06-06T12:00:00.000Z"),
+    });
+
+    expect(summary.planTier).toBe("free");
+    expect(summary.source).toBe("default");
+  });
+
+  it("does not grant paid access from stale profile plan tiers", async () => {
+    const client = createEntitlementsClient({
+      admin_plan_overrides: [
+        {
+          created_at: "2026-06-05T12:00:00.000Z",
+          expires_at: "2026-06-06T00:00:00.000Z",
+          plan_tier: "studio",
+          user_id: "user_123",
+        },
+      ],
+      profiles: [{ id: "user_123", plan_tier: "studio" }],
+      subscriptions: [],
       usage_events: [],
     });
 
@@ -266,6 +324,83 @@ describe("entitlement resolution", () => {
 
     expect(summary.planTier).toBe("free");
     expect(summary.source).toBe("default");
+  });
+
+  it("keeps the public free beta limit at one analysis per day", async () => {
+    const client = createEntitlementsClient({
+      admin_plan_overrides: [],
+      profiles: [{ id: "user_123", is_internal_admin: false, plan_tier: "free" }],
+      subscriptions: [],
+      usage_events: [],
+    });
+
+    const summary = await getEntitlementSummary("user_123", {
+      client,
+      now: new Date("2026-06-06T12:00:00.000Z"),
+    });
+
+    expect(summary.planTier).toBe("free");
+    expect(summary.entitlements.dailyAnalyses).toBe(1);
+    expect(summary.usage.dailyAnalyses.limit).toBe(1);
+  });
+
+  it("keeps three daily analyses for profile-backed internal admins during beta", async () => {
+    const client = createEntitlementsClient({
+      admin_plan_overrides: [],
+      profiles: [
+        {
+          email: "admin@example.com",
+          id: "user_123",
+          is_internal_admin: true,
+          plan_tier: "free",
+        },
+      ],
+      subscriptions: [],
+      usage_events: [
+        {
+          created_at: "2026-06-06T10:00:00.000Z",
+          event_type: "analysis.started",
+          user_id: "user_123",
+        },
+        {
+          created_at: "2026-06-06T11:00:00.000Z",
+          event_type: "analysis.started",
+          user_id: "user_123",
+        },
+      ],
+    });
+
+    const summary = await getEntitlementSummary("user_123", {
+      client,
+      now: new Date("2026-06-06T12:00:00.000Z"),
+    });
+
+    expect(summary.planTier).toBe("free");
+    expect(summary.entitlements.dailyAnalyses).toBe(3);
+    expect(summary.usage.dailyAnalyses).toEqual({
+      limit: 3,
+      remaining: 1,
+      used: 2,
+    });
+  });
+
+  it("keeps three daily analyses for allowlisted internal admins during beta", async () => {
+    process.env.MOTIONCODE_INTERNAL_ADMIN_USER_IDS = "user_123";
+    const client = createEntitlementsClient({
+      admin_plan_overrides: [],
+      profiles: [{ id: "user_123", is_internal_admin: false, plan_tier: "free" }],
+      subscriptions: [],
+      usage_events: [],
+    });
+
+    const summary = await getEntitlementSummary("user_123", {
+      client,
+      now: new Date("2026-06-06T12:00:00.000Z"),
+    });
+
+    expect(summary.planTier).toBe("free");
+    expect(summary.entitlements.dailyAnalyses).toBe(3);
+    expect(summary.source).toBe("profile");
   });
 
   it("does not trust client-controlled user metadata for plan tier", async () => {

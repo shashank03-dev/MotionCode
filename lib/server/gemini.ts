@@ -185,6 +185,13 @@ export async function analyzeFramesWithGemini(
   );
 
   if (!response.ok) {
+    if (response.status === 429) {
+      throw new ApiError(
+        "QUOTA_EXCEEDED",
+        "Daily AI quota reached. Try again tomorrow.",
+      );
+    }
+
     throw new ApiError("MODEL_FAILED", "Gemini analysis failed.");
   }
 

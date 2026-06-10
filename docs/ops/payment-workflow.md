@@ -7,7 +7,8 @@
 3. Razorpay Checkout returns `razorpay_payment_id`, `razorpay_subscription_id`, and `razorpay_signature` to the browser.
 4. The browser posts those values to `/api/razorpay/verify`; the server verifies the signature before updating entitlement state.
 5. Razorpay webhooks keep `subscriptions` and `profiles.plan_tier` in sync for later updates, cancellations, and status changes.
-6. Application authorization reads only trusted Supabase rows through `getEntitlementSummary`.
+6. Processed webhook event IDs are recorded in `billing_webhook_events` so duplicate deliveries do not sync twice.
+7. Application authorization reads only active admin overrides or trusted Razorpay subscription rows through `getEntitlementSummary`.
 
 ## Required Environment Variables
 
@@ -41,6 +42,7 @@
 - Keep all payment secrets server-only; never prefix them with `NEXT_PUBLIC_`.
 - Configure test-mode and live-mode variables separately.
 - Apply Supabase migrations before deploying payment code.
+- Confirm the final schema has no legacy billing-provider columns and includes `billing_webhook_events`.
 - Verify Razorpay in staging before live traffic.
 - Rotate webhook secrets if they are exposed or copied into the wrong environment.
 - Keep pricing copy, Razorpay Plans, and `PLAN_ENTITLEMENTS` aligned before launch.

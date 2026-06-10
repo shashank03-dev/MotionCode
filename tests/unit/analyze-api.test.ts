@@ -7,8 +7,10 @@ import { ApiError } from "@/lib/server/apiErrors";
 import {
   authorizeAnalysisRequestWithSupabase,
   getDailyAnalysisCountWithSupabase,
+  reserveDailyAnalysisUsageWithSupabase,
   type AnalysisAuthorizationDecision,
   type SupabaseInsertClient,
+  type SupabaseUsageClient,
 } from "@/lib/server/audit";
 import {
   normalizeGeminiAnalysis,
@@ -157,6 +159,8 @@ function createSelectClient(
 }
 
 function createDeps(options: { planTier?: PlanTier; userId?: string | null } = {}) {
+  const planTier = options.planTier ?? "free";
+
   return {
     audit: { record: vi.fn(async () => undefined) },
     authorizeAnalysisRequest: vi.fn<TestAuthorizeAnalysisRequest>(async () => ({
@@ -164,13 +168,17 @@ function createDeps(options: { planTier?: PlanTier; userId?: string | null } = {
     })),
     generateAnalysis: vi.fn(async () => generated),
     generateOpenAiAnalysis: vi.fn(async () => generated),
-    getDailyAnalysisCount: vi.fn(async () => 0),
     getCurrentUser: vi.fn(async () =>
       options.userId === null ? null : { id: options.userId ?? "user_123" },
     ),
-    getPlanTier: vi.fn(async () => options.planTier ?? "free"),
+    getEntitlementSummary: vi.fn(async () => ({
+      entitlements: PLAN_ENTITLEMENTS[planTier],
+      planTier,
+    })),
+    getPlanTier: vi.fn(async () => planTier),
     idGenerator: vi.fn(() => "analysis_123"),
     now: vi.fn(() => new Date("2026-06-06T12:00:00.000Z")),
+    reserveDailyAnalysisUsage: vi.fn(async () => true),
     usage: { record: vi.fn(async () => undefined) },
   };
 }
@@ -286,6 +294,7 @@ describe("POST /api/analyze", () => {
     });
     expect(deps.authorizeAnalysisRequest).not.toHaveBeenCalled();
     expect(deps.generateAnalysis).not.toHaveBeenCalled();
+    expect(deps.reserveDailyAnalysisUsage).not.toHaveBeenCalled();
     expect(deps.usage.record).not.toHaveBeenCalled();
     expect(deps.audit.record).not.toHaveBeenCalled();
   });
@@ -356,6 +365,7 @@ describe("POST /api/analyze", () => {
       }),
     );
     expect(deps.generateAnalysis).not.toHaveBeenCalled();
+    expect(deps.reserveDailyAnalysisUsage).not.toHaveBeenCalled();
     expect(deps.usage.record).not.toHaveBeenCalled();
     expect(deps.audit.record).not.toHaveBeenCalled();
   });
@@ -363,20 +373,58 @@ describe("POST /api/analyze", () => {
   it("returns quota exceeded when the daily plan limit is already used", async () => {
     const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
     const deps = createDeps({ planTier: "free" });
-    deps.getDailyAnalysisCount.mockResolvedValue(
-      PLAN_ENTITLEMENTS.free.dailyAnalyses,
-    );
+    deps.reserveDailyAnalysisUsage.mockResolvedValue(false);
 
     const response = await handleAnalyzeRequest(makeRequest(requestBody()), deps);
     const json = (await response.json()) as ApiResponse<AnalysisResult>;
 
     expect(response.status).toBe(429);
-    expect(json).toMatchObject({
+    expect(json).toEqual({
       code: "QUOTA_EXCEEDED",
+      message: "Your plan allows 1 analysis per day.",
       ok: false,
     });
     expect(deps.generateAnalysis).not.toHaveBeenCalled();
+    expect(deps.reserveDailyAnalysisUsage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dailyLimit: 1,
+        eventType: "analysis.started",
+        userId: "user_123",
+      }),
+    );
     expect(deps.usage.record).not.toHaveBeenCalled();
+  });
+
+  it("keeps three daily analyses for allowlisted internal beta testers", async () => {
+    process.env.MOTIONCODE_INTERNAL_ADMIN_USER_IDS = "user_123";
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
+    const deps = createDeps({ planTier: "free" });
+    deps.getEntitlementSummary.mockResolvedValue({
+      entitlements: {
+        ...PLAN_ENTITLEMENTS.free,
+        dailyAnalyses: 3,
+      },
+      planTier: "free",
+    });
+
+    const response = await handleAnalyzeRequest(makeRequest(requestBody()), deps);
+    const json = (await response.json()) as ApiResponse<AnalysisResult>;
+
+    expect(response.status).toBe(200);
+    expect(json).toMatchObject({
+      data: {
+        model: "gemini-2.5-flash",
+      },
+      ok: true,
+    });
+    expect(deps.generateAnalysis).toHaveBeenCalledOnce();
+    expect(deps.reserveDailyAnalysisUsage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dailyLimit: 3,
+        eventType: "analysis.started",
+        planTier: "free",
+      }),
+    );
   });
 
   it("returns an ApiResponse<AnalysisResult> and records usage and audit events", async () => {
@@ -405,12 +453,14 @@ describe("POST /api/analyze", () => {
       frames: [VALID_JPEG_BASE64],
       model: "gemini-2.5-flash",
     });
-    expect(deps.usage.record).toHaveBeenCalledWith({
+    expect(deps.reserveDailyAnalysisUsage).toHaveBeenCalledWith({
+      dailyLimit: 1,
       eventType: "analysis.started",
       frameCount: 1,
       model: "gemini-2.5-flash",
       planTier: "free",
       projectId: PROJECT_ID,
+      since: new Date("2026-06-06T00:00:00.000Z"),
       userId: "user_123",
       workspaceId: WORKSPACE_ID,
     });
@@ -424,7 +474,7 @@ describe("POST /api/analyze", () => {
       workspaceId: WORKSPACE_ID,
     });
     expect(
-      deps.usage.record.mock.invocationCallOrder[0],
+      deps.reserveDailyAnalysisUsage.mock.invocationCallOrder[0],
     ).toBeLessThan(deps.generateAnalysis.mock.invocationCallOrder[0]);
     expect(deps.audit.record).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -463,7 +513,7 @@ describe("POST /api/analyze", () => {
       frames: [VALID_JPEG_BASE64],
       model: "gpt-5.5",
     });
-    expect(deps.usage.record).toHaveBeenCalledWith(
+    expect(deps.reserveDailyAnalysisUsage).toHaveBeenCalledWith(
       expect.objectContaining({
         eventType: "analysis.started",
         model: "gpt-5.5",
@@ -525,7 +575,7 @@ describe("POST /api/analyze", () => {
 
     expect(response.status).toBe(200);
     expect(authorizedRequest).not.toHaveProperty("workspaceId");
-    expect(deps.usage.record).toHaveBeenCalledWith(
+    expect(deps.reserveDailyAnalysisUsage).toHaveBeenCalledWith(
       expect.objectContaining({
         eventType: "analysis.started",
         workspaceId: CANONICAL_WORKSPACE_ID,
@@ -558,7 +608,6 @@ describe("POST /api/analyze", () => {
       recordModelSuccess: vi.fn(),
       reset: vi.fn(),
     };
-    deps.usage.record.mockResolvedValueOnce(undefined);
     deps.usage.record.mockRejectedValueOnce(
       new ApiError("INTERNAL_ERROR", "Failed to record usage event."),
     );
@@ -582,7 +631,7 @@ describe("POST /api/analyze", () => {
   it("does not call Gemini when pre-Gemini quota reservation fails", async () => {
     const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
     const deps = createDeps();
-    deps.usage.record.mockRejectedValueOnce(
+    deps.reserveDailyAnalysisUsage.mockRejectedValueOnce(
       new ApiError("INTERNAL_ERROR", "Failed to reserve usage."),
     );
 
@@ -625,6 +674,7 @@ describe("POST /api/analyze", () => {
     process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-placeholder";
 
     const insert = vi.fn(async () => ({ error: null }));
+    const rpc = vi.fn(async () => ({ data: true, error: null }));
     const rowForTable = (table: string) => {
       if (table === "projects") {
         return {
@@ -666,7 +716,7 @@ describe("POST /api/analyze", () => {
         },
       ),
     }));
-    const createClient = vi.fn(() => ({ from }));
+    const createClient = vi.fn(() => ({ from, rpc }));
     vi.doMock("@supabase/supabase-js", async (importOriginal) => {
       const actual =
         await importOriginal<typeof import("@supabase/supabase-js")>();
@@ -710,15 +760,18 @@ describe("POST /api/analyze", () => {
     );
     expect(from).toHaveBeenCalledWith("usage_events");
     expect(from).toHaveBeenCalledWith("audit_events");
-    expect(insert).toHaveBeenCalledWith(
+    expect(rpc).toHaveBeenCalledWith(
+      "reserve_analysis_usage_event",
       expect.objectContaining({
-        event_type: "analysis.started",
-        frame_count: 1,
-        model: "gemini-2.5-flash",
-        plan_tier: "free",
-        project_id: PROJECT_ID,
-        user_id: "user_123",
-        workspace_id: WORKSPACE_ID,
+        p_daily_limit: 1,
+        p_event_type: "analysis.started",
+        p_frame_count: 1,
+        p_model: "gemini-2.5-flash",
+        p_period_start: "2026-06-06T00:00:00.000Z",
+        p_plan_tier: "free",
+        p_project_id: PROJECT_ID,
+        p_user_id: "user_123",
+        p_workspace_id: WORKSPACE_ID,
       }),
     );
     expect(insert).toHaveBeenCalledWith(
@@ -957,7 +1010,88 @@ describe("Supabase daily analysis count", () => {
   });
 });
 
+describe("Supabase daily analysis reservation", () => {
+  it("calls the atomic reservation RPC with the quota window and usage payload", async () => {
+    const rpc = vi.fn(async () => ({ data: true, error: null }));
+    const client = {
+      from: vi.fn(() => ({
+        insert: vi.fn(async () => ({ error: null })),
+        select: vi.fn(),
+      })),
+      rpc,
+    } satisfies SupabaseUsageClient;
+
+    await expect(
+      reserveDailyAnalysisUsageWithSupabase(
+        {
+          dailyLimit: 1,
+          eventType: "analysis.started",
+          frameCount: 1,
+          model: "gemini-2.5-flash",
+          planTier: "free",
+          projectId: PROJECT_ID,
+          since: new Date("2026-06-06T00:00:00.000Z"),
+          userId: "user_123",
+          workspaceId: WORKSPACE_ID,
+        },
+        { client },
+      ),
+    ).resolves.toBe(true);
+
+    expect(rpc).toHaveBeenCalledWith("reserve_analysis_usage_event", {
+      p_daily_limit: 1,
+      p_event_type: "analysis.started",
+      p_frame_count: 1,
+      p_model: "gemini-2.5-flash",
+      p_period_start: "2026-06-06T00:00:00.000Z",
+      p_plan_tier: "free",
+      p_project_id: PROJECT_ID,
+      p_user_id: "user_123",
+      p_workspace_id: WORKSPACE_ID,
+    });
+  });
+
+  it("returns false when the atomic reservation RPC reports quota exhaustion", async () => {
+    const client = {
+      from: vi.fn(() => ({
+        insert: vi.fn(async () => ({ error: null })),
+        select: vi.fn(),
+      })),
+      rpc: vi.fn(async () => ({ data: false, error: null })),
+    } satisfies SupabaseUsageClient;
+
+    await expect(
+      reserveDailyAnalysisUsageWithSupabase(
+        {
+          dailyLimit: 1,
+          eventType: "analysis.started",
+          planTier: "free",
+          since: new Date("2026-06-06T00:00:00.000Z"),
+          userId: "user_123",
+        },
+        { client },
+      ),
+    ).resolves.toBe(false);
+  });
+});
+
 describe("Gemini analysis normalization", () => {
+  it("maps Gemini project quota exhaustion to a daily AI quota error", async () => {
+    const { analyzeFramesWithGemini } = await import("@/lib/server/gemini");
+    const fetcher = vi.fn(async () => new Response("rate limited", { status: 429 }));
+
+    await expect(
+      analyzeFramesWithGemini(
+        { frames: [VALID_JPEG_BASE64], model: "gemini-2.5-flash" },
+        { apiKey: "server-gemini-key", fetch: fetcher as typeof fetch },
+      ),
+    ).rejects.toMatchObject({
+      code: "QUOTA_EXCEEDED",
+      message: "Daily AI quota reached. Try again tomorrow.",
+      status: 429,
+    });
+  });
+
   it("converts Gemini JSON into the shared AnalysisResult contract", () => {
     const result = normalizeGeminiAnalysis(
       {

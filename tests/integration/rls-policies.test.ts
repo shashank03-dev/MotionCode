@@ -13,6 +13,7 @@ const REQUIRED_TABLES = [
   "generated_outputs",
   "usage_events",
   "subscriptions",
+  "billing_webhook_events",
   "share_links",
   "project_comments",
   "support_tickets",
@@ -66,6 +67,30 @@ function statementIndex(sql: string, statement: RegExp) {
   return match?.index ?? -1;
 }
 
+function withoutApprovedLegacyBillingCleanup(sql: string) {
+  return sql
+    .replace(
+      /\balter table public\.profiles\s+drop constraint if exists profiles_stripe_customer_id_key;\s*/gi,
+      "",
+    )
+    .replace(
+      /\bdrop index if exists public\.profiles_stripe_customer_id_idx;\s*/gi,
+      "",
+    )
+    .replace(
+      /\balter table public\.profiles\s+drop column if exists stripe_customer_id;\s*/gi,
+      "",
+    )
+    .replace(
+      /\balter table public\.subscriptions\s+drop constraint if exists subscriptions_stripe_customer_id_key,\s*drop constraint if exists subscriptions_stripe_subscription_id_key,\s*drop column if exists stripe_customer_id,\s*drop column if exists stripe_subscription_id;\s*/gi,
+      "",
+    )
+    .replace(
+      /\balter table public\.billing_webhook_events\s+alter column processed_at drop not null,\s*alter column processed_at drop default;\s*/gi,
+      "",
+    );
+}
+
 describe("Supabase data foundation migration", () => {
   const sql = readMigrationSql();
 
@@ -84,10 +109,12 @@ describe("Supabase data foundation migration", () => {
   });
 
   it("keeps the migration free of approval-gated destructive SQL", () => {
-    expect(sql).not.toMatch(/\bdelete\s+from\b/i);
-    expect(sql).not.toMatch(/\btruncate\b/i);
-    expect(sql).not.toMatch(/\bdrop\s+/i);
-    expect(sql).not.toMatch(/\balter\s+table\b[\s\S]*?\bdrop\b/i);
+    const reviewedSql = withoutApprovedLegacyBillingCleanup(sql);
+
+    expect(reviewedSql).not.toMatch(/\bdelete\s+from\b/i);
+    expect(reviewedSql).not.toMatch(/\btruncate\b/i);
+    expect(reviewedSql).not.toMatch(/\bdrop\s+/i);
+    expect(reviewedSql).not.toMatch(/\balter\s+table\b[\s\S]*?\bdrop\b/i);
   });
 
   it("revokes broad public table privileges before applying narrow grants", () => {
@@ -204,10 +231,13 @@ describe("Supabase data foundation migration", () => {
 
   it("prevents profile billing identity spoofing through client inserts", () => {
     expect(sql).toMatch(
-      /create policy "authenticated users can create their profile"[\s\S]*stripe_customer_id is null/i,
+      /alter policy "authenticated users can create their profile"[\s\S]*razorpay_customer_id is null/i,
     );
     expect(sql).toMatch(
-      /alter policy "authenticated users can create their profile"[\s\S]*razorpay_customer_id is null/i,
+      /drop column if exists stripe_customer_id/i,
+    );
+    expect(sql).toMatch(
+      /drop column if exists stripe_subscription_id/i,
     );
   });
 
@@ -327,6 +357,18 @@ describe("Supabase data foundation migration", () => {
     );
     expect(sql).not.toMatch(
       /create policy\s+"[^"]+"\s+on public\.audit_events\s+for delete/i,
+    );
+  });
+
+  it("limits atomic analysis usage reservation execution to server role", () => {
+    expect(sql).toMatch(
+      /create or replace function public\.reserve_analysis_usage_event/i,
+    );
+    expect(sql).toMatch(
+      /revoke all on function public\.reserve_analysis_usage_event[\s\S]*from public, anon, authenticated;/i,
+    );
+    expect(sql).toMatch(
+      /grant execute on function public\.reserve_analysis_usage_event[\s\S]*to service_role;/i,
     );
   });
 

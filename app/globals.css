@@ -19,6 +19,8 @@
     --text: #FFFBF4;
     --muted: #565449;
 
+    --font-inter: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-space-mono: "Space Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
     --font-mono: var(--font-space-mono), monospace;
     --font-body: var(--font-inter), sans-serif;
   }
@@ -882,7 +884,7 @@ body::after {
   min-width: max-content;
   color: rgba(216, 207, 188, 0.78);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11px;
   letter-spacing: 0.04em;
   opacity: 0.84;
   transition: opacity 220ms ease, transform 220ms ease;
@@ -894,8 +896,8 @@ body::after {
 }
 
 .motioncode-logo-img {
-  width: 25px;
-  height: 25px;
+  width: 22px;
+  height: 22px;
   object-fit: contain;
   filter: drop-shadow(0 0 12px rgba(216, 207, 188, 0.14));
 }
@@ -2165,6 +2167,29 @@ body::after {
   box-shadow: inset 0 1px 0 rgba(255, 251, 244, 0.06);
 }
 
+.motioncode-nav-brand-magnet,
+.motioncode-nav-link-magnet,
+.motioncode-nav-auth-magnet,
+.motioncode-nav-cta-magnet {
+  display: inline-flex !important;
+  align-items: center;
+  line-height: 0;
+}
+
+.motioncode-nav-brand-magnet {
+  justify-self: start;
+  min-width: 0;
+}
+
+.motioncode-nav-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  justify-self: end;
+  min-width: 0;
+  gap: 7px;
+}
+
 .motioncode-nav-link {
   position: relative;
   display: inline-flex;
@@ -2228,6 +2253,7 @@ body::after {
   transform: translateY(0) scaleX(1);
 }
 
+.motioncode-nav-auth,
 .motioncode-nav-cta {
   display: inline-flex;
   align-items: center;
@@ -2248,6 +2274,87 @@ body::after {
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
+}
+
+.motioncode-nav-auth {
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+  border: 1px solid rgba(216, 207, 188, 0.24) !important;
+  border-radius: 999px !important;
+  padding: 0 16px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 251, 244, 0.08), rgba(255, 251, 244, 0.024)),
+    rgba(8, 10, 9, 0.36) !important;
+  color: rgba(255, 251, 244, 0.88) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 251, 244, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.16);
+  -webkit-backdrop-filter: blur(18px) saturate(1.18);
+  backdrop-filter: blur(18px) saturate(1.18);
+  transition:
+    border-color 190ms ease,
+    background 190ms ease,
+    box-shadow 190ms ease,
+    color 190ms ease,
+    transform 190ms ease;
+}
+
+.motioncode-nav-auth::before,
+.motioncode-nav-auth::after {
+  content: "";
+  position: absolute;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    opacity 220ms ease,
+    transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.motioncode-nav-auth::before {
+  inset: -8px;
+  z-index: -2;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(0, 255, 136, 0.28), transparent 42%),
+    radial-gradient(circle at 70% 80%, rgba(216, 207, 188, 0.18), transparent 48%);
+  filter: blur(11px);
+  transform: scale(0.72);
+}
+
+.motioncode-nav-auth::after {
+  inset: 1px;
+  z-index: -1;
+  background:
+    linear-gradient(120deg, rgba(0, 255, 136, 0.18), rgba(255, 251, 244, 0.1), rgba(124, 92, 255, 0.16)),
+    rgba(255, 251, 244, 0.03);
+  transform: scaleX(0.68);
+}
+
+.motioncode-nav-auth:hover {
+  border-color: rgba(0, 255, 136, 0.36) !important;
+  color: #fffbf4 !important;
+  background:
+    linear-gradient(180deg, rgba(255, 251, 244, 0.12), rgba(255, 251, 244, 0.034)),
+    rgba(8, 10, 9, 0.48) !important;
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.28),
+    0 0 22px rgba(0, 255, 136, 0.08),
+    inset 0 1px 0 rgba(255, 251, 244, 0.18);
+  transform: translateY(-2px);
+}
+
+.motioncode-nav-auth:hover::before,
+.motioncode-nav-auth:hover::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.motioncode-nav-auth:active {
+  transform: scale(0.985);
+}
+
+.motioncode-nav-cta {
   transition:
     background 190ms ease,
     box-shadow 190ms ease,
@@ -2270,6 +2377,7 @@ body::after {
 
 .motioncode-nav-brand:focus-visible,
 .motioncode-nav-link:focus-visible,
+.motioncode-nav-auth:focus-visible,
 .motioncode-nav-cta:focus-visible {
   outline: 2px solid rgba(0, 255, 136, 0.72);
   outline-offset: 3px;
@@ -2298,9 +2406,14 @@ body::after {
     font-size: 13px !important;
   }
 
+  .motioncode-nav-actions {
+    gap: 5px;
+  }
+
+  .motioncode-nav-auth,
   .motioncode-nav-cta {
     min-height: 38px;
-    padding: 0 13px !important;
+    padding: 0 12px !important;
     font-size: 11px !important;
   }
 }
@@ -2310,8 +2423,14 @@ body::after {
     font-size: 12px !important;
   }
 
+  .motioncode-nav-actions {
+    gap: 4px;
+  }
+
+  .motioncode-nav-auth,
   .motioncode-nav-cta {
-    padding: 0 11px !important;
+    padding: 0 10px !important;
+    font-size: 10px !important;
   }
 }
 
@@ -2767,6 +2886,7 @@ body::after {
   .motioncode-march-nav,
   .motioncode-nav-link,
   .motioncode-march-nav a,
+  .motioncode-nav-auth,
   .motioncode-nav-cta,
   .hero-mouse-glow,
   [data-testid="hero-mouse-glow"],
@@ -2779,6 +2899,7 @@ body::after {
 
   .motioncode-nav-shell::after,
   .motioncode-march-nav::after,
+  .motioncode-aurora-layer,
   .hero-signal-dot,
   .hero-signal-meter::before,
   .hero-eyebrow > div:first-child,
@@ -3147,10 +3268,46 @@ body::after {
   transform: translateY(0) scale(0.99);
 }
 
+.motioncode-aurora-layer {
+  position: absolute;
+  inset: -24% -10% 20% -8%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  filter: saturate(0.94) blur(0.2px);
+  mix-blend-mode: screen;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.52) 54%, transparent 92%);
+}
+
+.motioncode-aurora-layer canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.motioncode-nav-cta-magnet,
+.motioncode-nav-auth-magnet,
+.motioncode-nav-link-magnet,
+.motioncode-nav-brand-magnet {
+  display: inline-flex !important;
+  align-items: center;
+  line-height: 0;
+}
+
+.motioncode-nav-actions {
+  justify-self: end;
+}
+
+.motioncode-nav-cta-magnet .motioncode-nav-cta,
+.motioncode-nav-auth-magnet .motioncode-nav-auth,
+.motioncode-nav-link-magnet .motioncode-nav-link,
+.motioncode-nav-brand-magnet .motioncode-nav-brand {
+  line-height: 1;
+}
+
 .motioncode-glass-nav {
   --glass-x: 50%;
   --glass-y: 50%;
-  --motioncode-nav-width: min(940px, calc(100vw - 32px));
+  --motioncode-nav-width: min(1020px, calc(100vw - 32px));
   --motioncode-nav-height: 56px;
   --motioncode-nav-density: 0;
   position: fixed !important;
@@ -3248,8 +3405,37 @@ body::after {
     background 220ms ease;
 }
 
+.motioncode-nav-actions {
+  transform: scale(calc(1 - var(--motioncode-nav-density) * 0.018));
+  transform-origin: right center;
+  transition:
+    gap 520ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 520ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.motioncode-nav-auth,
 .motioncode-nav-cta {
   min-height: calc(var(--motioncode-nav-height) - 14px);
+  transition:
+    min-height 520ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 190ms ease,
+    background 190ms ease,
+    box-shadow 190ms ease,
+    color 190ms ease,
+    transform 190ms ease,
+    opacity 190ms ease;
+}
+
+.motioncode-nav-auth {
+  border-color: rgba(255, 251, 244, 0.2) !important;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(0, 255, 136, 0.18), transparent 60%),
+    linear-gradient(180deg, rgba(255, 251, 244, 0.09), rgba(255, 251, 244, 0.026)),
+    rgba(8, 10, 9, 0.4) !important;
+  color: rgba(255, 251, 244, 0.86) !important;
+}
+
+.motioncode-nav-cta {
   border-color: rgba(255, 251, 244, 0.28) !important;
   background:
     radial-gradient(circle at 50% 0%, rgba(255, 251, 244, 0.5), transparent 58%),
@@ -3262,12 +3448,6 @@ body::after {
     inset 0 -1px 0 rgba(0, 0, 0, 0.16);
   -webkit-backdrop-filter: blur(18px) saturate(1.22);
   backdrop-filter: blur(18px) saturate(1.22);
-  transition:
-    min-height 520ms cubic-bezier(0.16, 1, 0.3, 1),
-    background 190ms ease,
-    box-shadow 190ms ease,
-    transform 190ms ease,
-    opacity 190ms ease;
 }
 
 .motioncode-nav-cta:hover {
@@ -3492,6 +3672,11 @@ body::after {
 @media (max-width: 767px) {
   .motioncode-hero-section {
     min-height: 820px !important;
+  }
+
+  .motioncode-aurora-layer {
+    inset: -16% -34% 42% -34%;
+    opacity: 0.38;
   }
 
   .motioncode-hero-section::before {

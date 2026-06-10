@@ -9,9 +9,10 @@ MotionCode is in free beta. Free beta analysis uses Gemini only. Pro and Studio 
 3. Browser extracts representative JPEG frames.
 4. User starts analysis.
 5. `/api/analyze` verifies the Supabase user, plan entitlement, resource access, daily quota, and abuse controls.
-6. Gemini returns normalized motion output. `/api/analyze` does not call OpenAI during beta.
-7. MotionCode records usage and audit events.
-8. User copies generated animation code.
+6. Public free beta users can run one analysis per day; internal admin or allowlisted testing users can run three analyses per day.
+7. Gemini returns normalized motion output. `/api/analyze` does not call OpenAI during beta.
+8. MotionCode records usage and audit events.
+9. User copies generated animation code.
 
 ## Request Pro Or Studio Early Access
 

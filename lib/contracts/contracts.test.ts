@@ -16,7 +16,7 @@ describe("shared product contracts", () => {
     expect(PLAN_TIERS).toEqual(["free", "pro", "studio"]);
     expect(PLAN_ENTITLEMENTS.free).toMatchObject({
       tier: "free",
-      dailyAnalyses: 3,
+      dailyAnalyses: 1,
       allowedModels: ["gemini-2.5-flash"],
       shareLinks: false,
       comments: false,
