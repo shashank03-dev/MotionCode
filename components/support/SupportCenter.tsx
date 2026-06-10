@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { RefreshCw, Send } from "lucide-react";
 
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import type { SupportTicketDTO } from "@/lib/contracts/adminSupport";
 import type { ApiResponse } from "@/lib/contracts/errors";
 
@@ -61,6 +62,7 @@ export function SupportCenter({ initialTickets, userEmail }: SupportCenterProps)
             <p className="mt-2 text-sm leading-6 text-[#b9c0ba]">
               Signed in as {userEmail}. Your tickets stay scoped to your account.
             </p>
+            <SignOutButton className="mt-4 border-[var(--border)] text-[#e7f7ff] hover:border-[#8fd6ff]/50" />
           </div>
           <form className="grid gap-4" onSubmit={submitTicket}>
             <label className="grid gap-2 text-sm">

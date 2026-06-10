@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ShieldCheck, Users, LifeBuoy } from "lucide-react";
 
+import { SignOutButton } from "@/components/auth/sign-out-button";
+
 type AdminPageShellProps = {
   active: "dashboard" | "users";
   children: React.ReactNode;
@@ -37,6 +39,7 @@ export function AdminPageShell({
               <Users className="size-4" aria-hidden="true" />
               Users
             </AdminNavLink>
+            <SignOutButton className="border-[var(--border)] text-[#b9c0ba] hover:border-[#8fd6ff]/40 hover:text-[#e7f7ff]" />
           </nav>
         </header>
         {children}

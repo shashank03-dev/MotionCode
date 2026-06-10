@@ -21,7 +21,9 @@ type VersionPageProps = {
 
 export default async function VersionPage({ params }: VersionPageProps) {
   const { projectId, versionId } = await params;
-  const user = await requireDashboardUser();
+  const user = await requireDashboardUser(
+    `/projects/${projectId}/versions/${versionId}`,
+  );
   const data = await getVersionPageData(projectId, versionId, user);
 
   return (

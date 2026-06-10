@@ -2,6 +2,7 @@ import { FolderKanban, Gauge, Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { cn } from "@/lib/utils";
 
 type AppShellProps = {
@@ -28,13 +29,21 @@ export function AppShell({ active = "dashboard", children, userEmail }: AppShell
             >
               MotionCode
             </Link>
-            <Link
-              href="/onboarding"
-              className="inline-flex size-8 items-center justify-center border border-[#d8cfbc66] text-[#d8cfbc] lg:mt-8"
-              title="New workspace"
-            >
-              <Plus className="size-4" />
-            </Link>
+            <div className="flex items-center gap-2 lg:block">
+              {userEmail ? (
+                <SignOutButton
+                  className="border-[#56544966] text-[#b8af9d] hover:border-[#d8cfbc66] hover:text-[#fffbf4] lg:hidden"
+                  label="Sign out"
+                />
+              ) : null}
+              <Link
+                href="/onboarding"
+                className="inline-flex size-8 items-center justify-center border border-[#d8cfbc66] text-[#d8cfbc] lg:mt-8"
+                title="New workspace"
+              >
+                <Plus className="size-4" />
+              </Link>
+            </div>
           </div>
 
           <nav className="mt-5 flex gap-2 lg:flex-col">
@@ -61,8 +70,9 @@ export function AppShell({ active = "dashboard", children, userEmail }: AppShell
           </nav>
 
           {userEmail ? (
-            <div className="mt-8 hidden border-t border-[#56544966] pt-4 text-xs text-[#8f887a] lg:block">
-              {userEmail}
+            <div className="mt-8 hidden border-t border-[#56544966] pt-4 lg:block">
+              <div className="break-all text-xs text-[#8f887a]">{userEmail}</div>
+              <SignOutButton className="mt-4 w-full border-[#56544966] text-[#b8af9d] hover:border-[#d8cfbc66] hover:text-[#fffbf4]" />
             </div>
           ) : null}
         </aside>

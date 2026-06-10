@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
+import { normalizeAuthNextPath } from "@/lib/auth/redirects";
 import { observeAuthError } from "@/lib/server/observability";
+import { ensureProfileForUser } from "@/lib/server/profiles";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -17,7 +19,7 @@ export async function GET(request: Request) {
       route: "/auth/callback",
     });
 
-    return NextResponse.redirect(new URL("/login", request.url));
+    return redirectToCallbackError(request);
   }
 
   const supabase = await createSupabaseServerClient();
@@ -30,16 +32,45 @@ export async function GET(request: Request) {
       route: "/auth/callback",
     });
 
-    return NextResponse.redirect(new URL("/login", request.url));
+    return redirectToCallbackError(request);
+  }
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    await observeAuthError({
+      action: "callback",
+      reason: "user_lookup_failed",
+      route: "/auth/callback",
+    });
+
+    return redirectToCallbackError(request);
+  }
+
+  try {
+    await ensureProfileForUser(user);
+  } catch {
+    await observeAuthError({
+      action: "callback",
+      reason: "profile_bootstrap_failed",
+      route: "/auth/callback",
+    });
+
+    return redirectToCallbackError(request);
   }
 
   return NextResponse.redirect(new URL(next, request.url));
 }
 
 function normalizeNextPath(value: string | null) {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) {
-    return "/dashboard";
-  }
+  return normalizeAuthNextPath(value);
+}
 
-  return value;
+function redirectToCallbackError(request: Request) {
+  return NextResponse.redirect(
+    new URL("/login?auth=callback-error", request.url),
+  );
 }

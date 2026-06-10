@@ -22,6 +22,20 @@ MotionCode is in free beta for analysis usage. Pro and Studio upgrades run throu
 | `GEMINI_API_KEY` | Server only | Gemini analysis used by `/api/analyze` during free beta. |
 | `OPENAI_API_KEY` | Server only | Reserved for paid analysis after `MOTIONCODE_ENABLE_OPENAI_ANALYSIS=true`; not used during beta. |
 
+## Supabase Google OAuth
+
+Google OAuth is configured in Supabase Auth, not through MotionCode runtime env vars.
+
+| Setting | Where | Purpose |
+| --- | --- | --- |
+| Google OAuth client ID | Supabase Auth Google provider | Lets Supabase initiate hosted Google OAuth. |
+| Google OAuth client secret | Supabase Auth Google provider | Server-side provider secret; never expose it in `NEXT_PUBLIC_*`. |
+| Supabase Auth callback URL | Google Cloud OAuth client | Google redirects back to Supabase Auth, which then redirects to the app callback. |
+| `http://localhost:3000/auth/callback` | Supabase Auth redirect allowlist | Local OAuth and magic-link callback during development. |
+| Staging and production `/auth/callback` URLs | Supabase Auth redirect allowlist | Hosted environments. Production should match `NEXT_PUBLIC_SITE_URL`. |
+
+The app callback route exchanges the Supabase auth code, ensures a `profiles` row exists, and redirects to `/dashboard` or the sanitized `next` path. Sign-out clears only the current browser session through `/auth/signout`.
+
 ## Paid-Readiness Billing Variables
 
 Keep these values server-only. Use Razorpay test-mode values only when `MOTIONCODE_ENABLE_RAZORPAY_TEST_CHECKOUT=true`; use live values only when `MOTIONCODE_LAUNCH_PHASE=paid`.
@@ -57,6 +71,8 @@ Apply migrations before using authenticated product flows. Never run `supabase d
 ## Production Setup
 
 - Configure env vars in Vercel.
+- Configure Supabase Google OAuth provider credentials in Supabase Auth.
+- Add local, staging, and production `/auth/callback` URLs to the Supabase Auth redirect allowlist.
 - Leave `MOTIONCODE_LAUNCH_PHASE` unset or set to `beta` for beta deployment.
 - Enable Razorpay checkout in beta only with `MOTIONCODE_ENABLE_RAZORPAY_TEST_CHECKOUT=true` and test keys.
 - Keep server-only secrets out of `NEXT_PUBLIC_` variables.

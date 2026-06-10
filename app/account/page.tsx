@@ -10,6 +10,7 @@ import {
   UserRound,
 } from "lucide-react";
 
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { getEntitlementSummary } from "@/lib/server/entitlements";
 import { getCurrentUser } from "@/lib/supabase/server";
 
@@ -105,6 +106,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
               <CreditCard className="h-4 w-4" aria-hidden="true" />
               Billing
             </Link>
+            <SignOutButton className="h-10 border-[var(--border)] px-4 font-mono text-[var(--accent)] hover:border-[var(--accent-border)] hover:text-[var(--text)]" />
           </div>
         </header>
 

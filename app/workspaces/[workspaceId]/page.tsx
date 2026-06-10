@@ -16,7 +16,7 @@ type WorkspacePageProps = {
 
 export default async function WorkspacePage({ params }: WorkspacePageProps) {
   const { workspaceId } = await params;
-  const user = await requireDashboardUser();
+  const user = await requireDashboardUser(`/workspaces/${workspaceId}`);
   const data = await getWorkspacePageData(workspaceId, user);
 
   return (

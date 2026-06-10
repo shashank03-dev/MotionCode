@@ -1,6 +1,7 @@
 import type { User } from "@supabase/supabase-js";
 import * as navigation from "next/navigation";
 
+import { loginPathForNext } from "@/lib/auth/redirects";
 import {
   createSupabaseServerClient,
   getCurrentUser,
@@ -43,11 +44,11 @@ export type VersionPageData = ProjectPageData & {
   version: ProjectVersionRow;
 };
 
-export async function requireDashboardUser() {
+export async function requireDashboardUser(nextPath?: string) {
   const user = await getCurrentUser();
 
   if (!user) {
-    navigation.redirect("/login");
+    navigation.redirect(loginPathForNext(nextPath));
   }
 
   return user;
