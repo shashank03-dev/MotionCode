@@ -1,3 +1,5 @@
+import { Check, Copy, Download } from "lucide-react";
+
 import type { AnalysisResult } from "@/lib/contracts/motion";
 import {
   CODE_TABS,
@@ -6,6 +8,8 @@ import {
   highlightCode,
   prettifyCode,
 } from "@/lib/generatedCode";
+
+import styles from "./CodeOutput.module.css";
 
 type CodeOutputProps = {
   activeTab: CodeTab;
@@ -25,34 +29,22 @@ export function CodeOutput({
   result,
 }: CodeOutputProps) {
   const code = getCodeContent(result, activeTab);
+  const formattedCode = prettifyCode(code, activeTab);
+  const activePanelId = `code-panel-${getTabSlug(activeTab)}`;
 
   return (
-    <>
-      <div
-        style={{
-          borderBottom: "1px solid #1a1a1a",
-          display: "flex",
-          gap: 4,
-          overflowX: "auto",
-          padding: "0 24px",
-        }}
-      >
+    <section className={styles.output} aria-label="Generated code">
+      <div className={styles.tabs} role="tablist" aria-label="Output framework">
         {CODE_TABS.map((tab) => (
           <button
+            aria-controls={`code-panel-${getTabSlug(tab)}`}
+            aria-selected={activeTab === tab}
+            className={activeTab === tab ? styles.tabActive : undefined}
+            id={`code-tab-${getTabSlug(tab)}`}
             key={tab}
             onClick={() => onTabChange(tab)}
-            style={{
-              backgroundColor: "transparent",
-              border: "none",
-              borderBottom: `2px solid ${activeTab === tab ? "#00ff88" : "transparent"}`,
-              color: activeTab === tab ? "#00ff88" : "#3a3a4a",
-              cursor: "pointer",
-              fontFamily: "Space Mono, monospace",
-              fontSize: 12,
-              padding: "12px 16px",
-              whiteSpace: "nowrap",
-              transition: "color 0.2s",
-            }}
+            role="tab"
+            type="button"
           >
             {tab}
           </button>
@@ -60,72 +52,43 @@ export function CodeOutput({
       </div>
 
       <div
-        style={{
-          backgroundColor: "#050505",
-          flex: 1,
-          overflow: "auto",
-          padding: 24,
-          position: "relative",
-        }}
+        aria-labelledby={`code-tab-${getTabSlug(activeTab)}`}
+        className={styles.codePanel}
+        id={activePanelId}
+        role="tabpanel"
       >
-        <div
-          style={{
-            display: "flex",
-            gap: 8,
-            position: "absolute",
-            right: 16,
-            top: 16,
-          }}
-        >
-          <OutputButton label="Download" onClick={onDownload} />
-          <OutputButton
-            label={copied ? "Copied" : "Copy Code"}
+        <div className={styles.actions}>
+          <button aria-label="Download code" onClick={onDownload} type="button">
+            <Download aria-hidden="true" size={14} />
+            Download code
+          </button>
+          <button
+            aria-label="Copy code"
+            className={copied ? styles.copied : undefined}
             onClick={onCopy}
-            tone={copied ? "#47bbedff" : "#fcfcffff"}
-          />
+            type="button"
+          >
+            {copied ? (
+              <Check aria-hidden="true" size={14} />
+            ) : (
+              <Copy aria-hidden="true" size={14} />
+            )}
+            Copy code
+          </button>
         </div>
         <pre
           dangerouslySetInnerHTML={{
-            __html: highlightCode(prettifyCode(code, activeTab)),
-          }}
-          style={{
-            color: "#e2e8f0",
-            fontFamily: "Space Mono, monospace",
-            fontSize: 12.5,
-            lineHeight: 1.9,
-            margin: 0,
-            whiteSpace: "pre-wrap",
-            wordBreak: "break-all",
+            __html: highlightCode(formattedCode),
           }}
         />
+        <span aria-live="polite" className={styles.srOnly}>
+          {copied ? "Code copied" : ""}
+        </span>
       </div>
-    </>
+    </section>
   );
 }
 
-type OutputButtonProps = {
-  label: string;
-  onClick: () => void;
-  tone?: string;
-};
-
-function OutputButton({ label, onClick, tone = "#fcfcffff" }: OutputButtonProps) {
-  return (
-    <button
-      className="copy-btn"
-      onClick={onClick}
-      style={{
-        backgroundColor: "transparent",
-        border: "1px solid #1a1a1a",
-        color: tone,
-        cursor: "pointer",
-        fontFamily: "Space Mono, monospace",
-        fontSize: 10,
-        padding: "5px 12px",
-        transition: "all 0.2s",
-      }}
-    >
-      {label}
-    </button>
-  );
+function getTabSlug(tab: CodeTab) {
+  return tab.toLowerCase().replace(/\s+/g, "-");
 }

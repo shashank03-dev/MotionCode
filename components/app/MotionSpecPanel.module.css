@@ -1,0 +1,149 @@
+.panel {
+  flex: 0 0 auto;
+  border-bottom: 1px solid var(--border);
+  background: rgba(17, 18, 13, 0.92);
+  padding: 14px clamp(16px, 2vw, 24px);
+}
+
+.topline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.summary {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 14px;
+}
+
+.intentBadge {
+  flex: 0 0 auto;
+  border: 1px solid var(--intent-color);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--intent-color) 13%, transparent);
+  color: var(--intent-color);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  padding: 5px 10px;
+  text-transform: uppercase;
+}
+
+.summaryText {
+  min-width: 0;
+}
+
+.summaryText h2 {
+  margin: 0 0 3px;
+  color: var(--text);
+  font-size: 0.86rem;
+  letter-spacing: 0;
+}
+
+.summaryText p {
+  max-width: 72ch;
+  margin: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resetButton {
+  display: inline-flex;
+  min-height: 38px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: rgba(216, 207, 188, 0.035);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 8px 11px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.fieldWide {
+  margin-top: 10px;
+}
+
+.field > span {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.field input,
+.field select,
+.loopToggle {
+  width: 100%;
+  min-width: 0;
+  min-height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 7px 8px;
+}
+
+.loopToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loopToggle input {
+  width: auto;
+  min-height: 0;
+  padding: 0;
+}
+
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .topline,
+  .summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .resetButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .summaryText p {
+    white-space: normal;
+  }
+}

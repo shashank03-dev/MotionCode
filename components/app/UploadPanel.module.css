@@ -1,0 +1,438 @@
+.panel {
+  --input-ease: cubic-bezier(0.19, 1, 0.22, 1);
+  --input-panel: color-mix(in srgb, var(--surface) 84%, #000 16%);
+  --input-line: color-mix(in srgb, var(--border) 70%, var(--accent) 22%);
+  --input-hairline: color-mix(in srgb, var(--text) 7%, transparent);
+  display: flex;
+  width: min(420px, 34vw);
+  min-width: 370px;
+  min-height: 0;
+  flex: 0 0 min(420px, 34vw);
+  flex-direction: column;
+  overflow-y: auto;
+  border: 1px solid color-mix(in srgb, var(--input-line) 78%, transparent);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 5%, transparent), transparent 30%),
+    linear-gradient(135deg, rgba(0, 255, 136, 0.035), transparent 44%),
+    var(--input-panel);
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 var(--input-hairline),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.32);
+  scrollbar-color: color-mix(in srgb, var(--accent) 34%, transparent) transparent;
+}
+
+.header {
+  border-bottom: 1px solid color-mix(in srgb, var(--input-line) 64%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 5%, transparent), transparent);
+  padding: 16px 22px;
+}
+
+.header span,
+.controlLabel {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.dropzone {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 184px;
+  margin: 20px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--input-line) 78%, transparent);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--border) 42%, transparent) 50%, transparent 0) 0 0 / 12px 1px repeat-x,
+    linear-gradient(90deg, color-mix(in srgb, var(--border) 42%, transparent) 50%, transparent 0) 0 100% / 12px 1px repeat-x,
+    linear-gradient(0deg, color-mix(in srgb, var(--border) 42%, transparent) 50%, transparent 0) 0 0 / 1px 12px repeat-y,
+    linear-gradient(0deg, color-mix(in srgb, var(--border) 42%, transparent) 50%, transparent 0) 100% 0 / 1px 12px repeat-y,
+    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 50%),
+    rgba(0, 0, 0, 0.16);
+  box-shadow:
+    inset 0 1px 0 var(--input-hairline),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.36);
+  cursor: pointer;
+  transition:
+    border-color 240ms var(--input-ease),
+    box-shadow 240ms var(--input-ease),
+    background-position 420ms var(--input-ease),
+    transform 240ms var(--input-ease);
+}
+
+.dropzone::before,
+.dropzone::after {
+  position: absolute;
+  pointer-events: none;
+  content: "";
+}
+
+.dropzone::before {
+  inset: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 11%, transparent);
+  border-radius: 5px;
+}
+
+.dropzone::after {
+  top: -40%;
+  left: -32%;
+  width: 64%;
+  height: 180%;
+  background: linear-gradient(90deg, transparent, rgba(255, 251, 244, 0.055), transparent);
+  transform: rotate(18deg) translateX(-120%);
+  transition: transform 650ms var(--input-ease);
+}
+
+.dropzone input {
+  display: none;
+}
+
+.dropzone:hover,
+.dropzoneActive {
+  border-color: color-mix(in srgb, var(--accent-border) 78%, #00ff88 14%);
+  background-position:
+    6px 0,
+    -6px 100%,
+    0 6px,
+    100% -6px,
+    50% 0,
+    0 0;
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.24),
+    0 0 0 1px color-mix(in srgb, var(--accent) 8%, transparent),
+    inset 0 1px 0 var(--input-hairline),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.36);
+  transform: translateY(-1px);
+}
+
+.dropzone:hover::after,
+.dropzoneActive::after {
+  transform: rotate(18deg) translateX(250%);
+}
+
+.dropzoneError {
+  border-color: rgba(239, 68, 68, 0.82);
+  background-color: rgba(239, 68, 68, 0.045);
+  box-shadow:
+    0 0 0 1px rgba(239, 68, 68, 0.14),
+    inset 0 1px 0 var(--input-hairline);
+}
+
+.dropzoneReady {
+  border-color: color-mix(in srgb, #00ff88 48%, var(--accent-border));
+  background-color: rgba(0, 255, 136, 0.025);
+}
+
+.emptyUpload,
+.fileSummary {
+  display: flex;
+  max-width: 100%;
+  align-items: center;
+  flex-direction: column;
+  gap: 9px;
+  padding: 20px;
+  text-align: center;
+}
+
+.emptyUpload svg,
+.fileSummary svg {
+  color: var(--accent);
+  filter: drop-shadow(0 0 16px color-mix(in srgb, var(--accent) 18%, transparent));
+}
+
+.emptyUpload span,
+.fileSummary strong {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+}
+
+.emptyUpload small,
+.fileSummary small,
+.submitArea span {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+}
+
+.fileSummary strong {
+  color: #00ff88;
+  font-weight: 600;
+}
+
+.fileActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.smallButton {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid color-mix(in srgb, var(--input-line) 82%, transparent);
+  border-radius: 6px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 8%, transparent), transparent),
+    rgba(0, 0, 0, 0.18);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  padding: 7px 10px;
+  transition:
+    border-color 220ms var(--input-ease),
+    color 220ms var(--input-ease),
+    transform 220ms var(--input-ease),
+    background 220ms var(--input-ease);
+}
+
+.smallButton:hover {
+  border-color: color-mix(in srgb, var(--accent-border) 82%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 12%, transparent), transparent),
+    rgba(0, 0, 0, 0.22);
+  transform: translateY(-1px);
+}
+
+.smallButtonDanger {
+  border-color: rgba(239, 68, 68, 0.36);
+  color: #ef7d73;
+}
+
+.validation {
+  margin: -4px 20px 16px;
+  color: #ef7d73;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 20px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--input-line) 80%, transparent);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 4%, transparent), transparent),
+    rgba(0, 0, 0, 0.36);
+  box-shadow:
+    inset 0 1px 0 var(--input-hairline),
+    0 14px 36px rgba(0, 0, 0, 0.22);
+}
+
+.preview video,
+.preview img {
+  width: 100%;
+  max-height: 210px;
+  object-fit: contain;
+}
+
+.controls {
+  margin-top: auto;
+  border-top: 1px solid color-mix(in srgb, var(--input-line) 64%, transparent);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.1), transparent);
+  padding: 14px 20px;
+}
+
+.controlLabel {
+  margin-bottom: 10px;
+}
+
+.frameButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.frameButtons button {
+  min-width: 44px;
+  min-height: 34px;
+  border: 1px solid color-mix(in srgb, var(--input-line) 78%, transparent);
+  border-radius: 6px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 6%, transparent), transparent),
+    rgba(0, 0, 0, 0.16);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  box-shadow: inset 0 1px 0 var(--input-hairline);
+  transition:
+    border-color 220ms var(--input-ease),
+    color 220ms var(--input-ease),
+    transform 220ms var(--input-ease),
+    box-shadow 220ms var(--input-ease);
+}
+
+.frameButtons button:hover {
+  border-color: color-mix(in srgb, var(--accent-border) 72%, transparent);
+  transform: translateY(-1px);
+}
+
+.frameButtonActive {
+  border-color: rgba(0, 255, 136, 0.64) !important;
+  color: #00ff88 !important;
+  background:
+    linear-gradient(180deg, rgba(0, 255, 136, 0.1), rgba(0, 255, 136, 0.035)) !important;
+  box-shadow:
+    0 0 0 1px rgba(0, 255, 136, 0.08),
+    inset 0 1px 0 var(--input-hairline) !important;
+}
+
+.loadingRail {
+  height: 3px;
+  margin: 0 20px 16px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border) 42%, transparent);
+}
+
+.loadingRail span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, #00ff88 84%, var(--accent)));
+  box-shadow: 0 0 18px rgba(0, 255, 136, 0.18);
+  animation: loadingRail 18s cubic-bezier(0.08, 0.82, 0.18, 1) forwards;
+}
+
+.usageBox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 20px 18px;
+  border: 1px solid color-mix(in srgb, var(--input-line) 70%, transparent);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 5%, transparent), transparent),
+    rgba(0, 0, 0, 0.14);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  padding: 11px 13px;
+  box-shadow: inset 0 1px 0 var(--input-hairline);
+}
+
+.usageBox strong {
+  color: #ef7d73;
+  font-weight: 600;
+}
+
+.usageBox a {
+  color: #00ff88;
+}
+
+.usageBoxPro {
+  border-color: rgba(0, 255, 136, 0.42);
+  color: #00ff88;
+}
+
+.submitArea {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 20px 20px;
+  text-align: center;
+}
+
+.submitArea button {
+  min-height: 48px;
+  border: 1px solid color-mix(in srgb, var(--accent) 72%, #00ff88 18%);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fff 18%, transparent), transparent 48%),
+    var(--accent);
+  color: var(--bg);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 700;
+  box-shadow:
+    0 16px 34px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.submitArea button:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 20px 42px rgba(0, 0, 0, 0.3),
+    0 0 28px rgba(216, 207, 188, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.submitArea button:disabled {
+  border-color: color-mix(in srgb, var(--border) 72%, transparent);
+  background: rgba(86, 84, 73, 0.16);
+  box-shadow: inset 0 1px 0 var(--input-hairline);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+@keyframes loadingRail {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  .panel {
+    width: 100%;
+    min-width: 0;
+    max-height: none;
+    flex: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .dropzone,
+  .preview,
+  .usageBox {
+    margin-inline: 14px;
+  }
+
+  .dropzone {
+    min-height: 154px;
+  }
+
+  .controls,
+  .submitArea {
+    padding-inline: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dropzone,
+  .dropzone::after,
+  .smallButton,
+  .frameButtons button,
+  .submitArea button,
+  .loadingRail span {
+    animation: none;
+    transition: none;
+  }
+
+  .dropzone:hover,
+  .dropzoneActive,
+  .smallButton:hover,
+  .frameButtons button:hover,
+  .submitArea button:not(:disabled):hover {
+    transform: none;
+  }
+}

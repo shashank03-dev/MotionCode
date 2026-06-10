@@ -1,6 +1,7 @@
 import type { MotionSpec } from "@/lib/contracts/motion";
 import { getAccessibilityStatus } from "@/lib/motionSpecEditor";
 
+import styles from "./Scorecard.module.css";
 import type { ScoreKey } from "./types";
 
 type ScorecardProps = {
@@ -22,128 +23,120 @@ export function Scorecard({
   spec,
 }: ScorecardProps) {
   const accessibilityStatus = getAccessibilityStatus(spec.accessibilityNote);
+  const easingType = spec.easing.split("(")[0].split("-")[0] || "custom";
 
   return (
-    <div
-      style={{
-        borderTop: "1px solid #1a1a1a",
-        display: "flex",
-        flexWrap: "wrap",
-        gap: 16,
-        padding: "16px 24px",
-        position: "relative",
-      }}
+    <section
+      aria-label="Analysis quality scorecard"
+      className={styles.scorecard}
     >
       <ScoreItem
-        label="PERF SCORE"
+        label="Performance"
+        meter={spec.performanceScore}
+        meterText={`${spec.performanceScore} out of 100`}
         onHover={onHoveredScoreChange}
         scoreKey="perf"
+        tone={getPerfTone(spec.performanceScore)}
         value={`${spec.performanceScore}/100`}
-        valueColor={
-          spec.performanceScore >= 85
-            ? "#00ff88"
-            : spec.performanceScore >= 65
-              ? "#f59e0b"
-              : "#ef4444"
-        }
       />
       <ScoreItem
-        label="ACCELERATION"
+        label="Acceleration"
+        meter={spec.gpuAccelerated ? 92 : 54}
+        meterText={
+          spec.gpuAccelerated
+            ? "GPU acceleration preferred"
+            : "CPU-bound animation risk"
+        }
         onHover={onHoveredScoreChange}
         scoreKey="accel"
+        tone={spec.gpuAccelerated ? "good" : "warn"}
         value={spec.gpuAccelerated ? "GPU" : "CPU"}
-        valueColor={spec.gpuAccelerated ? "#00ff88" : "#f59e0b"}
       />
       <ScoreItem
-        label="ACCESSIBILITY"
+        label="Accessibility"
+        meter={accessibilityStatus === "needs-fix" ? 58 : 88}
+        meterText={
+          accessibilityStatus === "needs-fix"
+            ? "Reduced motion note needs attention"
+            : "Reduced motion guidance included"
+        }
         onHover={onHoveredScoreChange}
         scoreKey="a11y"
+        tone={accessibilityStatus === "needs-fix" ? "warn" : "good"}
         value={accessibilityStatus === "needs-fix" ? "Fix" : "Pass"}
-        valueColor={accessibilityStatus === "needs-fix" ? "#f59e0b" : "#00ff88"}
       />
       <ScoreItem
-        label="EASING TYPE"
+        label="Easing"
+        meter={78}
+        meterText={`${easingType} easing detected`}
         onHover={onHoveredScoreChange}
         scoreKey="easing"
-        value={spec.easing.split("(")[0].split("-")[0]}
-        valueColor="#e2e8f0"
-        withDivider={false}
+        tone="neutral"
+        value={easingType}
       />
 
       {hoveredScore && (
-        <div
-          style={{
-            background: "#0a0a0a",
-            border: "1px solid #1a1a1a",
-            bottom: "calc(100% + 12px)",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
-            color: "#3a3a4a",
-            fontFamily: "Space Mono, monospace",
-            fontSize: 10,
-            left: 24,
-            maxWidth: 220,
-            padding: "8px 12px",
-            position: "absolute",
-            zIndex: 100,
-          }}
-        >
+        <div className={styles.tooltip} role="tooltip">
           {TOOLTIP_COPY[hoveredScore]}
         </div>
       )}
-    </div>
+    </section>
   );
 }
 
 type ScoreItemProps = {
   label: string;
+  meter: number;
+  meterText: string;
   onHover: (score: ScoreKey | null) => void;
   scoreKey: ScoreKey;
+  tone: "bad" | "good" | "neutral" | "warn";
   value: string;
-  valueColor: string;
-  withDivider?: boolean;
 };
 
 function ScoreItem({
   label,
+  meter,
+  meterText,
   onHover,
   scoreKey,
+  tone,
   value,
-  valueColor,
-  withDivider = true,
 }: ScoreItemProps) {
   return (
     <div
+      className={`${styles.item} ${styles[tone]}`}
+      onFocus={() => onHover(scoreKey)}
       onMouseEnter={() => onHover(scoreKey)}
       onMouseLeave={() => onHover(null)}
-      style={{
-        borderRight: withDivider ? "1px solid #1a1a1a" : "none",
-        cursor: "help",
-        display: "flex",
-        flexDirection: "column",
-        gap: 4,
-        paddingRight: withDivider ? 16 : 0,
-      }}
+      onBlur={() => onHover(null)}
+      tabIndex={0}
     >
-      <div
-        style={{
-          color: valueColor,
-          fontFamily: "Space Mono, monospace",
-          fontSize: 16,
-          fontWeight: "bold",
-        }}
-      >
-        {value}
+      <div className={styles.itemTop}>
+        <strong>{value}</strong>
+        <span>{label}</span>
       </div>
-      <div
-        style={{
-          color: "#3a3a4a",
-          fontFamily: "Space Mono, monospace",
-          fontSize: 9,
-          letterSpacing: 1,
-        }}
-      >
-        {label}
-      </div>
+      <meter
+        aria-label={`${label}: ${meterText}`}
+        aria-valuetext={meterText}
+        className={styles.meter}
+        high={85}
+        low={60}
+        max={100}
+        min={0}
+        optimum={100}
+        value={getMeterValue(meter)}
+      />
     </div>
   );
+}
+
+function getMeterValue(value: number) {
+  return Math.min(100, Math.max(0, value));
+}
+
+function getPerfTone(score: number): "bad" | "good" | "warn" {
+  if (score >= 85) return "good";
+  if (score >= 65) return "warn";
+  return "bad";
 }

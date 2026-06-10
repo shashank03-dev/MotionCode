@@ -1,0 +1,68 @@
+.statusBar {
+  flex: 0 0 auto;
+  min-height: 46px;
+  border-top: 1px solid var(--border);
+  background: rgba(17, 18, 13, 0.96);
+  padding: 10px clamp(16px, 2vw, 24px);
+}
+
+.statusContent {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.statusMessage {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.success {
+  color: #00ff88;
+}
+
+.error {
+  color: #ef7d73;
+}
+
+.statusDot {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #00ff88;
+  box-shadow: 0 0 12px rgba(0, 255, 136, 0.3);
+  animation: statusPulse 900ms ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  50% {
+    opacity: 0.34;
+    transform: scale(0.74);
+  }
+}
+
+@media (max-width: 640px) {
+  .statusBar {
+    min-height: 56px;
+  }
+
+  .statusContent {
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .statusDot {
+    animation: none;
+  }
+}

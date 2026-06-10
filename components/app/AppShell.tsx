@@ -10,10 +10,10 @@ import {
   type MouseEvent,
 } from "react";
 
-import { AnalysisStatus } from "@/components/app/AnalysisStatus";
+import { AppStatusBar } from "@/components/app/AppStatusBar";
 import { CodeOutput } from "@/components/app/CodeOutput";
-import { EmptyState } from "@/components/app/EmptyState";
 import { MotionSpecPanel } from "@/components/app/MotionSpecPanel";
+import { ProcessCanvas } from "@/components/app/ProcessCanvas";
 import { Scorecard } from "@/components/app/Scorecard";
 import { UploadPanel } from "@/components/app/UploadPanel";
 import type { ApiResponse } from "@/lib/contracts/errors";
@@ -34,6 +34,7 @@ import type { MotionSpecEditableField } from "@/lib/motionSpecEditor";
 import { updateAnalysisResultSpec } from "@/lib/motionSpecEditor";
 import { incrementUsage, usagesLeft } from "@/lib/rateLimit";
 
+import styles from "./AppShell.module.css";
 import type { AnalysisStage, ClientAnalysisIds, ScoreKey } from "./types";
 
 const DEFAULT_ENTITLEMENTS = PLAN_ENTITLEMENTS.free;
@@ -261,6 +262,7 @@ export function AppShell({
       setError(
         `Daily limit reached (${entitlements.dailyAnalyses}/day). Upgrade with Razorpay for higher capacity.`,
       );
+      setStage("error");
       return;
     }
 
@@ -459,92 +461,20 @@ export function AppShell({
   const intentColor = result
     ? INTENT_COLORS[result.spec.intent.toLowerCase()] || "#00ff88"
     : "#00ff88";
+  const processStage: Exclude<AnalysisStage, "done"> =
+    stage === "done" ? "idle" : stage;
+  const liveStatusMessage =
+    stage === "analyzing" ? STATUS_MESSAGES[statusBarMsgIndex] : statusMessage;
 
   return (
-    <div
-      id="app-root"
-      style={{
-        backgroundColor: "#080808",
-        color: "#e2e8f0",
-        display: "flex",
-        flexDirection: "column",
-        fontFamily: "Inter, sans-serif",
-        height: "100vh",
-        overflow: "hidden",
-        width: "100vw",
-      }}
-    >
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.15; } }
-        @keyframes progress { 0% { width: 0%; } 100% { width: 100%; } }
-        @keyframes fadeSlideIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
-        @keyframes fadeOut { to { opacity: 0; transform: translateY(8px) } }
-        .copy-btn:hover {
-          box-shadow: 0 0 12px #00ff8860;
-          border-color: #00ff88 !important;
-          color: #00ff88 !important;
-        }
-        @media (max-width: 768px) {
-          #main-area { flex-direction: column !important; }
-          #left-panel { width: 100% !important; height: auto !important; min-height: 0 !important; }
-          #right-panel { width: 100% !important; flex: 1 !important; min-height: 60vh !important; }
-          #video-preview { max-height: 140px !important; }
-          #frame-strip-container { overflow-x: scroll !important; flex-wrap: nowrap !important; }
-          #navbar { padding: 0 16px !important; }
-        }
-      `,
-        }}
-      />
-
-      <nav
-        id="navbar"
-        style={{
-          alignItems: "center",
-          backgroundColor: "#080808",
-          borderBottom: "1px solid #1a1a1a",
-          display: "flex",
-          flexShrink: 0,
-          height: 56,
-          justifyContent: "space-between",
-          padding: "0 24px",
-        }}
-      >
-        <Link
-          href="/"
-          style={{
-            color: "#e2e8f0",
-            fontFamily: "Space Mono, monospace",
-            fontSize: 14,
-            fontWeight: "bold",
-            textDecoration: "none",
-          }}
-        >
+    <div className={styles.root} id="app-root">
+      <nav className={styles.navbar} id="navbar">
+        <Link className={styles.brandLink} href="/">
           &lt;/&gt; MotionCode
         </Link>
-        <div style={{ alignItems: "center", display: "flex", gap: 16 }}>
-          <div
-            style={{
-              border: `1px solid ${userPlan === "free" ? "#3a3a4a" : "#00ff88"}`,
-              color: userPlan === "free" ? "#3a3a4a" : "#00ff88",
-              fontFamily: "Space Mono, monospace",
-              fontSize: 9,
-              letterSpacing: 2,
-              padding: "2px 8px",
-            }}
-          >
-            {userPlan.toUpperCase()}
-          </div>
-          <Link
-            href="/"
-            style={{
-              color: "#3a3a4a",
-              fontFamily: "Space Mono, monospace",
-              fontSize: 13,
-              textDecoration: "none",
-            }}
-          >
+        <div className={styles.navActions}>
+          <div className={styles.planBadge}>{userPlan.toUpperCase()}</div>
+          <Link className={styles.homeLink} href="/">
             Back to home
           </Link>
         </div>
@@ -552,7 +482,7 @@ export function AppShell({
 
       <h1 className="sr-only">MotionCode animation converter</h1>
 
-      <main id="main-area" style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+      <main className={styles.mainArea} id="main-area">
         <UploadPanel
           canUseFree={canUseFree}
           dragActive={dragActive}
@@ -578,39 +508,15 @@ export function AppShell({
           validationError={validationError}
         />
 
-        <div
-          id="right-panel"
-          style={{
-            backgroundColor: "#080808",
-            display: "flex",
-            flex: 1,
-            flexDirection: "column",
-            overflow: "hidden",
-            position: "relative",
-          }}
-        >
+        <div className={styles.rightPanel} id="right-panel">
           <div
-            style={{
-              backgroundColor: "#1a1a1a",
-              height: 2,
-              left: 0,
-              opacity: stage === "done" ? 0 : stage === "analyzing" ? 1 : 0,
-              pointerEvents: "none",
-              position: "absolute",
-              right: 0,
-              top: 0,
-              transition: stage === "done" ? "opacity 0.4s ease 0.4s" : "none",
-              zIndex: 10,
-            }}
+            className={`${styles.topProgress} ${
+              stage === "analyzing" ? styles.topProgressVisible : ""
+            }`}
           >
             <div
+              className={styles.topProgressFill}
               style={{
-                background: "linear-gradient(90deg, #00ff88, #00cc6e)",
-                height: "100%",
-                transition:
-                  stage === "done"
-                    ? "width 0.1s ease-out"
-                    : "width 20s cubic-bezier(0.1, 0, 0.3, 1)",
                 width:
                   stage === "done"
                     ? "100%"
@@ -622,25 +528,21 @@ export function AppShell({
           </div>
 
           {!result ? (
-            stage === "analyzing" ? (
-              <AnalysisStatus
-                activeStep={activeStep}
-                frameThumbs={frameThumbs}
-                scannerIndex={scannerIndex}
-                steps={stepsList}
-              />
-            ) : (
-              <EmptyState />
-            )
+            <ProcessCanvas
+              activeStep={activeStep}
+              canRetry={frames.length > 0 && !loading && stage !== "extracting"}
+              error={error}
+              frameThumbs={frameThumbs}
+              onRetry={handleAnalyze}
+              onUploadClick={() => fileInputRef.current?.click()}
+              progressWidth={progressWidth}
+              scannerIndex={scannerIndex}
+              stage={processStage}
+              statusMessage={liveStatusMessage}
+              steps={stepsList}
+            />
           ) : (
-            <div
-              style={{
-                display: "flex",
-                flex: 1,
-                flexDirection: "column",
-                overflow: "hidden",
-              }}
-            >
+            <div className={styles.resultStack}>
               <MotionSpecPanel
                 intentColor={intentColor}
                 onReset={handleReset}
@@ -663,96 +565,24 @@ export function AppShell({
             </div>
           )}
 
-          <div
-            style={{
-              alignItems: "center",
-              backgroundColor: "#080808",
-              borderTop: "1px solid #1a1a1a",
-              display: "flex",
-              justifyContent: "space-between",
-              padding: "10px 24px",
-            }}
-          >
-            <div
-              style={{
-                alignItems: "center",
-                color: "#3a3a4a",
-                display: "flex",
-                fontFamily: "Space Mono, monospace",
-                fontSize: 11,
-                gap: 10,
-              }}
-            >
-              {stage === "idle" && (
-                <span>Cmd+Enter analyze / 1-4 switch tabs / Cmd+K upload</span>
-              )}
-              {stage === "extracting" && (
-                <>
-                  <StatusDot />
-                  <span>Extracting frames...</span>
-                </>
-              )}
-              {stage === "analyzing" && (
-                <>
-                  <StatusDot />
-                  <span>{statusMessage || STATUS_MESSAGES[statusBarMsgIndex]}</span>
-                </>
-              )}
-              {stage === "done" && result && (
-                <span style={{ color: "#00ff88" }}>
-                  Analysis complete / {frames.length} frames / {result.spec.intent} detected
-                </span>
-              )}
-              {stage === "error" && <span style={{ color: "#ef4444" }}>{error}</span>}
-            </div>
-            <div
-              style={{
-                color: "#1a1a1a",
-                fontFamily: "Space Mono, monospace",
-                fontSize: 10,
-              }}
-            />
-          </div>
+          <AppStatusBar
+            error={error}
+            framesLength={frames.length}
+            resultIntent={result?.spec.intent ?? null}
+            stage={stage}
+            statusMessage={liveStatusMessage}
+          />
         </div>
       </main>
 
       {showToast && (
-        <div
-          style={{
-            animation: "fadeSlideIn 0.3s ease, fadeOut 0.3s ease 2.7s forwards",
-            background: "#0f0f0f",
-            border: "1px solid #00ff88",
-            bottom: 24,
-            boxShadow: "0 8px 32px rgba(0,255,136,0.15)",
-            color: "#00ff88",
-            fontFamily: "Space Mono, monospace",
-            fontSize: 12,
-            padding: "12px 20px",
-            position: "fixed",
-            right: 24,
-            zIndex: 1000,
-          }}
-        >
+        <div className={styles.toast} role="status">
           Analysis complete - code ready
         </div>
       )}
     </div>
   );
 
-}
-
-function StatusDot() {
-  return (
-    <div
-      style={{
-        animation: "blink 0.8s infinite",
-        backgroundColor: "#00ff88",
-        borderRadius: "50%",
-        height: 6,
-        width: 6,
-      }}
-    />
-  );
 }
 
 async function analyzeViaApi({

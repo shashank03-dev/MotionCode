@@ -1,0 +1,1148 @@
+.canvas {
+  --process-bg: color-mix(in srgb, var(--bg) 88%, #020202 12%);
+  --process-panel: color-mix(in srgb, var(--surface) 74%, #020403 26%);
+  --process-panel-strong: color-mix(in srgb, var(--surface) 68%, var(--accent) 9%);
+  --process-line: color-mix(in srgb, var(--border) 66%, var(--accent) 34%);
+  --process-muted: color-mix(in srgb, var(--muted) 68%, var(--text) 32%);
+  --process-danger: #ff5b5f;
+  --process-success: #00ff88;
+  --process-cyan: #8bdff6;
+  --process-blueprint: color-mix(in srgb, #0b1420 72%, var(--surface) 28%);
+  --process-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  background:
+    radial-gradient(circle at 78% 8%, color-mix(in srgb, var(--process-cyan) 12%, transparent), transparent 30%),
+    radial-gradient(circle at 12% 18%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 34%),
+    linear-gradient(135deg, color-mix(in srgb, var(--surface) 66%, transparent), transparent 46%),
+    var(--process-bg);
+  color: var(--text);
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: clamp(12px, 1.5vw, 18px);
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  padding: clamp(18px, 2.7vw, 36px);
+  position: relative;
+}
+
+.canvas::before {
+  background:
+    linear-gradient(color-mix(in srgb, var(--accent) 10%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--process-cyan) 8%, transparent) 1px, transparent 1px);
+  background-size: 64px 64px;
+  content: "";
+  inset: 0;
+  mask-image: radial-gradient(circle at 45% 24%, #000 0, transparent 68%);
+  opacity: 0.24;
+  pointer-events: none;
+  position: absolute;
+}
+
+.canvas > * {
+  position: relative;
+}
+
+.header {
+  align-items: flex-start;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1fr) minmax(210px, 290px);
+}
+
+.headerCopy {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.kicker,
+.progressValue,
+.panelHeader span,
+.phaseMeta,
+.stepLabel,
+.laneLabel,
+.meterCopy strong {
+  font-family: var(--font-mono);
+}
+
+.kicker {
+  align-items: center;
+  color: color-mix(in srgb, var(--accent) 88%, var(--process-cyan) 12%);
+  display: inline-flex;
+  font-size: 11px;
+  gap: 8px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.kicker::before {
+  background: var(--process-success);
+  border-radius: 50%;
+  box-shadow: 0 0 18px color-mix(in srgb, var(--process-success) 54%, transparent);
+  content: "";
+  height: 7px;
+  width: 7px;
+}
+
+.title {
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: clamp(27px, 3vw, 42px);
+  letter-spacing: 0;
+  line-height: 0.98;
+  margin: 0;
+  max-width: 14ch;
+}
+
+.message {
+  color: var(--process-muted);
+  font-size: 14px;
+  line-height: 1.55;
+  margin: 0;
+  max-width: 68ch;
+}
+
+.headerMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.headerMeta span {
+  background: color-mix(in srgb, var(--surface) 58%, transparent);
+  border: 1px solid color-mix(in srgb, var(--process-line) 72%, transparent);
+  border-radius: 999px;
+  color: var(--process-muted);
+  font-size: 11px;
+  line-height: 1;
+  padding: 8px 10px;
+}
+
+.headerMeta span:first-child {
+  color: var(--text);
+  font-family: var(--font-mono);
+}
+
+.progressBlock {
+  align-items: stretch;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--text) 5%, transparent), transparent),
+    color-mix(in srgb, var(--surface) 74%, #030403 26%);
+  border: 1px solid var(--process-line);
+  border-radius: 8px;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--text) 9%, transparent),
+    0 18px 50px color-mix(in srgb, #000 28%, transparent);
+  display: grid;
+  gap: 12px;
+  justify-self: end;
+  padding: 14px;
+  width: min(100%, 290px);
+}
+
+.progressTopline {
+  align-items: end;
+  display: flex;
+  justify-content: space-between;
+}
+
+.progressValue {
+  color: var(--accent);
+  font-size: 34px;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.progressPhase,
+.progressCaption {
+  color: var(--process-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.progressCaption {
+  color: color-mix(in srgb, var(--process-muted) 78%, var(--process-cyan) 22%);
+}
+
+.progressTrack {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--border) 54%, transparent) 1px, transparent 1px),
+    color-mix(in srgb, var(--border) 44%, transparent);
+  background-size: 20% 100%;
+  border-radius: 999px;
+  display: block;
+  height: 10px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.progressFill {
+  background:
+    linear-gradient(90deg, var(--accent), var(--process-success) 58%, var(--process-cyan)),
+    var(--accent);
+  border-radius: inherit;
+  box-shadow: 0 0 24px color-mix(in srgb, var(--process-success) 34%, transparent);
+  display: block;
+  height: 100%;
+  transform: scaleX(calc(var(--progress) / 100%));
+  transform-origin: left center;
+  transition: transform 620ms var(--process-ease);
+}
+
+.grid {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  grid-template-rows: minmax(220px, auto) minmax(170px, auto);
+  min-height: 0;
+}
+
+.panel {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--text) 5%, transparent), transparent 40%),
+    radial-gradient(circle at 18% 0, color-mix(in srgb, var(--accent) 8%, transparent), transparent 40%),
+    var(--process-panel);
+  border: 1px solid var(--process-line);
+  border-radius: 8px;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--text) 9%, transparent),
+    0 16px 46px color-mix(in srgb, #000 22%, transparent);
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.panel::before {
+  border: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
+  border-radius: 6px;
+  content: "";
+  inset: 5px;
+  pointer-events: none;
+  position: absolute;
+  z-index: 1;
+}
+
+.panel::after {
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--border) 52%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--border) 52%, transparent) 1px, transparent 1px);
+  background-size: 44px 44px;
+  content: "";
+  inset: 0;
+  opacity: 0.16;
+  pointer-events: none;
+  position: absolute;
+  z-index: 0;
+}
+
+.panel > * {
+  position: relative;
+  z-index: 2;
+}
+
+.panelHeader {
+  align-items: center;
+  border-bottom: 1px solid var(--process-line);
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  min-height: 54px;
+  padding: 0 18px;
+  position: relative;
+}
+
+.panelHeader::before {
+  background: color-mix(in srgb, var(--process-muted) 58%, transparent);
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--process-muted) 8%, transparent);
+  content: "";
+  height: 7px;
+  width: 7px;
+}
+
+.panelHeader h3 {
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  margin: 0;
+  margin-right: auto;
+  text-transform: uppercase;
+}
+
+.panelHeader span {
+  color: var(--process-muted);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.panelHeader[data-state="active"] span,
+.panelHeader[data-state="ready"] span {
+  color: var(--accent);
+}
+
+.panelHeader[data-state="active"]::before,
+.panelHeader[data-state="ready"]::before {
+  background: var(--process-success);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--process-success) 54%, transparent);
+}
+
+.panelHeader[data-state="done"] span {
+  color: var(--process-success);
+}
+
+.panelHeader[data-state="done"]::before {
+  background: var(--process-cyan);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--process-cyan) 42%, transparent);
+}
+
+.panelHeader[data-state="blocked"] span {
+  color: var(--process-danger);
+}
+
+.panelHeader[data-state="blocked"]::before {
+  background: var(--process-danger);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--process-danger) 50%, transparent);
+}
+
+.framePanel {
+  display: grid;
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.conveyor {
+  align-content: center;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(70px, 1fr));
+  padding: 22px;
+  position: relative;
+}
+
+.frame {
+  align-items: center;
+  aspect-ratio: 16 / 10;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 9%, transparent), transparent),
+    #050605;
+  border: 1px solid color-mix(in srgb, var(--border) 72%, var(--text) 8%);
+  border-radius: 7px;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 7%, transparent);
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+  transition:
+    border-color 420ms var(--process-ease),
+    box-shadow 420ms var(--process-ease),
+    opacity 420ms var(--process-ease),
+    transform 420ms var(--process-ease);
+}
+
+.frame img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.framePlaceholder {
+  opacity: 0.74;
+}
+
+.framePlaceholder::before {
+  background:
+    linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 12%, transparent), transparent),
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0 8px,
+      color-mix(in srgb, var(--border) 36%, transparent) 8px 9px
+    );
+  content: "";
+  inset: 0;
+  position: absolute;
+}
+
+.frameGlyph {
+  color: color-mix(in srgb, var(--muted) 74%, var(--text) 26%);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  position: relative;
+}
+
+.frameActive {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent),
+    0 18px 36px color-mix(in srgb, #000 44%, transparent),
+    0 0 42px color-mix(in srgb, var(--process-success) 16%, transparent);
+  transform: translateY(-3px);
+}
+
+.scanBeam {
+  background:
+    linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 82%, transparent), transparent),
+    linear-gradient(180deg, transparent, color-mix(in srgb, var(--process-success) 74%, transparent), transparent);
+  bottom: 0;
+  display: block;
+  left: 48%;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  width: 7px;
+}
+
+.scanBeamActive {
+  opacity: 1;
+}
+
+.timeline {
+  display: grid;
+  gap: 7px;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  padding: 0 22px 20px;
+  position: relative;
+}
+
+.timeline span {
+  background: color-mix(in srgb, var(--border) 64%, transparent);
+  border-radius: 999px;
+  display: block;
+  height: 4px;
+}
+
+.timeline .timelineTickActive {
+  background: linear-gradient(90deg, var(--accent), var(--process-success), var(--process-cyan));
+  box-shadow: 0 0 14px color-mix(in srgb, var(--process-success) 28%, transparent);
+}
+
+.solvePanel {
+  display: grid;
+  grid-column: 2 / 3;
+  grid-row: 1 / 3;
+  grid-template-rows: auto minmax(190px, 1fr) minmax(150px, 0.74fr);
+}
+
+.vectorField {
+  background:
+    radial-gradient(circle at 60% 26%, color-mix(in srgb, var(--process-cyan) 12%, transparent), transparent 34%),
+    linear-gradient(color-mix(in srgb, var(--border) 38%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--border) 38%, transparent) 1px, transparent 1px),
+    var(--process-blueprint);
+  background-size: auto, 32px 32px, 32px 32px, auto;
+  border: 1px solid color-mix(in srgb, var(--process-line) 76%, transparent);
+  border-radius: 8px;
+  margin: 22px;
+  min-height: 190px;
+  position: relative;
+}
+
+.vectorLine {
+  background: linear-gradient(90deg, var(--accent), var(--process-success), var(--process-cyan));
+  box-shadow: 0 0 28px color-mix(in srgb, var(--process-success) 26%, transparent);
+  height: 2px;
+  left: 12%;
+  opacity: 0.48;
+  position: absolute;
+  top: 58%;
+  transform: rotate(-12deg);
+  transform-origin: left center;
+  width: 78%;
+}
+
+.vectorNode {
+  align-items: center;
+  background: var(--process-panel-strong);
+  border: 1px solid var(--process-line);
+  border-radius: 50%;
+  color: var(--process-muted);
+  display: flex;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  height: 34px;
+  justify-content: center;
+  left: var(--node-x);
+  position: absolute;
+  top: var(--node-y);
+  transform: translate(-50%, -50%);
+  transition:
+    background 460ms var(--process-ease),
+    border-color 460ms var(--process-ease),
+    color 460ms var(--process-ease),
+    transform 460ms var(--process-ease);
+  width: 34px;
+}
+
+.vectorNodeSolved {
+  background: color-mix(in srgb, var(--accent) 17%, var(--surface));
+  border-color: var(--accent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--text) 18%, transparent),
+    0 0 22px color-mix(in srgb, var(--accent) 22%, transparent);
+  color: var(--text);
+}
+
+.curveSolver {
+  border-top: 1px solid var(--process-line);
+  display: grid;
+  gap: 14px;
+  grid-template-rows: minmax(92px, 1fr) auto;
+  padding: 18px 22px 22px;
+  position: relative;
+}
+
+.curveGrid {
+  background:
+    linear-gradient(color-mix(in srgb, var(--border) 48%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--border) 48%, transparent) 1px, transparent 1px);
+  background-size: 25% 50%;
+  border: 1px solid color-mix(in srgb, var(--border) 74%, transparent);
+  border-radius: 8px;
+  min-height: 92px;
+  position: relative;
+}
+
+.curveSegmentOne,
+.curveSegmentTwo,
+.curveSegmentThree {
+  background: linear-gradient(90deg, var(--accent), var(--process-cyan));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 18%, transparent);
+  height: 2px;
+  left: 18%;
+  position: absolute;
+  top: 72%;
+  transform-origin: left center;
+  width: 24%;
+}
+
+.curveSegmentOne {
+  transform: rotate(-38deg);
+}
+
+.curveSegmentTwo {
+  left: 38%;
+  top: 39%;
+  transform: rotate(-8deg);
+}
+
+.curveSegmentThree {
+  left: 59%;
+  top: 33%;
+  transform: rotate(28deg);
+}
+
+.curvePointStart,
+.curvePointEnd {
+  background: var(--process-success);
+  border: 2px solid var(--process-panel);
+  border-radius: 50%;
+  height: 10px;
+  position: absolute;
+  width: 10px;
+}
+
+.curvePointStart {
+  left: 16%;
+  top: 68%;
+}
+
+.curvePointEnd {
+  left: 82%;
+  top: 45%;
+}
+
+.curveCopy {
+  align-items: center;
+  color: var(--process-muted);
+  display: flex;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  justify-content: space-between;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.curveCopy strong {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.compilerPanel {
+  display: grid;
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
+  grid-template-rows: auto 1fr;
+}
+
+.lanes {
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+  position: relative;
+}
+
+.lane {
+  align-items: center;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 76px minmax(0, 1fr);
+}
+
+.laneLabel {
+  color: var(--process-muted);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.laneRail {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--border) 58%, transparent) 1px, transparent 1px),
+    color-mix(in srgb, var(--border) 42%, transparent);
+  background-size: 25% 100%;
+  border-radius: 999px;
+  display: block;
+  height: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.laneFill {
+  background: linear-gradient(90deg, var(--accent), var(--process-success), var(--process-cyan));
+  border-radius: inherit;
+  box-shadow: 0 0 18px color-mix(in srgb, var(--process-success) 26%, transparent);
+  display: block;
+  height: 100%;
+  transform: scaleX(calc(var(--lane-progress) / 100%));
+  transform-origin: left center;
+  transition: transform 620ms var(--process-ease);
+}
+
+.meterPanel {
+  display: none;
+}
+
+.meters {
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+  position: relative;
+}
+
+.meter {
+  display: grid;
+  gap: 9px;
+}
+
+.meterCopy {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.meterCopy span {
+  color: var(--process-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.meterCopy strong {
+  color: var(--accent);
+  font-size: 12px;
+}
+
+.meterTrack {
+  background: color-mix(in srgb, var(--border) 44%, transparent);
+  border-radius: 999px;
+  display: block;
+  height: 10px;
+  overflow: hidden;
+}
+
+.meterFill {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--process-success) 66%, var(--accent)), var(--process-cyan));
+  border-radius: inherit;
+  display: block;
+  height: 100%;
+  transform: scaleX(calc(var(--meter-value) / 100%));
+  transform-origin: left center;
+  transition: transform 620ms var(--process-ease);
+}
+
+.footer {
+  display: grid;
+  gap: 14px;
+}
+
+.phaseList {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.phaseItem {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--text) 4%, transparent), transparent),
+    color-mix(in srgb, var(--surface) 78%, #000 22%);
+  border: 1px solid var(--process-line);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 7%, transparent);
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  padding: 13px;
+  position: relative;
+}
+
+.phaseItem::before {
+  background: color-mix(in srgb, var(--process-muted) 48%, transparent);
+  border-radius: 999px;
+  content: "";
+  height: 3px;
+  left: 13px;
+  position: absolute;
+  right: 13px;
+  top: -7px;
+}
+
+.phaseItem[data-state="active"],
+.phaseItem[data-state="ready"] {
+  border-color: var(--accent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--text) 10%, transparent),
+    0 0 28px color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.phaseItem[data-state="active"]::before,
+.phaseItem[data-state="ready"]::before {
+  background: linear-gradient(90deg, var(--accent), var(--process-success));
+}
+
+.phaseItem[data-state="done"] {
+  border-color: color-mix(in srgb, var(--process-success) 64%, var(--border));
+}
+
+.phaseItem[data-state="done"]::before {
+  background: var(--process-success);
+}
+
+.phaseItem[data-state="blocked"] {
+  border-color: color-mix(in srgb, var(--process-danger) 78%, var(--border));
+}
+
+.phaseItem[data-state="blocked"]::before {
+  background: var(--process-danger);
+}
+
+.phaseOrdinal {
+  color: color-mix(in srgb, var(--accent) 70%, var(--process-cyan) 30%);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.phaseTitle {
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.phaseDescription {
+  color: var(--process-muted);
+  font-size: 11px;
+  line-height: 1.35;
+  min-height: 30px;
+}
+
+.phaseMeta {
+  color: color-mix(in srgb, var(--process-muted) 74%, var(--process-cyan) 26%);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.stepBox,
+.errorBox {
+  align-items: center;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--text) 4%, transparent), transparent),
+    color-mix(in srgb, var(--surface) 76%, #000 24%);
+  border: 1px solid var(--process-line);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 8%, transparent);
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  min-width: 0;
+  padding: 13px 14px;
+}
+
+.stepBox {
+  color: var(--process-muted);
+}
+
+.stepLabel {
+  color: var(--accent);
+  flex: 0 0 auto;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.stepText {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.45;
+  min-width: 0;
+}
+
+.errorBox > div:first-child {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.errorBox strong {
+  color: var(--process-danger);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.errorBox span {
+  color: var(--process-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.actions {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 10px;
+}
+
+.primaryAction,
+.secondaryAction,
+.inlineAction {
+  align-items: center;
+  border-radius: 6px;
+  display: inline-flex;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  justify-content: center;
+  line-height: 1;
+  min-height: 34px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    border-color 420ms var(--process-ease),
+    color 420ms var(--process-ease),
+    transform 420ms var(--process-ease);
+}
+
+.primaryAction {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: var(--bg);
+  padding: 0 14px;
+}
+
+.primaryAction:disabled {
+  background: transparent;
+  border-color: var(--process-line);
+  color: var(--process-muted);
+  cursor: not-allowed;
+}
+
+.secondaryAction,
+.inlineAction {
+  background: transparent;
+  border: 1px solid var(--process-line);
+  color: var(--text);
+  padding: 0 12px;
+}
+
+.inlineAction {
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+
+.primaryAction:not(:disabled):hover,
+.secondaryAction:hover,
+.inlineAction:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.primaryAction:not(:disabled):active,
+.secondaryAction:active,
+.inlineAction:active {
+  transform: translateY(0) scale(0.985);
+}
+
+[data-stage="extracting"] .frameActive,
+[data-stage="analyzing"] .frameActive {
+  animation: frameFocus 1200ms var(--process-ease) infinite;
+}
+
+[data-stage="analyzing"] .vectorNodeSolved {
+  animation: nodePulse 1600ms var(--process-ease) infinite;
+  animation-delay: var(--node-delay);
+}
+
+[data-stage="analyzing"] .curveSegmentOne,
+[data-stage="analyzing"] .curveSegmentTwo,
+[data-stage="analyzing"] .curveSegmentThree,
+[data-stage="analyzing"] .laneFill,
+[data-stage="analyzing"] .meterFill {
+  animation: signalSheen 1800ms var(--process-ease) infinite;
+}
+
+[data-stage="extracting"] .scanBeamActive,
+[data-stage="analyzing"] .scanBeamActive {
+  animation: scanBeam 920ms cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+[data-stage="error"] .panel {
+  border-color: color-mix(in srgb, var(--process-danger) 42%, var(--border));
+}
+
+@keyframes frameFocus {
+  0%,
+  100% {
+    transform: translateY(-2px) scale(1);
+  }
+
+  50% {
+    transform: translateY(-3px) scale(1.015);
+  }
+}
+
+@keyframes nodePulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+
+  50% {
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 0%, transparent);
+  }
+}
+
+@keyframes signalSheen {
+  0%,
+  100% {
+    filter: saturate(1);
+  }
+
+  50% {
+    filter: saturate(1.35) brightness(1.08);
+  }
+}
+
+@keyframes scanBeam {
+  0% {
+    opacity: 0.42;
+    transform: translateX(-50%) scaleY(0.78);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scaleY(1);
+  }
+
+  100% {
+    opacity: 0.42;
+    transform: translateX(-50%) scaleY(0.78);
+  }
+}
+
+@media (min-width: 1180px) {
+  .canvas {
+    gap: 10px;
+    padding: 18px 24px;
+  }
+
+  .header {
+    gap: 16px;
+  }
+
+  .headerCopy {
+    gap: 7px;
+  }
+
+  .title {
+    font-size: clamp(26px, 2.45vw, 36px);
+  }
+
+  .message {
+    font-size: 13px;
+  }
+
+  .progressBlock {
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .grid {
+    gap: 12px;
+    grid-template-columns: minmax(0, 1.08fr) minmax(300px, 0.78fr) minmax(230px, 0.58fr);
+    grid-template-rows: 260px 210px;
+  }
+
+  .panelHeader {
+    min-height: 46px;
+  }
+
+  .conveyor {
+    gap: 9px;
+    padding: 16px;
+  }
+
+  .timeline {
+    padding: 0 16px 14px;
+  }
+
+  .vectorField {
+    margin: 16px;
+    min-height: 160px;
+  }
+
+  .solvePanel {
+    grid-column: 2 / 3;
+    grid-row: 1 / 3;
+    grid-template-rows: auto 1fr 156px;
+  }
+
+  .curveSolver {
+    gap: 10px;
+    padding: 14px 16px 16px;
+  }
+
+  .curveGrid {
+    min-height: 82px;
+  }
+
+  .lanes,
+  .meters {
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .phaseItem {
+    min-height: 78px;
+    padding: 9px 10px;
+  }
+
+  .phaseDescription {
+    display: none;
+  }
+
+  .stepBox,
+  .errorBox {
+    padding: 10px 12px;
+  }
+
+  .meterPanel {
+    display: grid;
+    grid-column: 3 / 4;
+    grid-row: 2 / 3;
+    grid-template-rows: auto 1fr;
+  }
+}
+
+@media (max-width: 980px) {
+  .canvas {
+    padding: 20px;
+  }
+
+  .header,
+  .grid,
+  .footer {
+    grid-template-columns: 1fr;
+  }
+
+  .progressBlock {
+    justify-self: stretch;
+    width: 100%;
+  }
+
+  .grid {
+    grid-template-rows: auto;
+  }
+
+  .framePanel,
+  .solvePanel,
+  .compilerPanel,
+  .meterPanel {
+    display: grid;
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .phaseList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .canvas {
+    gap: 14px;
+    padding: 16px;
+  }
+
+  .conveyor {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .phaseList {
+    grid-template-columns: 1fr;
+  }
+
+  .stepBox,
+  .errorBox,
+  .actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .primaryAction,
+  .secondaryAction,
+  .inlineAction {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .canvas *,
+  .canvas *::before,
+  .canvas *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .frameActive,
+  .primaryAction:not(:disabled):hover,
+  .secondaryAction:hover,
+  .inlineAction:hover {
+    transform: none;
+  }
+}

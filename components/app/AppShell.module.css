@@ -1,0 +1,235 @@
+.root {
+  --app-ease: cubic-bezier(0.19, 1, 0.22, 1);
+  --app-panel: color-mix(in srgb, var(--surface) 86%, #000 14%);
+  --app-line: color-mix(in srgb, var(--border) 70%, var(--accent) 20%);
+  --app-hairline: color-mix(in srgb, var(--text) 7%, transparent);
+  position: relative;
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  flex-direction: column;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 3%, transparent), transparent 28%),
+    radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 32%),
+    radial-gradient(circle at 96% 14%, rgba(0, 255, 136, 0.055), transparent 26%),
+    var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+}
+
+.navbar {
+  z-index: 2;
+  display: flex;
+  height: 64px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid color-mix(in srgb, var(--app-line) 84%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 7%, transparent), transparent 90%),
+    color-mix(in srgb, var(--bg) 92%, #000 8%);
+  box-shadow:
+    inset 0 1px 0 var(--app-hairline),
+    0 18px 42px rgba(0, 0, 0, 0.2);
+  padding: 0 clamp(16px, 2vw, 24px);
+}
+
+.brandLink,
+.planBadge,
+.homeLink {
+  font-family: var(--font-mono);
+}
+
+.brandLink {
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  transition: color 220ms var(--app-ease), opacity 220ms var(--app-ease);
+}
+
+.brandLink:hover {
+  color: color-mix(in srgb, var(--accent) 84%, #00ff88 16%);
+}
+
+.navActions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.planBadge {
+  border: 1px solid color-mix(in srgb, var(--accent-border) 76%, transparent);
+  border-radius: 4px;
+  padding: 3px 9px;
+  color: var(--accent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 12%, transparent), transparent),
+    color-mix(in srgb, var(--bg) 82%, #000 18%);
+  box-shadow:
+    inset 0 1px 0 var(--app-hairline),
+    inset 0 -1px 0 color-mix(in srgb, var(--bg) 74%, #000 26%);
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+}
+
+.homeLink {
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-decoration: none;
+  transition: color 220ms var(--app-ease);
+}
+
+.homeLink:hover {
+  color: var(--accent);
+}
+
+.mainArea {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+  padding: clamp(10px, 1.4vw, 18px);
+  gap: clamp(10px, 1.4vw, 18px);
+}
+
+.rightPanel {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--app-line) 78%, transparent);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 3%, transparent), transparent 34%),
+    var(--app-panel);
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 var(--app-hairline),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
+.topProgress {
+  position: absolute;
+  z-index: 5;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 3px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--border) 42%, transparent);
+}
+
+.topProgressVisible {
+  opacity: 1;
+  transition: opacity 220ms var(--app-ease);
+}
+
+.topProgressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, #00ff88 82%, var(--accent)));
+  box-shadow: 0 0 18px rgba(0, 255, 136, 0.18);
+  transition: width 18s cubic-bezier(0.08, 0.82, 0.18, 1);
+}
+
+.resultStack {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.toast {
+  position: fixed;
+  z-index: 1000;
+  right: 24px;
+  bottom: 24px;
+  border: 1px solid rgba(0, 255, 136, 0.52);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(0, 255, 136, 0.07), transparent),
+    color-mix(in srgb, var(--bg) 92%, #000 8%);
+  box-shadow:
+    0 18px 44px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 var(--app-hairline);
+  color: #00ff88;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  padding: 12px 16px;
+  animation: toastIn 320ms var(--app-ease), toastOut 260ms var(--app-ease) 2.7s forwards;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes toastOut {
+  to {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (max-width: 900px) {
+  .root {
+    height: auto;
+    min-height: 100vh;
+    overflow: auto;
+  }
+
+  .mainArea {
+    flex-direction: column;
+    overflow: visible;
+    padding: 10px;
+  }
+
+  .rightPanel {
+    min-height: 620px;
+    border-color: color-mix(in srgb, var(--app-line) 72%, transparent);
+  }
+}
+
+@media (max-width: 640px) {
+  .navbar {
+    height: auto;
+    min-height: 58px;
+    align-items: flex-start;
+    flex-direction: column;
+    padding-block: 12px;
+  }
+
+  .mainArea {
+    gap: 10px;
+    padding: 8px;
+  }
+
+  .navActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .toast {
+    right: 14px;
+    bottom: 14px;
+    left: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topProgressFill,
+  .toast {
+    animation: none;
+    transition: none;
+  }
+}
