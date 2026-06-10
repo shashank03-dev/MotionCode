@@ -80,6 +80,19 @@ npm run test -- tests/integration/rls-policies.test.ts
 
 Internal admin access is server-checked with `profiles.is_internal_admin` or the server allowlist env vars. Do not use user-editable auth metadata for admin decisions.
 
+## Google OAuth Setup
+
+MotionCode uses Supabase-managed Google OAuth. Do not add Google OAuth client secrets to app environment variables or any `NEXT_PUBLIC_*` value.
+
+1. In Google Cloud, create a Web OAuth client and register the Supabase Auth callback URL shown in the Supabase Google provider settings.
+2. In Supabase Auth, enable the Google provider and save the Google client ID and client secret there.
+3. In Supabase Auth redirect URLs, allow the app callback origins used by MotionCode:
+   - `http://localhost:3000/auth/callback`
+   - the staging app callback URL
+   - the production app callback URL based on `NEXT_PUBLIC_SITE_URL`
+4. Smoke test `/login`: Google OAuth should return to `/auth/callback`, then to `/dashboard` or the preserved `next` path. Magic-link email remains available as fallback.
+5. Sign-out is local to the current browser session and posts to `/auth/signout`.
+
 ## Paid Checkout Setup
 
 1. Create Pro and Studio recurring subscription plans in Razorpay.

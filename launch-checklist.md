@@ -20,6 +20,10 @@ MotionCode is in free beta. Free beta analysis uses Gemini only. Pro and Studio 
 
 - `/` loads public content.
 - `/app` accepts supported uploads and handles validation errors.
+- `/login` offers Google OAuth and magic-link fallback.
+- Google OAuth redirects through Supabase Auth and returns to `/auth/callback`.
+- `/auth/callback` creates or syncs a user profile before redirecting to `/dashboard` or a preserved protected `next` path.
+- Authenticated surfaces expose sign-out, and `/auth/signout` clears only the current browser session.
 - `/api/analyze` requires authentication and records usage/audit events.
 - `/pricing` shows early-access CTAs for Pro and Studio instead of paid checkout.
 - Early-access requests persist and are visible to admins.
@@ -33,6 +37,9 @@ MotionCode is in free beta. Free beta analysis uses Gemini only. Pro and Studio 
 - RLS enabled on public tables.
 - `project-assets` bucket remains private.
 - Service role key is configured only in server environments.
+- Google provider is enabled in Supabase Auth.
+- Supabase Auth redirect URLs include local, staging, and production `/auth/callback` URLs.
+- Google Cloud OAuth client uses the Supabase Auth provider callback URL, not the app `/auth/callback` URL.
 - Internal admin bootstrap account verified.
 
 ## Billing And AI Providers

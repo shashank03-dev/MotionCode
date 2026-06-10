@@ -6,6 +6,7 @@ import {
   type MotionValue,
   useReducedMotion,
   useScroll,
+  useSpring,
   useTransform,
 } from "framer-motion";
 
@@ -13,7 +14,12 @@ import { cn } from "@/lib/utils";
 
 type ContainerScrollProps = {
   titleComponent: string | React.ReactNode;
-  children: React.ReactNode;
+  children:
+    | React.ReactNode
+    | ((
+        progress: MotionValue<number>,
+        prefersReducedMotion: boolean,
+      ) => React.ReactNode);
   className?: string;
   contentClassName?: string;
   cardClassName?: string;
@@ -22,7 +28,6 @@ type ContainerScrollProps = {
 type ContainerScrollHeaderProps = {
   titleComponent: string | React.ReactNode;
   className?: string;
-  translateY?: MotionValue<number>;
 };
 
 type ContainerScrollCardProps = {
@@ -37,11 +42,9 @@ type ContainerScrollCardProps = {
 function ContainerScrollHeader({
   titleComponent,
   className,
-  translateY,
 }: ContainerScrollHeaderProps) {
   return (
-    <motion.div
-      style={{ y: translateY }}
+    <div
       className={cn(
         "mx-auto flex w-full max-w-6xl flex-col items-center px-4 text-center sm:px-6",
         className
@@ -54,7 +57,7 @@ function ContainerScrollHeader({
       ) : (
         titleComponent
       )}
-    </motion.div>
+    </div>
   );
 }
 
@@ -107,41 +110,32 @@ function ContainerScroll({
 }: ContainerScrollProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const prefersReducedMotion = useReducedMotion();
-  const [isMobile, setIsMobile] = React.useState(false);
-
-  React.useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 767px)");
-    const updateIsMobile = () => setIsMobile(mediaQuery.matches);
-
-    updateIsMobile();
-    mediaQuery.addEventListener("change", updateIsMobile);
-    return () => mediaQuery.removeEventListener("change", updateIsMobile);
-  }, []);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
-    offset: ["start start", "end start"],
+    offset: ["start start", "end end"],
   });
 
-  const titleTranslate: MotionValue<number> = useTransform(
-    scrollYProgress,
-    [0, 1],
-    prefersReducedMotion ? [0, 0] : [0, -120]
-  );
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: prefersReducedMotion ? 1000 : 72,
+    damping: prefersReducedMotion ? 100 : 24,
+    mass: 0.24,
+  });
+
   const rotateX: MotionValue<number> = useTransform(
     scrollYProgress,
-    [0, 1],
-    prefersReducedMotion ? [0, 0] : [isMobile ? 10 : 20, 0]
+    [0, 0.12, 1],
+    prefersReducedMotion ? [0, 0, 0] : [12, 0, 0]
   );
   const scale: MotionValue<number> = useTransform(
     scrollYProgress,
-    [0, 1],
-    prefersReducedMotion ? [1, 1] : [isMobile ? 0.92 : 0.82, 1]
+    [0, 0.12, 0.86, 1],
+    prefersReducedMotion ? [1, 1, 1, 1] : [0.9, 1, 1, 0.98]
   );
   const cardTranslate: MotionValue<number> = useTransform(
     scrollYProgress,
-    [0, 1],
-    prefersReducedMotion ? [0, 0] : [isMobile ? 18 : 42, 0]
+    [0, 0.12, 0.86, 1],
+    prefersReducedMotion ? [0, 0, 0, 0] : [36, 0, 0, -12]
   );
 
   return (
@@ -149,17 +143,16 @@ function ContainerScroll({
       ref={containerRef}
       style={{ position: "relative" }}
       className={cn(
-        "relative flex min-h-[155vh] w-full items-start justify-center overflow-hidden bg-[#11120d] py-20 sm:min-h-[180vh] sm:py-28",
+        "relative flex min-h-[220vh] w-full flex-col items-center justify-start overflow-hidden bg-[#11120d] py-20 sm:py-28",
         className
       )}
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_14%,rgba(216,207,188,0.12),transparent_30%),radial-gradient(circle_at_50%_48%,rgba(0,255,136,0.08),transparent_34%)]" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#d8cfbc]/35 to-transparent" />
-      <div className="motioncode-container-scroll-sticky sticky top-12 z-10 flex w-full flex-col gap-10 px-4 sm:top-16 sm:gap-14 sm:px-6 lg:top-20">
-        <ContainerScrollHeader
-          titleComponent={titleComponent}
-          translateY={titleTranslate}
-        />
+      <div className="relative z-10 w-full">
+        <ContainerScrollHeader titleComponent={titleComponent} />
+      </div>
+      <div className="motioncode-container-scroll-sticky sticky top-0 z-10 flex min-h-[100dvh] w-full items-center justify-center px-4 py-16 sm:px-6 lg:py-20">
         <ContainerScrollCard
           rotateX={rotateX}
           scale={scale}
@@ -167,7 +160,9 @@ function ContainerScroll({
           className={cardClassName}
           contentClassName={contentClassName}
         >
-          {children}
+          {typeof children === "function"
+            ? children(smoothProgress, Boolean(prefersReducedMotion))
+            : children}
         </ContainerScrollCard>
       </div>
     </section>

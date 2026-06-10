@@ -4968,3 +4968,1470 @@ body::after {
     background-color: rgba(8, 10, 9, 0.94) !important;
   }
 }
+
+/* Motion bridge redesign: scroll-authored product evidence, not a static terminal board. */
+.motioncode-scroll-bridge {
+  overflow: visible;
+  border-bottom: 1px solid rgba(216, 207, 188, 0.16);
+  background:
+    radial-gradient(circle at 50% 34%, rgba(0, 255, 136, 0.105), transparent 34%),
+    radial-gradient(circle at 12% 62%, rgba(216, 207, 188, 0.085), transparent 28%),
+    linear-gradient(180deg, #11120d 0%, #080a07 52%, #11120d 100%);
+}
+
+.motioncode-scroll-bridge::before {
+  -webkit-mask-image: radial-gradient(circle at 50% 42%, black, transparent 76%);
+  mask-image: radial-gradient(circle at 50% 42%, black, transparent 76%);
+}
+
+.motioncode-scroll-bridge-container {
+  height: auto !important;
+  min-height: 188vh !important;
+  overflow: visible !important;
+  padding-inline: clamp(16px, 4vw, 72px) !important;
+}
+
+.motioncode-scroll-bridge-container .motioncode-container-scroll-sticky {
+  min-height: 100dvh;
+  gap: 24px !important;
+  justify-content: flex-start !important;
+  padding-top: clamp(124px, 14dvh, 136px) !important;
+  padding-bottom: 32px !important;
+}
+
+.motioncode-scroll-bridge-heading {
+  max-width: 980px;
+}
+
+.motioncode-scroll-bridge-kicker {
+  display: none;
+  margin: 0;
+  color: rgba(216, 207, 188, 0.72);
+  font-size: 0.78rem;
+}
+
+.motioncode-scroll-bridge-heading h2 {
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.motioncode-scroll-bridge-title-meta {
+  color: rgba(255, 251, 244, 0.9);
+  font-size: clamp(1.05rem, 2vw, 1.55rem);
+}
+
+.motioncode-scroll-bridge-title-main {
+  max-width: 980px;
+  font-size: clamp(3.6rem, 6.5vw, 6.1rem);
+  line-height: 0.87;
+}
+
+.motioncode-scroll-bridge-heading p {
+  max-width: 56ch;
+  margin-top: 22px;
+  color: rgba(216, 207, 188, 0.84);
+}
+
+.motioncode-scroll-bridge-card {
+  max-width: min(1180px, calc(100vw - 40px)) !important;
+  border-radius: 18px !important;
+  border-color: rgba(216, 207, 188, 0.22) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 251, 244, 0.08), rgba(255, 251, 244, 0.016)),
+    rgba(7, 9, 7, 0.92) !important;
+  box-shadow:
+    0 38px 100px rgba(0, 0, 0, 0.62),
+    0 0 72px rgba(0, 255, 136, 0.06),
+    inset 0 1px 0 rgba(255, 251, 244, 0.1) !important;
+}
+
+.motioncode-scroll-bridge-card-inner {
+  min-height: clamp(390px, 46dvh, 500px) !important;
+  border-radius: 12px !important;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(0, 255, 136, 0.105), transparent 36%),
+    linear-gradient(180deg, rgba(16, 18, 13, 0.92), rgba(5, 7, 5, 0.98)) !important;
+}
+
+.motioncode-bridge-story {
+  position: relative;
+  display: grid;
+  min-height: inherit;
+  grid-template-columns: minmax(190px, 0.8fr) minmax(0, 2.3fr);
+  gap: clamp(18px, 2.8vw, 34px);
+  overflow: hidden;
+  padding: clamp(18px, 2.6vw, 34px);
+}
+
+.motioncode-bridge-story-halo {
+  position: absolute;
+  inset: 10% auto auto 28%;
+  width: min(55vw, 680px);
+  height: 260px;
+  border-radius: 999px;
+  background: radial-gradient(ellipse, rgba(0, 255, 136, 0.18), rgba(216, 207, 188, 0.065) 45%, transparent 72%);
+  filter: blur(16px);
+  opacity: 0.78;
+  pointer-events: none;
+}
+
+.motioncode-bridge-stage-list {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  align-content: center;
+  gap: 12px;
+}
+
+.motioncode-bridge-stage {
+  display: grid;
+  min-height: 74px;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  border: 1px solid rgba(216, 207, 188, 0.16);
+  border-radius: 14px;
+  padding: 13px;
+  background:
+    linear-gradient(180deg, rgba(255, 251, 244, 0.065), rgba(255, 251, 244, 0.014)),
+    rgba(8, 10, 9, 0.74);
+  box-shadow:
+    0 18px 44px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 251, 244, 0.075);
+}
+
+.motioncode-bridge-stage-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid rgba(0, 255, 136, 0.24);
+  border-radius: 11px;
+  color: #00ff88;
+  background: rgba(0, 255, 136, 0.055);
+}
+
+.motioncode-bridge-stage-copy {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  font-family: var(--font-mono);
+}
+
+.motioncode-bridge-stage-copy strong {
+  color: rgba(255, 251, 244, 0.94);
+  font-size: 13px;
+}
+
+.motioncode-bridge-stage-copy small {
+  color: rgba(216, 207, 188, 0.66);
+  font-size: 10px;
+}
+
+.motioncode-bridge-workbench {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  min-height: 100%;
+  grid-template-columns: minmax(210px, 0.9fr) minmax(260px, 1.05fr) minmax(250px, 1fr);
+  align-items: stretch;
+  gap: 14px;
+  overflow: hidden;
+  border-radius: 14px;
+  transform-origin: center;
+}
+
+.motioncode-bridge-scan-sweep {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 4;
+  width: 16%;
+  border-left: 1px solid rgba(0, 255, 136, 0.38);
+  border-right: 1px solid rgba(0, 255, 136, 0.16);
+  background:
+    linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.13), rgba(255, 251, 244, 0.055), transparent),
+    repeating-linear-gradient(180deg, rgba(0, 255, 136, 0.13) 0 1px, transparent 1px 14px);
+  opacity: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 0 18px rgba(0, 255, 136, 0.2));
+  mix-blend-mode: screen;
+}
+
+.motioncode-bridge-remap-svg {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.motioncode-bridge-remap-base,
+.motioncode-bridge-remap-active {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.motioncode-bridge-remap-base {
+  stroke: rgba(216, 207, 188, 0.16);
+  stroke-width: 1;
+}
+
+.motioncode-bridge-remap-active {
+  stroke: #00ff88;
+  stroke-linecap: round;
+  stroke-width: 2;
+}
+
+.motioncode-bridge-remap-packet {
+  fill: #00ff88;
+  filter: drop-shadow(0 0 10px rgba(0, 255, 136, 0.48));
+}
+
+.motioncode-bridge-token-dock {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: auto;
+  margin-top: auto;
+  padding: 0 14px 14px;
+  pointer-events: none;
+}
+
+.motioncode-bridge-token-dock span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  border: 1px solid rgba(0, 255, 136, 0.22);
+  border-radius: 999px;
+  padding: 7px 10px;
+  background:
+    linear-gradient(180deg, rgba(0, 255, 136, 0.08), rgba(255, 251, 244, 0.018)),
+    rgba(7, 9, 7, 0.78);
+  color: rgba(255, 251, 244, 0.9);
+  font-family: var(--font-mono);
+  box-shadow: 0 14px 42px rgba(0, 0, 0, 0.26);
+}
+
+.motioncode-bridge-token-dock small {
+  color: rgba(0, 255, 136, 0.75);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.motioncode-bridge-token-dock strong {
+  font-size: 10px;
+  line-height: 1.05;
+}
+
+.motioncode-bridge-source-panel,
+.motioncode-bridge-map-panel,
+.motioncode-bridge-export-panel,
+.motioncode-bridge-artifacts article {
+  border: 1px solid rgba(216, 207, 188, 0.16);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 251, 244, 0.07), rgba(255, 251, 244, 0.012)),
+    rgba(8, 10, 9, 0.78);
+  box-shadow:
+    0 22px 56px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 251, 244, 0.08);
+}
+
+.motioncode-bridge-panel-top {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border-bottom: 1px solid rgba(216, 207, 188, 0.11);
+  padding: 13px 14px;
+  color: rgba(216, 207, 188, 0.78);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.motioncode-bridge-panel-top svg {
+  color: #00ff88;
+}
+
+.motioncode-bridge-source-panel,
+.motioncode-bridge-map-panel,
+.motioncode-bridge-export-panel {
+  display: grid;
+  align-content: stretch;
+  overflow: hidden;
+}
+
+.motioncode-bridge-source-stage {
+  position: relative;
+  min-height: clamp(170px, 24dvh, 250px);
+  margin: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(216, 207, 188, 0.1);
+  border-radius: 12px;
+  background:
+    linear-gradient(rgba(216, 207, 188, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(216, 207, 188, 0.032) 1px, transparent 1px),
+    radial-gradient(circle at 55% 46%, rgba(0, 255, 136, 0.11), transparent 34%);
+  background-size: 24px 24px, 24px 24px, auto;
+}
+
+.motioncode-bridge-source-object,
+.motioncode-bridge-source-ghost {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 92px;
+  height: 92px;
+  border-radius: 28px;
+  transform: translate3d(-50%, -50%, 0) rotate(12deg);
+}
+
+.motioncode-bridge-source-object {
+  border: 1px solid rgba(0, 255, 136, 0.36);
+  background:
+    linear-gradient(135deg, rgba(0, 255, 136, 0.22), rgba(216, 207, 188, 0.14)),
+    rgba(0, 255, 136, 0.05);
+  box-shadow: 0 0 44px rgba(0, 255, 136, 0.11);
+  animation: motioncodeBridgeObject 3.6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.motioncode-bridge-source-ghost {
+  border: 1px dashed rgba(216, 207, 188, 0.18);
+  opacity: 0.38;
+}
+
+.motioncode-bridge-source-ghost-a {
+  transform: translate3d(-88%, -38%, 0) rotate(-8deg) scale(0.76);
+}
+
+.motioncode-bridge-source-ghost-b {
+  transform: translate3d(-10%, -64%, 0) rotate(22deg) scale(0.58);
+}
+
+.motioncode-bridge-frame-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0 14px 14px;
+  font-family: var(--font-mono);
+}
+
+.motioncode-bridge-frame-strip span {
+  display: grid;
+  min-height: 34px;
+  place-items: center;
+  border: 1px solid rgba(216, 207, 188, 0.13);
+  border-radius: 9px;
+  color: rgba(255, 251, 244, 0.68);
+  background: rgba(255, 251, 244, 0.04);
+  font-size: 10px;
+  animation: motioncodeBridgeFrame 2.8s ease-in-out infinite;
+  animation-delay: calc(var(--frame-index) * 90ms);
+}
+
+.motioncode-bridge-map-field {
+  position: relative;
+  min-height: clamp(210px, 30dvh, 310px);
+  margin: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(216, 207, 188, 0.1);
+  border-radius: 12px;
+  background-image:
+    linear-gradient(rgba(216, 207, 188, 0.042) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(216, 207, 188, 0.034) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.motioncode-bridge-map-path {
+  position: absolute;
+  left: 11%;
+  top: 55%;
+  width: 78%;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, #00ff88, rgba(216, 207, 188, 0.92), transparent);
+  transform-origin: left center;
+  rotate: -15deg;
+}
+
+.motioncode-bridge-map-node {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  background: #00ff88;
+  box-shadow: 0 0 18px rgba(0, 255, 136, 0.42);
+  transform: translate3d(-50%, -50%, 0);
+}
+
+.motioncode-bridge-map-node-a { left: 16%; top: 65%; }
+.motioncode-bridge-map-node-b { left: 36%; top: 41%; }
+.motioncode-bridge-map-node-c { left: 62%; top: 48%; }
+.motioncode-bridge-map-node-d { left: 85%; top: 28%; }
+
+.motioncode-bridge-map-readout {
+  display: grid;
+  gap: 8px;
+  padding: 0 14px 14px;
+  color: rgba(216, 207, 188, 0.7);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.motioncode-bridge-map-readout span,
+.motioncode-bridge-qa-list span {
+  border: 1px solid rgba(216, 207, 188, 0.12);
+  border-radius: 999px;
+  padding: 8px 10px;
+  background: rgba(255, 251, 244, 0.035);
+}
+
+.motioncode-bridge-export-panel {
+  position: relative;
+  align-content: start;
+  grid-template-rows: auto auto auto 1fr;
+}
+
+.motioncode-bridge-export-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 14px 14px 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.motioncode-bridge-export-tabs span {
+  border: 1px solid rgba(216, 207, 188, 0.14);
+  border-radius: 999px;
+  padding: 8px 10px;
+  color: rgba(216, 207, 188, 0.68);
+}
+
+.motioncode-bridge-export-tabs span[data-active="true"] {
+  border-color: rgba(0, 255, 136, 0.34);
+  color: #00ff88;
+  background: rgba(0, 255, 136, 0.07);
+}
+
+.motioncode-bridge-export-panel pre {
+  margin: 14px;
+  overflow: auto;
+  border: 1px solid rgba(216, 207, 188, 0.12);
+  border-radius: 12px;
+  padding: 16px;
+  background: rgba(3, 5, 4, 0.72);
+  color: rgba(255, 251, 244, 0.78);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.9;
+}
+
+.motioncode-bridge-export-panel code {
+  display: block;
+}
+
+.motioncode-bridge-qa-list {
+  display: grid;
+  gap: 8px;
+  padding: 0 14px 14px;
+  color: rgba(216, 207, 188, 0.74);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.motioncode-bridge-qa-list span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.motioncode-bridge-qa-list svg {
+  color: #00ff88;
+}
+
+.motioncode-bridge-artifacts {
+  position: relative;
+  z-index: 2;
+  grid-column: 2;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.motioncode-bridge-artifacts article {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.motioncode-bridge-artifacts svg {
+  color: #00ff88;
+}
+
+.motioncode-bridge-artifacts strong {
+  color: rgba(255, 251, 244, 0.94);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.motioncode-bridge-artifacts span {
+  color: rgba(216, 207, 188, 0.7);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+@keyframes motioncodeBridgeObject {
+  0%,
+  100% {
+    opacity: 0.86;
+    transform: translate3d(-60%, -50%, 0) rotate(8deg) scale(0.94);
+  }
+  50% {
+    opacity: 1;
+    transform: translate3d(-40%, -54%, 0) rotate(17deg) scale(1);
+  }
+}
+
+@keyframes motioncodeBridgeFrame {
+  0%,
+  100% {
+    opacity: 0.52;
+    transform: translate3d(0, 0, 0);
+  }
+  48% {
+    opacity: 1;
+    transform: translate3d(0, -3px, 0);
+  }
+}
+
+.motioncode-logo-strip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  margin-top: -1px;
+  padding: 34px 0 30px;
+  border-top: 1px solid rgba(216, 207, 188, 0.08);
+  border-bottom: 1px solid rgba(216, 207, 188, 0.14);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(216, 207, 188, 0.045), transparent 42%),
+    var(--bg);
+}
+
+.motioncode-handoff-bridge {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  scroll-margin-top: 112px;
+  margin-top: -96px;
+  padding: 108px clamp(20px, 5vw, 82px) 74px;
+  border-bottom: 1px solid rgba(216, 207, 188, 0.12);
+  background:
+    linear-gradient(180deg, rgba(8, 10, 7, 0), rgba(8, 10, 7, 0.94) 22%, rgba(17, 18, 13, 0.98) 100%),
+    radial-gradient(circle at 50% 18%, rgba(0, 255, 136, 0.1), transparent 36%);
+}
+
+.motioncode-handoff-bridge::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: min(760px, 76vw);
+  height: 150px;
+  border-radius: 0 0 999px 999px;
+  border: 1px solid rgba(0, 255, 136, 0.16);
+  border-top: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(0, 255, 136, 0.14), transparent 70%);
+  opacity: 0.9;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.motioncode-handoff-spine {
+  position: absolute;
+  inset: 6px 0 auto;
+  height: 100%;
+  pointer-events: none;
+}
+
+.motioncode-handoff-spine::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 1px;
+  height: calc(100% - 20px);
+  background: linear-gradient(180deg, rgba(0, 255, 136, 0), rgba(0, 255, 136, 0.5) 18%, rgba(216, 207, 188, 0.24) 70%, rgba(216, 207, 188, 0));
+  transform: translateX(-50%) scaleY(0.2);
+  transform-origin: top;
+  animation: motioncodeHandoffSpine 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.motioncode-handoff-spine span {
+  position: absolute;
+  left: 50%;
+  width: min(28vw, 360px);
+  height: 1px;
+  background: linear-gradient(90deg, rgba(0, 255, 136, 0), rgba(0, 255, 136, 0.42), rgba(216, 207, 188, 0.22), rgba(216, 207, 188, 0));
+  transform: scaleX(0);
+  transform-origin: left;
+  opacity: 0.9;
+  animation: motioncodeHandoffLine 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.motioncode-handoff-spine span:nth-child(1) {
+  top: 34%;
+  margin-left: -24vw;
+  rotate: -7deg;
+  animation-delay: 120ms;
+}
+
+.motioncode-handoff-spine span:nth-child(2) {
+  top: 48%;
+  margin-left: 2vw;
+  rotate: 5deg;
+  animation-delay: 220ms;
+}
+
+.motioncode-handoff-spine span:nth-child(3) {
+  top: 65%;
+  margin-left: -10vw;
+  rotate: 2deg;
+  animation-delay: 340ms;
+}
+
+.motioncode-handoff-shell {
+  position: relative;
+  z-index: 2;
+  width: min(1120px, 100%);
+  margin-inline: auto;
+}
+
+.motioncode-handoff-header {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  margin-bottom: 28px;
+  text-align: center;
+}
+
+.motioncode-handoff-header p {
+  margin: 0;
+  color: rgba(216, 207, 188, 0.58);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.motioncode-handoff-header h2 {
+  max-width: 740px;
+  margin: 0;
+  color: rgba(255, 251, 244, 0.92);
+  font-family: var(--font-mono);
+  font-size: clamp(1.55rem, 3vw, 2.7rem);
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+.motioncode-handoff-notes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.motioncode-handoff-note {
+  position: relative;
+  min-height: 184px;
+  border: 1px solid rgba(216, 207, 188, 0.16);
+  border-radius: 14px;
+  padding: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 251, 244, 0.08), rgba(255, 251, 244, 0.015)),
+    rgba(9, 11, 8, 0.78);
+  box-shadow:
+    0 22px 54px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 251, 244, 0.08);
+  opacity: 0;
+  transform: translate3d(0, 76px, 0) scale(0.96);
+  animation: motioncodeHandoffNote 0.95s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--note-index) * 95ms);
+}
+
+.motioncode-handoff-note::before {
+  content: "";
+  position: absolute;
+  left: 18px;
+  top: -28px;
+  width: 1px;
+  height: 28px;
+  background: linear-gradient(180deg, rgba(0, 255, 136, 0), rgba(0, 255, 136, 0.48));
+}
+
+.motioncode-handoff-note::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: -32px;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: #00ff88;
+  box-shadow: 0 0 18px rgba(0, 255, 136, 0.42);
+}
+
+.motioncode-handoff-note span {
+  display: block;
+  margin-bottom: 16px;
+  color: rgba(0, 255, 136, 0.82);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.motioncode-handoff-note strong {
+  display: block;
+  color: rgba(255, 251, 244, 0.94);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.motioncode-handoff-note p {
+  margin: 12px 0 0;
+  color: rgba(216, 207, 188, 0.72);
+  font-size: 12.5px;
+  line-height: 1.58;
+}
+
+@keyframes motioncodeHandoffNote {
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes motioncodeHandoffSpine {
+  to {
+    transform: translateX(-50%) scaleY(1);
+  }
+}
+
+@keyframes motioncodeHandoffLine {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .motioncode-handoff-note {
+    animation-timeline: view();
+    animation-range: entry 4% cover 42%;
+  }
+
+  .motioncode-handoff-spine::before,
+  .motioncode-handoff-spine span {
+    animation-timeline: view();
+    animation-range: entry 0% cover 55%;
+  }
+}
+
+.motioncode-logo-strip::before,
+.motioncode-logo-strip::after {
+  width: clamp(34px, 8vw, 120px);
+}
+
+.motioncode-logo-kicker {
+  margin: 0 0 18px;
+  color: rgba(216, 207, 188, 0.68);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.motioncode-logo-marquee {
+  animation-duration: 34s;
+}
+
+.motioncode-logo-mark {
+  gap: 11px;
+  color: rgba(216, 207, 188, 0.82);
+  opacity: 0.9;
+  transition: opacity 220ms ease;
+}
+
+.motioncode-logo-mark:hover {
+  opacity: 1;
+  transform: none;
+}
+
+.motioncode-logo-img {
+  width: 20px;
+  height: 20px;
+  filter: drop-shadow(0 0 10px rgba(216, 207, 188, 0.1));
+}
+
+@media (max-width: 1023px) {
+  .motioncode-scroll-bridge-container {
+    min-height: 0 !important;
+    padding-block: 72px !important;
+  }
+
+  .motioncode-scroll-bridge-container .motioncode-container-scroll-sticky {
+    position: relative !important;
+    top: auto !important;
+    min-height: 0;
+    padding-block: 0 !important;
+  }
+
+  .motioncode-scroll-bridge-kicker {
+    display: inline-flex;
+  }
+
+  .motioncode-scroll-bridge-container .motioncode-container-scroll-sticky > div {
+    transform: none !important;
+  }
+
+  .motioncode-bridge-story {
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+
+  .motioncode-bridge-workbench,
+  .motioncode-bridge-artifacts {
+    grid-column: auto;
+    grid-template-columns: 1fr;
+  }
+
+  .motioncode-bridge-scan-sweep,
+  .motioncode-bridge-remap-svg {
+    display: none;
+  }
+
+  .motioncode-bridge-source-stage,
+  .motioncode-bridge-map-field {
+    min-height: 220px;
+  }
+
+  .motioncode-handoff-bridge {
+    margin-top: 0;
+    padding-top: 74px;
+  }
+
+  .motioncode-handoff-notes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .motioncode-scroll-bridge-title-main {
+    max-width: 9ch;
+    font-size: clamp(3.35rem, 15vw, 4.35rem);
+  }
+
+  .motioncode-bridge-stage {
+    min-height: 68px;
+  }
+
+  .motioncode-logo-strip {
+    padding-block: 28px;
+  }
+
+  .motioncode-handoff-bridge {
+    scroll-margin-top: 92px;
+    padding: 92px 20px 48px;
+  }
+
+  .motioncode-handoff-header {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .motioncode-handoff-notes {
+    grid-template-columns: 1fr;
+  }
+
+  .motioncode-handoff-note {
+    min-height: 0;
+  }
+
+  .motioncode-logo-marquee {
+    width: 100%;
+    animation: none;
+    white-space: normal;
+  }
+
+  .motioncode-logo-track {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 18px 28px;
+    padding-right: 0;
+  }
+
+  .motioncode-logo-track[aria-hidden="true"] {
+    display: none;
+  }
+
+  .motioncode-logo-mark {
+    font-size: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motioncode-scroll-bridge-container {
+    min-height: 0 !important;
+    padding-block: 72px !important;
+  }
+
+  .motioncode-scroll-bridge-container .motioncode-container-scroll-sticky {
+    position: relative !important;
+    top: auto !important;
+    min-height: 0;
+    padding-block: 0 !important;
+  }
+
+  .motioncode-scroll-bridge-container .motioncode-container-scroll-sticky > div,
+  .motioncode-bridge-stage,
+  .motioncode-bridge-workbench,
+  .motioncode-bridge-source-panel,
+  .motioncode-bridge-map-panel,
+  .motioncode-bridge-export-panel {
+    transform: none !important;
+  }
+
+  .motioncode-bridge-source-object,
+  .motioncode-bridge-frame-strip span,
+  .motioncode-handoff-note,
+  .motioncode-handoff-spine::before,
+  .motioncode-handoff-spine span {
+    animation: none !important;
+  }
+
+  .motioncode-handoff-note {
+    --note-motion-y: 0px;
+    --note-scale: 1;
+    --note-tilt: 0deg;
+    opacity: 1;
+  }
+
+  .motioncode-logo-marquee {
+    width: 100%;
+    animation: none !important;
+    white-space: normal;
+  }
+
+  .motioncode-logo-track {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 18px 34px;
+    padding-right: 0;
+  }
+
+  .motioncode-logo-track[aria-hidden="true"] {
+    display: none;
+  }
+}
+
+/* Live scroll-routed handoff animation. These rules intentionally sit last so
+   GSAP owns the active scroll state while the layout keeps a static fallback. */
+.motioncode-scroll-bridge-container {
+  min-height: 250vh !important;
+  padding-top: 0 !important;
+}
+
+.motioncode-scroll-bridge-container .motioncode-container-scroll-sticky {
+  top: 72px !important;
+  min-height: calc(100dvh - 72px) !important;
+  justify-content: center !important;
+  padding-top: 0 !important;
+  padding-bottom: clamp(28px, 5dvh, 56px) !important;
+}
+
+.motioncode-scroll-bridge-container .motioncode-container-scroll-sticky > div:first-child {
+  transform: none !important;
+}
+
+.motioncode-scroll-bridge-heading {
+  max-width: 980px;
+  margin: 0 auto clamp(28px, 7dvh, 64px);
+  padding-top: clamp(92px, 12dvh, 126px);
+}
+
+.motioncode-bridge-export-panel pre {
+  max-width: 100%;
+  overflow-x: hidden !important;
+  overflow-y: hidden !important;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.motioncode-bridge-export-panel pre::-webkit-scrollbar {
+  display: none;
+}
+
+.motioncode-handoff-bridge {
+  min-height: 280vh;
+  overflow: visible;
+  margin-top: -72px;
+  padding-top: clamp(104px, 13vh, 138px);
+  padding-bottom: clamp(70px, 10vh, 110px);
+}
+
+.motioncode-handoff-map {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.motioncode-handoff-path {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.motioncode-handoff-branch-base {
+  stroke: rgba(216, 207, 188, 0.12);
+  stroke-width: 1;
+}
+
+.motioncode-handoff-branch-active {
+  stroke: #00ff88;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
+.motioncode-handoff-node {
+  fill: #00ff88;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.motioncode-handoff-spine {
+  display: none;
+}
+
+.motioncode-handoff-shell {
+  position: relative;
+  z-index: 3;
+  min-height: 230vh;
+}
+
+.motioncode-handoff-header {
+  margin-bottom: clamp(22px, 4vh, 36px);
+}
+
+.motioncode-handoff-header h2 {
+  max-width: 900px;
+  font-family: var(--font-body);
+  font-size: clamp(2.75rem, 5vw, 5.4rem);
+  font-weight: 680;
+  letter-spacing: 0;
+  line-height: 0.96;
+}
+
+.motioncode-split-text {
+  display: inline;
+}
+
+.motioncode-split-text > span {
+  display: inline;
+}
+
+.motioncode-split-word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.motioncode-split-char {
+  display: inline-block;
+  white-space: pre;
+  margin: 0;
+  will-change: transform, opacity;
+}
+
+.motioncode-handoff-stage {
+  position: relative;
+  z-index: 3;
+  width: min(1180px, 100%);
+  height: min(690px, calc(100dvh - 132px));
+  margin-inline: auto;
+  position: sticky;
+  top: 104px;
+}
+
+.motioncode-handoff-terminal {
+  position: absolute;
+  overflow: hidden;
+  border: 1px solid rgba(216, 207, 188, 0.16);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 251, 244, 0.07), rgba(255, 251, 244, 0.014)),
+    rgba(7, 9, 7, 0.84);
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 251, 244, 0.08);
+}
+
+.motioncode-handoff-hub {
+  z-index: 7;
+  left: 50%;
+  top: 52%;
+  width: clamp(280px, 30vw, 360px);
+  min-height: 390px;
+  transform: translate(-50%, -50%);
+  border-color: rgba(216, 207, 188, 0.24);
+  box-shadow:
+    0 34px 96px rgba(0, 0, 0, 0.48),
+    0 0 0 1px rgba(0, 255, 136, 0.08),
+    inset 0 1px 0 rgba(255, 251, 244, 0.12);
+}
+
+.motioncode-handoff-terminal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(216, 207, 188, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(216, 207, 188, 0.028) 1px, transparent 1px);
+  background-size: 22px 22px;
+  opacity: 0.42;
+  pointer-events: none;
+}
+
+.motioncode-handoff-terminal-top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(216, 207, 188, 0.12);
+  padding: 14px 16px;
+  color: rgba(216, 207, 188, 0.7);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.motioncode-handoff-terminal-top strong {
+  color: rgba(0, 255, 136, 0.82);
+  font-weight: 600;
+}
+
+.motioncode-handoff-terminal-rows {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+
+.motioncode-handoff-terminal-row {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 3px 10px;
+  min-height: 62px;
+  align-content: center;
+  border: 1px solid rgba(216, 207, 188, 0.11);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: rgba(255, 251, 244, 0.035);
+  color: rgba(216, 207, 188, 0.68);
+  font-family: var(--font-mono);
+}
+
+.motioncode-handoff-terminal-row > span {
+  grid-row: span 2;
+  color: rgba(0, 255, 136, 0.84);
+  font-size: 10px;
+}
+
+.motioncode-handoff-terminal-row strong {
+  color: rgba(255, 251, 244, 0.9);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.motioncode-handoff-terminal-row small {
+  color: rgba(216, 207, 188, 0.58);
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.motioncode-handoff-notes {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: block;
+  pointer-events: none;
+}
+
+.motioncode-handoff-note {
+  --note-motion-y: 0px;
+  --note-scale: 1;
+  --note-tilt: 0deg;
+  z-index: 4;
+  position: absolute;
+  left: var(--note-x);
+  top: var(--note-y);
+  width: var(--note-width);
+  overflow: visible;
+  min-height: 148px;
+  padding: 16px;
+  border-radius: 8px;
+  animation: none !important;
+  opacity: 1;
+  transform: translate(-50%, calc(-50% + var(--note-motion-y))) rotate(var(--note-rotate)) rotate(var(--note-tilt)) scale(var(--note-scale));
+  transition:
+    border-color 220ms ease,
+    background 220ms ease,
+    box-shadow 220ms ease;
+  will-change: transform, opacity;
+  pointer-events: auto;
+}
+
+.motioncode-handoff-note:nth-child(4) {
+  background:
+    linear-gradient(135deg, rgba(0, 255, 136, 0.075), rgba(255, 251, 244, 0.024) 54%, rgba(255, 251, 244, 0.012)),
+    rgba(9, 11, 8, 0.82);
+}
+
+.motioncode-handoff-note::before {
+  left: var(--dot-x);
+  top: var(--dot-y);
+  width: 22px;
+  height: 1px;
+  background: rgba(0, 255, 136, 0.5);
+  transform: translate(var(--tail-x), -50%) scaleX(0);
+  transform-origin: var(--tail-origin);
+  transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.motioncode-handoff-note::after {
+  left: var(--dot-x);
+  top: var(--dot-y);
+  width: 10px;
+  height: 10px;
+  border: 1px solid rgba(0, 255, 136, 0.42);
+  background: #00ff88;
+  transform: translate(-50%, -50%) scale(0.58);
+  opacity: 0.42;
+  transition:
+    opacity 220ms ease,
+    transform 320ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 220ms ease;
+}
+
+.motioncode-handoff-note[data-connected="true"] {
+  border-color: rgba(0, 255, 136, 0.46);
+  background:
+    linear-gradient(180deg, rgba(0, 255, 136, 0.07), rgba(255, 251, 244, 0.018)),
+    rgba(9, 11, 8, 0.88);
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgba(0, 255, 136, 0.16),
+    0 0 34px rgba(0, 255, 136, 0.1),
+    inset 0 1px 0 rgba(255, 251, 244, 0.1);
+}
+
+.motioncode-handoff-note[data-connected="true"]::before {
+  transform: translate(var(--tail-x), -50%) scaleX(1);
+}
+
+.motioncode-handoff-note[data-connected="true"]::after {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  box-shadow:
+    0 0 0 5px rgba(0, 255, 136, 0.08),
+    0 0 24px rgba(0, 255, 136, 0.52);
+}
+
+.motioncode-handoff-label {
+  display: block !important;
+  margin-bottom: 9px;
+  color: rgba(216, 207, 188, 0.7);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.motioncode-handoff-note .motioncode-split-text > span {
+  display: inline !important;
+  margin: 0 !important;
+}
+
+.motioncode-handoff-note .motioncode-split-word {
+  display: inline-block !important;
+  margin: 0 !important;
+  white-space: nowrap;
+}
+
+.motioncode-handoff-note .motioncode-split-char {
+  display: inline-block !important;
+  margin: 0 !important;
+  white-space: pre;
+}
+
+.motioncode-handoff-title {
+  display: block !important;
+  color: rgba(255, 251, 244, 0.94);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.18;
+}
+
+.motioncode-handoff-body {
+  display: block !important;
+  margin: 8px 0 0;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  letter-spacing: 0;
+  line-height: 1.42;
+  text-transform: none;
+  color: rgba(216, 207, 188, 0.72);
+}
+
+.motioncode-handoff-title .motioncode-split-char,
+.motioncode-handoff-body .motioncode-split-char {
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  letter-spacing: 0;
+  line-height: inherit;
+  text-transform: none;
+}
+
+.motioncode-handoff-note[data-connected="true"] .motioncode-handoff-label {
+  color: rgba(0, 255, 136, 0.92);
+}
+
+.motioncode-logo-name {
+  overflow: hidden;
+  line-height: 1.2;
+}
+
+.motioncode-logo-mark .motioncode-split-char {
+  animation: motioncodeLogoLetter 3.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  animation-delay: calc(var(--char-index) * var(--split-step));
+}
+
+@keyframes motioncodeLogoLetter {
+  0%,
+  72%,
+  100% {
+    opacity: 0.76;
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  80% {
+    opacity: 1;
+    transform: translate3d(0, -0.24em, 0) rotate(-3deg);
+  }
+  88% {
+    opacity: 0.9;
+    transform: translate3d(0, 0.06em, 0) rotate(1.5deg);
+  }
+}
+
+@media (max-width: 1023px) {
+  .motioncode-scroll-bridge-container {
+    min-height: 0 !important;
+  }
+
+  .motioncode-handoff-bridge {
+    min-height: 0;
+    margin-top: 0;
+  }
+
+  .motioncode-handoff-map {
+    display: none;
+  }
+
+  .motioncode-handoff-stage {
+    display: grid;
+    position: relative;
+    top: auto;
+    height: auto;
+    gap: 18px;
+  }
+
+  .motioncode-handoff-notes {
+    position: static;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .motioncode-handoff-terminal,
+  .motioncode-handoff-note {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: auto;
+    min-height: 0;
+    transform: none !important;
+  }
+
+  .motioncode-handoff-note::before,
+  .motioncode-handoff-note::after {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .motioncode-handoff-map {
+    display: none;
+  }
+
+  .motioncode-handoff-header h2 {
+    font-size: clamp(2rem, 12vw, 3rem);
+    line-height: 1.02;
+  }
+
+  .motioncode-handoff-notes {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motioncode-handoff-main-active,
+  .motioncode-handoff-branch-active {
+    filter: none;
+  }
+
+  html {
+    scroll-behavior: auto !important;
+  }
+
+  .motioncode-split-char,
+  .motioncode-logo-mark .motioncode-split-char {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .motioncode-handoff-note {
+    --note-motion-y: 0px;
+    --note-scale: 1;
+    --note-tilt: 0deg;
+    opacity: 1 !important;
+  }
+}
