@@ -58,7 +58,7 @@ test.describe("marketing surface", () => {
     ).toHaveAttribute("href", "/app");
     await expect(
       page.getByRole("link", { name: /See it work/i }),
-    ).toHaveAttribute("href", "#features");
+    ).toHaveAttribute("href", "#motion-bridge");
     await expect(
       page.getByRole("link", { name: /Launch Converter/i }),
     ).toHaveAttribute("href", "/app");
@@ -69,8 +69,24 @@ test.describe("marketing surface", () => {
     await expect(
       page
         .locator("#how-it-works")
-        .getByText("Three steps to production-ready code"),
+        .getByText("From reference clip to reviewable motion code"),
     ).toBeVisible();
+
+    const process = page.locator("#how-it-works");
+    const processList = process.getByRole("list", { name: "MotionCode process" });
+    await expect(processList).toHaveCSS("display", "grid");
+    await expect(process.getByRole("listitem")).toHaveCount(3);
+    await expect(
+      process.getByRole("heading", { name: "Capture the reference" }),
+    ).toBeVisible();
+    await expect(
+      process.getByRole("heading", { name: "Map the motion" }),
+    ).toBeVisible();
+    await expect(
+      process.getByRole("heading", { name: "Review and export" }),
+    ).toBeVisible();
+    await expect(process.getByText("duration 640ms")).toBeVisible();
+    await expect(process.getByText("Code + fallbacks + notes")).toBeVisible();
 
     const pricing = page.locator("#pricing");
     await expect(
@@ -112,6 +128,25 @@ test.describe("marketing surface", () => {
       return pricingTop < ctaTop;
     });
     expect(sectionOrder).toBe(true);
+  });
+
+  test("process section respects reduced motion for decorative effects", async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/#how-it-works");
+
+    const process = page.locator("#how-it-works");
+    await expect(
+      process.getByRole("heading", {
+        name: "From reference clip to reviewable motion code",
+      }),
+    ).toBeVisible();
+
+    const railAnimation = await process.locator(".motioncode-process-rail span")
+      .first()
+      .evaluate((node) => getComputedStyle(node).animationName);
+    expect(railAnimation).toBe("none");
   });
 
   test("landing uses real partner logos and readable footer links", async ({

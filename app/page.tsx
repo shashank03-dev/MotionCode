@@ -72,6 +72,44 @@ const EXPORT_STACK = [
   { label: "Framer", value: "mapped", width: "91%" },
 ];
 
+const PROCESS_STEPS = [
+  {
+    num: "01",
+    meta: "Source",
+    title: "Capture the reference",
+    desc: "Drop in a video or GIF. MotionCode samples frames and timing so the source stays visible through analysis.",
+    output: "Frames + timing",
+  },
+  {
+    num: "02",
+    meta: "Motion map",
+    title: "Map the motion",
+    desc: "MotionCode turns sampled frames into transform paths, easing, duration, and intent you can inspect.",
+    output: "Curves + keyframes + intent",
+  },
+  {
+    num: "03",
+    meta: "Export",
+    title: "Review and export",
+    desc: "Copy CSS, GSAP, or Framer Motion snippets with accessibility fallbacks and handoff notes attached.",
+    output: "Code + fallbacks + notes",
+  },
+];
+
+const PROCESS_FRAME_TILES = ["00", "06", "12", "18", "24", "30"];
+const PROCESS_CURVE_POINTS = [
+  { left: "10%", top: "68%" },
+  { left: "30%", top: "34%" },
+  { left: "54%", top: "48%" },
+  { left: "78%", top: "22%" },
+];
+const PROCESS_EXPORT_ROWS = [
+  ["CSS", "ready"],
+  ["GSAP", "timed"],
+  ["Motion", "mapped"],
+  ["A11y", "fallback"],
+];
+
 const LOGO_BRANDS = [
   { name: "Vercel", icon: "vercel" },
   { name: "Razorpay", icon: "razorpay" },
@@ -188,8 +226,8 @@ export default function LandingPage() {
   const leftCardsRef = useRef<(HTMLDivElement | null)[]>([]);
   const rightPanelsRef = useRef<(HTMLDivElement | null)[]>([]);
 
-  const processSectionRef = useRef<HTMLDivElement>(null);
-  const processStepsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const processSectionRef = useRef<HTMLElement>(null);
+  const processStepsRef = useRef<(HTMLElement | null)[]>([]);
 
   useEffect(() => {
     const handleGlobalMouseMove = (e: MouseEvent) => {
@@ -532,21 +570,29 @@ export default function LandingPage() {
 
       // Setup Process Steps Animation
       if (processSectionRef.current && processStepsRef.current.length > 0) {
-        gsap.fromTo(
-          processStepsRef.current,
-          { opacity: 0, y: 40 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.8,
-            stagger: 0.2,
-            ease: "power2.out",
-            scrollTrigger: {
-              trigger: processSectionRef.current,
-              start: "top 70%",
+        const reduceMotion = window.matchMedia(
+          "(prefers-reduced-motion: reduce)",
+        ).matches;
+
+        if (reduceMotion) {
+          gsap.set(processStepsRef.current, { opacity: 1, y: 0 });
+        } else {
+          gsap.fromTo(
+            processStepsRef.current,
+            { opacity: 0, y: 40 },
+            {
+              opacity: 1,
+              y: 0,
+              duration: 0.8,
+              stagger: 0.2,
+              ease: "power2.out",
+              scrollTrigger: {
+                trigger: processSectionRef.current,
+                start: "top 70%",
+              }
             }
-          }
-        );
+          );
+        }
       }
 
       return () => {
@@ -1211,42 +1257,97 @@ export default function LandingPage() {
       </section>
 
       {/* SECTION 6 - HOW IT WORKS */}
-      <section id="how-it-works" ref={processSectionRef}
-               style={{ position: "relative", background: "var(--bg)", padding: "120px 10vw", borderBottom: "1px solid var(--border)" }}>
-
-        <div style={{ position: "absolute", left: "20px", top: "50%", transform: "translateY(-50%)", writingMode: "vertical-rl", textOrientation: "mixed", fontFamily: "var(--font-mono)", fontSize: "9px", color: "#1a1a1a", letterSpacing: "3px" }}>
-          04 /
-        </div>
-
-        <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "var(--muted)", letterSpacing: "2px" }}>Process</div>
-        <div style={{ fontFamily: "var(--font-mono)", fontSize: "36px", color: "var(--text)", marginBottom: "64px", marginTop: "16px" }}>Three steps to production-ready code</div>
-
-        <div className="flex flex-col md:flex-row" style={{ border: "1px solid #1a1a1a" }}>
-          {[
-            { num: "01", title: "Upload", desc: "Drop your video or GIF into the converter" },
-            { num: "02", title: "Analyze", desc: "AI extracts every frame and reads the motion" },
-            { num: "03", title: "Ship", desc: "Copy production code in CSS, GSAP, or Framer Motion" }
-          ].map((st, i) => (
-            <div key={st.num}
-                 ref={el => { processStepsRef.current[i] = el; }}
-                 className="motioncode-process-step flex-1 relative group"
-                 style={{ padding: "48px 40px", borderRight: i === 2 ? "none" : "1px solid #1a1a1a", willChange: "transform", background: "linear-gradient(180deg, rgba(255,255,255,0.01) 0%, transparent 100%)", transition: "background 0.3s ease" }}>
-
-              <div style={{ position: "absolute", top: 0, left: 0, width: "0%", height: "2px", background: "#00ff88", transition: "width 0.3s ease", opacity: 0.8 }} className="group-hover:w-full" />
-              <div style={{ fontFamily: "var(--font-mono)", fontSize: "64px", color: "var(--border)", display: "block", marginBottom: "-16px", transform: "translateY(-16px)", transition: "color 0.3s ease", userSelect: "none" }} className="group-hover:text-[#ffffff0c]">{st.num}</div>
-
-              <div style={{ fontFamily: "var(--font-mono)", fontSize: "11px", color: "#00ff88", letterSpacing: "2px", display: "flex", alignItems: "center", gap: "8px" }}>
-                <div style={{ width: "6px", height: "6px", background: "#00ff88", borderRadius: "50%", opacity: 0.8 }} className="animate-pulse" />
-                {`STEP ${st.num}`}
-              </div>
-
-              <div style={{ fontFamily: "var(--font-mono)", fontSize: "20px", color: "#e2e8f0", margin: "16px 0 10px" }}>{st.title}</div>
-              <div style={{ fontFamily: "var(--font-body)", fontSize: "14px", color: "var(--muted)", lineHeight: 1.7 }}>{st.desc}</div>
-              {i < 2 && (
-                <div className="motioncode-process-arrow" style={{ position: "absolute", right: "-16px", top: "50%", transform: "translateY(-50%)", fontFamily: "var(--font-mono)", color: "#1a1a1a", fontSize: "24px", zIndex: 10 }}>→</div>
-              )}
+      <section
+        id="how-it-works"
+        ref={processSectionRef}
+        className="motioncode-process-section"
+        aria-labelledby="process-heading"
+      >
+        <div className="motioncode-process-shell">
+          <div className="motioncode-process-header">
+            <div>
+              <p className="motioncode-process-kicker">Workflow</p>
+              <h2 id="process-heading">From reference clip to reviewable motion code</h2>
             </div>
-          ))}
+            <p>
+              Upload a clip, inspect the sampled frames and motion spec, then
+              export framework snippets with fallbacks and handoff notes.
+            </p>
+          </div>
+
+          <ol className="motioncode-process-grid" aria-label="MotionCode process">
+            {PROCESS_STEPS.map((st, i) => (
+              <li
+                key={st.num}
+                ref={(el) => {
+                  processStepsRef.current[i] = el;
+                }}
+                className="motioncode-process-step"
+              >
+                <div className="motioncode-process-step-top">
+                  <span className="motioncode-process-num" aria-hidden="true">
+                    {st.num}
+                  </span>
+                  <span className="sr-only">{`Step ${i + 1} of ${PROCESS_STEPS.length}`}</span>
+                  <span className="motioncode-process-meta">{st.meta}</span>
+                </div>
+
+                <div>
+                  <h3>{st.title}</h3>
+                  <p>{st.desc}</p>
+                </div>
+
+                <div className="motioncode-process-artifact" aria-hidden="true">
+                  {i === 0 ? (
+                    <div className="motioncode-process-frames">
+                      {PROCESS_FRAME_TILES.map((frame) => (
+                        <span key={frame}>{frame}</span>
+                      ))}
+                    </div>
+                  ) : null}
+                  {i === 1 ? (
+                    <div className="motioncode-process-curve">
+                      <span className="motioncode-process-curve-line" />
+                      {PROCESS_CURVE_POINTS.map((point, pointIndex) => (
+                        <span
+                          key={`${point.left}-${point.top}`}
+                          className="motioncode-process-curve-node"
+                          style={{
+                            left: point.left,
+                            top: point.top,
+                            animationDelay: `${pointIndex * 0.18}s`,
+                          }}
+                        />
+                      ))}
+                      <div className="motioncode-process-spec-readout">
+                        <span>duration 640ms</span>
+                        <span>ease out-cubic</span>
+                      </div>
+                    </div>
+                  ) : null}
+                  {i === 2 ? (
+                    <div className="motioncode-process-exports">
+                      {PROCESS_EXPORT_ROWS.map(([label, value]) => (
+                        <span key={label}>
+                          <strong>{label}</strong>
+                          <em>{value}</em>
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="motioncode-process-output">
+                  <span>{st.output}</span>
+                </div>
+              </li>
+            ))}
+          </ol>
+
+          <div className="motioncode-process-rail" aria-hidden="true">
+            <span />
+            <span />
+          </div>
         </div>
       </section>
 
