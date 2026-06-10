@@ -7,6 +7,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Aurora, Magnet } from "@/components/react-bits";
 import { CheckoutButton } from "@/app/pricing/CheckoutButton";
+import { ScrollSolutionBridge } from "@/components/marketing/scroll-solution-bridge";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -818,7 +819,7 @@ export default function LandingPage() {
           >
             Start for free →
           </Link>
-          <Link href="#features"
+          <Link href="#motion-bridge"
                 className="motioncode-hero-action motioncode-hero-action-secondary"
                 style={{
                   background: "transparent",
@@ -1108,7 +1109,10 @@ export default function LandingPage() {
 
       </section>
 
-      {/* SECTION 3 - LOGO STRIP */}
+      {/* SECTION 3 - SCROLL BRIDGE */}
+      <ScrollSolutionBridge />
+
+      {/* SECTION 4 - LOGO STRIP */}
       <section data-testid="logo-strip" className="motioncode-logo-strip" style={{ padding: "28px 0", borderBottom: "1px solid var(--border)", background: "var(--bg)", display: "flex", flexDirection: "column", alignItems: "center", overflow: "hidden" }}>
         <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "var(--muted)", letterSpacing: "3px", whiteSpace: "nowrap", marginBottom: "18px", opacity: 0.6 }}>
           TRUSTED BY DEVELOPERS AT
@@ -1136,12 +1140,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* SECTION 4 - LOGO/FEATURES (STICKY SCROLL) */}
+      {/* SECTION 5 - LOGO/FEATURES (STICKY SCROLL) */}
       <section id="features" ref={featuresSectionRef} className="motioncode-feature-section"
                style={{ position: "relative", height: "100vh", overflow: "hidden", display: "flex", borderBottom: "1px solid var(--border)", marginBottom: `${(FEATURES_DATA.length - 1) * 100}vh` }}>
 
         <div style={{ position: "absolute", left: "20px", top: "50%", transform: "translateY(-50%)", writingMode: "vertical-rl", textOrientation: "mixed", fontFamily: "var(--font-mono)", fontSize: "9px", color: "#1a1a1a", letterSpacing: "3px" }}>
-          02 /
+          03 /
         </div>
 
         <div className="motioncode-feature-list" style={{ width: "48%", padding: "60px 40px", borderRight: "1px solid var(--border)", display: "flex", flexDirection: "column" }}>
@@ -1206,12 +1210,12 @@ export default function LandingPage() {
 
       </section>
 
-      {/* SECTION 5 - HOW IT WORKS */}
+      {/* SECTION 6 - HOW IT WORKS */}
       <section id="how-it-works" ref={processSectionRef}
                style={{ position: "relative", background: "var(--bg)", padding: "120px 10vw", borderBottom: "1px solid var(--border)" }}>
 
         <div style={{ position: "absolute", left: "20px", top: "50%", transform: "translateY(-50%)", writingMode: "vertical-rl", textOrientation: "mixed", fontFamily: "var(--font-mono)", fontSize: "9px", color: "#1a1a1a", letterSpacing: "3px" }}>
-          03 /
+          04 /
         </div>
 
         <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "var(--muted)", letterSpacing: "2px" }}>Process</div>
@@ -1246,9 +1250,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* SECTION 6 - PRICING */}
+      {/* SECTION 7 - PRICING */}
       <section id="pricing" className="motioncode-pricing-section">
-        <div className="motioncode-section-index">04 /</div>
+        <div className="motioncode-section-index">05 /</div>
         <div className="motioncode-pricing-header">
           <div className="motioncode-pricing-kicker">Pricing</div>
           <h2>Pricing built for motion teams</h2>
@@ -1303,9 +1307,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* SECTION 7 - CTA */}
+      {/* SECTION 8 - CTA */}
       <section data-testid="final-cta" className="motioncode-final-cta">
-        <div className="motioncode-section-index">05 /</div>
+        <div className="motioncode-section-index">06 /</div>
         <div className="motioncode-final-cta-rule" />
         <h2>Start converting animations today.</h2>
 
@@ -1320,7 +1324,7 @@ export default function LandingPage() {
         </Link>
       </section>
 
-      {/* SECTION 8 - FOOTER */}
+      {/* SECTION 9 - FOOTER */}
       <footer className="motioncode-footer">
         <div className="motioncode-footer-top">
           <div className="motioncode-footer-brand-block">

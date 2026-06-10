@@ -19,10 +19,11 @@
     --text: #FFFBF4;
     --muted: #565449;
 
-    --font-inter: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    --font-space-mono: "Space Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-    --font-mono: var(--font-space-mono), monospace;
-    --font-body: var(--font-inter), sans-serif;
+    --font-inter: var(--font-geist-sans, ui-sans-serif), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-space-mono: var(--font-geist-mono, "SFMono-Regular"), Consolas, "Liberation Mono", monospace;
+    --font-mono: var(--font-space-mono);
+    --font-body: var(--font-inter);
+    --font-display: var(--font-inter);
   }
 
   body {
@@ -48,6 +49,7 @@ body {
 }
 
 html {
+  position: relative;
   scroll-behavior: smooth;
 }
 
@@ -707,7 +709,10 @@ body::after {
   .landing-logo-marquee,
   .motioncode-nav-shell::after,
   .feature-code-snippet,
-  .feature-code-snippet::before {
+  .feature-code-snippet::before,
+  .motioncode-bridge-signal,
+  .motioncode-bridge-pipeline-node,
+  .motioncode-bridge-rail span {
     animation: none !important;
     transition-duration: 1ms !important;
   }
@@ -921,6 +926,622 @@ body::after {
   height: 22px;
   object-fit: contain;
   filter: drop-shadow(0 0 12px rgba(216, 207, 188, 0.14));
+}
+
+.motioncode-scroll-bridge {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+  background:
+    radial-gradient(circle at 50% 30%, rgba(0, 255, 136, 0.08), transparent 28%),
+    radial-gradient(circle at 16% 58%, rgba(216, 207, 188, 0.08), transparent 26%),
+    linear-gradient(180deg, #11120d 0%, #0b0d0a 54%, #11120d 100%);
+}
+
+.motioncode-scroll-bridge::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-image:
+    linear-gradient(rgba(216, 207, 188, 0.032) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(216, 207, 188, 0.026) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(circle at 50% 42%, black, transparent 76%);
+  opacity: 0.52;
+  pointer-events: none;
+}
+
+.motioncode-scroll-bridge::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, rgba(17, 18, 13, 0.94), transparent 24% 76%, rgba(17, 18, 13, 0.94)),
+    linear-gradient(180deg, rgba(255, 251, 244, 0.035), transparent 22% 78%, rgba(0, 0, 0, 0.18));
+  pointer-events: none;
+}
+
+.motioncode-scroll-bridge-container {
+  height: 74rem !important;
+  padding-inline: clamp(18px, 5vw, 80px) !important;
+}
+
+.motioncode-scroll-bridge-heading {
+  display: grid;
+  justify-items: center;
+  max-width: 920px;
+  margin-inline: auto;
+  color: var(--text);
+  text-align: center;
+}
+
+.motioncode-scroll-bridge-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(216, 207, 188, 0.66);
+  font-family: var(--font-bridge-mono, var(--font-mono));
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.motioncode-scroll-bridge-kicker::before,
+.motioncode-scroll-bridge-kicker::after {
+  content: "";
+  display: block;
+  width: 34px;
+  height: 1px;
+  background: rgba(216, 207, 188, 0.22);
+}
+
+.motioncode-scroll-bridge-heading h2 {
+  display: grid;
+  width: min(100%, 940px);
+  gap: 14px;
+  max-width: 940px;
+  margin: 30px 0 0;
+  color: var(--text);
+  text-wrap: balance;
+}
+
+.motioncode-scroll-bridge-title-meta {
+  display: block;
+  color: rgba(255, 251, 244, 0.92);
+  font-family: var(--font-bridge-mono, var(--font-mono));
+  font-size: 1.55rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1;
+  text-align: center;
+}
+
+.motioncode-scroll-bridge-title-main {
+  display: block;
+  color: var(--accent);
+  font-family: var(--font-bridge-display, var(--font-display));
+  font-size: 5.9rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 0.86;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.motioncode-scroll-bridge-heading p {
+  max-width: 58ch;
+  margin: 32px 0 0;
+  color: rgba(216, 207, 188, 0.82);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.72;
+  letter-spacing: 0;
+  text-wrap: pretty;
+}
+
+.motioncode-scroll-bridge-card {
+  border-color: rgba(216, 207, 188, 0.28) !important;
+  border-radius: 18px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 251, 244, 0.075), rgba(255, 251, 244, 0.012)),
+    rgba(7, 9, 7, 0.9) !important;
+  box-shadow:
+    0 42px 90px rgba(0, 0, 0, 0.58),
+    0 0 80px rgba(0, 255, 136, 0.07),
+    inset 0 1px 0 rgba(255, 251, 244, 0.1) !important;
+}
+
+.motioncode-scroll-bridge-card-inner {
+  border-radius: 12px !important;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(0, 255, 136, 0.1), transparent 38%),
+    linear-gradient(180deg, rgba(12, 14, 11, 0.86), rgba(6, 8, 6, 0.96)) !important;
+}
+
+.motioncode-bridge-card-content {
+  position: relative;
+  display: grid;
+  height: 100%;
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  gap: 16px;
+  overflow: hidden;
+  padding: clamp(16px, 2.4vw, 30px);
+}
+
+.motioncode-bridge-diagram {
+  position: relative;
+  display: grid;
+  min-height: 330px;
+  grid-template-columns: minmax(156px, 0.86fr) minmax(320px, 1.32fr) minmax(156px, 0.86fr);
+  align-items: center;
+  gap: clamp(18px, 3vw, 42px);
+}
+
+.motioncode-bridge-diagram-grid {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(216, 207, 188, 0.08);
+  border-radius: 14px;
+  background-image:
+    linear-gradient(rgba(216, 207, 188, 0.036) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(216, 207, 188, 0.03) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: radial-gradient(circle at 50% 50%, black 0 54%, transparent 84%);
+  pointer-events: none;
+}
+
+.motioncode-bridge-core-glow {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  width: min(560px, 68%);
+  height: 210px;
+  border-radius: 999px;
+  background: radial-gradient(ellipse, rgba(0, 255, 136, 0.16), rgba(216, 207, 188, 0.06) 42%, transparent 72%);
+  filter: blur(12px);
+  opacity: 0.74;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.motioncode-bridge-signal-stack {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 18px;
+}
+
+.motioncode-bridge-signal {
+  position: relative;
+  display: grid;
+  min-height: 58px;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  border: 1px solid rgba(216, 207, 188, 0.16);
+  border-radius: 999px;
+  padding: 9px 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 251, 244, 0.06), rgba(255, 251, 244, 0.014)),
+    rgba(8, 10, 9, 0.72);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 251, 244, 0.08);
+  color: rgba(216, 207, 188, 0.8);
+  font-family: var(--font-mono);
+  animation: bridgeSignalPulse 3.2s ease-in-out infinite;
+}
+
+.motioncode-bridge-signal::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: clamp(34px, 5vw, 86px);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(216, 207, 188, 0.22), rgba(0, 255, 136, 0.28), transparent);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.motioncode-bridge-signal-stack-left .motioncode-bridge-signal::after {
+  left: calc(100% - 2px);
+}
+
+.motioncode-bridge-signal-stack-right .motioncode-bridge-signal::after {
+  right: calc(100% - 2px);
+  transform: translateY(-50%) scaleX(-1);
+}
+
+.motioncode-bridge-signal svg {
+  color: #00ff88;
+  filter: drop-shadow(0 0 10px rgba(0, 255, 136, 0.28));
+}
+
+.motioncode-bridge-signal span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.motioncode-bridge-signal strong {
+  color: rgba(255, 251, 244, 0.94);
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.motioncode-bridge-signal small {
+  color: rgba(216, 207, 188, 0.48);
+  font-size: 9px;
+  line-height: 1.1;
+  letter-spacing: 0;
+}
+
+.motioncode-bridge-pipeline {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: minmax(82px, 1fr) minmax(42px, 0.46fr) minmax(120px, 1.18fr) minmax(42px, 0.46fr) minmax(82px, 1fr);
+  align-items: center;
+  gap: 0;
+}
+
+.motioncode-bridge-pipeline-node {
+  position: relative;
+  display: grid;
+  min-height: 116px;
+  place-items: center;
+  gap: 9px;
+  border: 1px solid rgba(216, 207, 188, 0.24);
+  border-radius: 16px;
+  padding: 16px 12px;
+  background:
+    linear-gradient(180deg, rgba(255, 251, 244, 0.095), rgba(255, 251, 244, 0.02)),
+    rgba(7, 9, 7, 0.84);
+  box-shadow:
+    0 28px 64px rgba(0, 0, 0, 0.4),
+    0 0 36px rgba(0, 255, 136, 0.055),
+    inset 0 1px 0 rgba(255, 251, 244, 0.1);
+  animation: bridgeNodeLift 3.8s ease-in-out infinite;
+}
+
+.motioncode-bridge-pipeline-node-core {
+  min-height: 142px;
+  border-color: rgba(0, 255, 136, 0.32);
+}
+
+.motioncode-bridge-node-icon {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  border: 1px solid rgba(0, 255, 136, 0.28);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(0, 255, 136, 0.18), transparent 66%),
+    rgba(0, 255, 136, 0.055);
+  color: rgba(255, 251, 244, 0.94);
+  box-shadow: inset 0 1px 0 rgba(255, 251, 244, 0.12);
+}
+
+.motioncode-bridge-node-copy {
+  display: grid;
+  gap: 5px;
+  justify-items: center;
+  font-family: var(--font-mono);
+  text-align: center;
+}
+
+.motioncode-bridge-node-copy strong {
+  color: rgba(255, 251, 244, 0.94);
+  font-size: 13px;
+  letter-spacing: 0;
+}
+
+.motioncode-bridge-node-copy small {
+  color: rgba(216, 207, 188, 0.52);
+  font-size: 9px;
+  letter-spacing: 0;
+}
+
+.motioncode-bridge-rail {
+  position: relative;
+  display: block;
+  height: 1px;
+  background: rgba(216, 207, 188, 0.22);
+}
+
+.motioncode-bridge-rail span {
+  position: absolute;
+  top: -3px;
+  left: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #00ff88;
+  box-shadow: 0 0 16px rgba(0, 255, 136, 0.72);
+  animation: bridgeRailTravel 2.4s linear infinite;
+}
+
+.motioncode-bridge-proof-grid {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.motioncode-bridge-proof-card {
+  display: grid;
+  gap: 11px;
+  min-height: 120px;
+  border: 1px solid rgba(216, 207, 188, 0.14);
+  border-radius: 12px;
+  padding: 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 251, 244, 0.06), rgba(255, 251, 244, 0.012)),
+    rgba(9, 11, 8, 0.76);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 251, 244, 0.07);
+}
+
+.motioncode-bridge-proof-card div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.motioncode-bridge-proof-card span {
+  color: rgba(216, 207, 188, 0.56);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0;
+}
+
+.motioncode-bridge-proof-card strong {
+  color: #00ff88;
+  font-family: var(--font-mono);
+  font-size: clamp(26px, 3vw, 42px);
+  line-height: 0.94;
+  letter-spacing: 0;
+  text-shadow: 0 0 22px rgba(0, 255, 136, 0.18);
+}
+
+.motioncode-bridge-proof-card p {
+  margin: 0;
+  color: rgba(216, 207, 188, 0.7);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.motioncode-bridge-status {
+  display: flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: rgba(216, 207, 188, 0.52);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0;
+}
+
+.motioncode-bridge-status svg {
+  color: #00ff88;
+}
+
+@keyframes bridgeSignalPulse {
+  0%,
+  100% {
+    border-color: rgba(216, 207, 188, 0.16);
+    opacity: 0.74;
+    transform: translateY(0);
+  }
+  48% {
+    border-color: rgba(0, 255, 136, 0.26);
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes bridgeNodeLift {
+  0%,
+  100% {
+    transform: translateY(0);
+    box-shadow:
+      0 28px 64px rgba(0, 0, 0, 0.4),
+      0 0 36px rgba(0, 255, 136, 0.055),
+      inset 0 1px 0 rgba(255, 251, 244, 0.1);
+  }
+  50% {
+    transform: translateY(-5px);
+    box-shadow:
+      0 34px 76px rgba(0, 0, 0, 0.48),
+      0 0 46px rgba(0, 255, 136, 0.09),
+      inset 0 1px 0 rgba(255, 251, 244, 0.12);
+  }
+}
+
+@keyframes bridgeRailTravel {
+  from {
+    left: 0;
+  }
+  to {
+    left: calc(100% - 7px);
+  }
+}
+
+@keyframes bridgeRailTravelVertical {
+  from {
+    top: 0;
+  }
+  to {
+    top: calc(100% - 7px);
+  }
+}
+
+@media (max-width: 1023px) {
+  .motioncode-scroll-bridge-container {
+    min-height: 170vh !important;
+    padding-inline: 20px !important;
+  }
+
+  .motioncode-scroll-bridge-heading h2 {
+    width: min(100%, 720px);
+    gap: 14px;
+  }
+
+  .motioncode-scroll-bridge-title-main {
+    font-size: 4.3rem;
+    line-height: 0.88;
+  }
+
+  .motioncode-bridge-diagram {
+    min-height: 0;
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .motioncode-bridge-signal-stack {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .motioncode-bridge-signal {
+    min-height: 56px;
+    border-radius: 12px;
+  }
+
+  .motioncode-bridge-signal::after {
+    display: none;
+  }
+
+  .motioncode-bridge-pipeline {
+    width: min(100%, 420px);
+    justify-self: center;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .motioncode-bridge-pipeline-node,
+  .motioncode-bridge-pipeline-node-core {
+    min-height: 100px;
+  }
+
+  .motioncode-bridge-rail {
+    width: 1px;
+    height: 32px;
+    justify-self: center;
+  }
+
+  .motioncode-bridge-rail span {
+    left: 50%;
+    transform: translateX(-50%);
+    animation-name: bridgeRailTravelVertical;
+  }
+}
+
+@media (max-width: 767px) {
+  .motioncode-scroll-bridge {
+    overflow: visible;
+  }
+
+  .motioncode-scroll-bridge-container {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    padding-block: 70px !important;
+  }
+
+  .motioncode-scroll-bridge-container .motioncode-container-scroll-sticky {
+    position: relative !important;
+    top: auto !important;
+  }
+
+  .motioncode-scroll-bridge-container .motioncode-container-scroll-sticky > div {
+    transform: none !important;
+  }
+
+  .motioncode-scroll-bridge-heading {
+    text-align: left;
+    justify-items: start;
+  }
+
+  .motioncode-scroll-bridge-heading h2 {
+    width: 100%;
+    margin-top: 22px;
+    gap: 12px;
+  }
+
+  .motioncode-scroll-bridge-title-meta,
+  .motioncode-scroll-bridge-title-main {
+    text-align: left;
+  }
+
+  .motioncode-scroll-bridge-title-meta {
+    max-width: 26ch;
+    font-size: 1rem;
+    letter-spacing: 0;
+  }
+
+  .motioncode-scroll-bridge-title-main {
+    max-width: 8ch;
+    font-size: 3.75rem;
+    letter-spacing: 0;
+    line-height: 0.88;
+  }
+
+  .motioncode-scroll-bridge-heading p {
+    max-width: none;
+    margin-top: 26px;
+    font-size: 0.9375rem;
+  }
+
+  .motioncode-scroll-bridge-card {
+    border-radius: 14px !important;
+  }
+
+  .motioncode-scroll-bridge-card-inner {
+    border-radius: 10px !important;
+  }
+
+  .motioncode-bridge-card-content {
+    gap: 14px;
+    padding: 14px;
+    overflow: visible;
+  }
+
+  .motioncode-bridge-signal-stack {
+    grid-template-columns: 1fr;
+  }
+
+  .motioncode-bridge-proof-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .motioncode-bridge-proof-card {
+    min-height: 0;
+  }
+
+  .motioncode-bridge-status {
+    min-height: 0;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 9px 12px;
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 379px) {
+  .motioncode-scroll-bridge-title-main {
+    font-size: 3.35rem;
+  }
 }
 
 .motioncode-feature-card {
@@ -2891,7 +3512,10 @@ body::after {
   .motion-lab-preview,
   .motion-lab-console,
   .motion-lab-panel,
-  .motion-lab-status-strip {
+  .motion-lab-status-strip,
+  .motioncode-bridge-signal,
+  .motioncode-bridge-pipeline-node,
+  .motioncode-bridge-proof-card {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
     background-color: rgba(8, 10, 9, 0.94) !important;
@@ -2906,7 +3530,10 @@ body::after {
   .motion-lab-preview,
   .motion-lab-console,
   .motion-lab-panel,
-  .motion-lab-status-strip {
+  .motion-lab-status-strip,
+  .motioncode-bridge-signal,
+  .motioncode-bridge-pipeline-node,
+  .motioncode-bridge-proof-card {
     background-color: rgba(8, 10, 9, 0.94) !important;
   }
 }
@@ -2923,7 +3550,10 @@ body::after {
   .motion-lab-preview,
   .motion-lab-console,
   .motion-lab-panel,
-  .motion-lab-status-strip {
+  .motion-lab-status-strip,
+  .motioncode-bridge-signal,
+  .motioncode-bridge-pipeline-node,
+  .motioncode-bridge-proof-card {
     transition-duration: 1ms !important;
   }
 
@@ -2934,7 +3564,10 @@ body::after {
   .hero-signal-meter::before,
   .hero-eyebrow > div:first-child,
   .motion-lab-preview::before,
-  .motion-curve-path::after {
+  .motion-curve-path::after,
+  .motioncode-bridge-signal,
+  .motioncode-bridge-pipeline-node,
+  .motioncode-bridge-rail span {
     animation: none !important;
   }
 
@@ -2944,7 +3577,8 @@ body::after {
 
   .motion-lab-preview[data-hovered="true"] .motion-lab-console,
   .motion-lab-preview[data-hovered="true"] .motion-lab-panel,
-  .motion-lab-preview[data-hovered="true"] .motion-lab-status-strip {
+  .motion-lab-preview[data-hovered="true"] .motion-lab-status-strip,
+  .motioncode-bridge-pipeline-node {
     transform: none;
   }
 }
@@ -3781,7 +4415,10 @@ body::after {
   .motioncode-nav-shell,
   .motioncode-nav-cta,
   .motion-lab-depth-card,
-  .motion-lab-proof-chip {
+  .motion-lab-proof-chip,
+  .motioncode-bridge-signal,
+  .motioncode-bridge-pipeline-node,
+  .motioncode-bridge-proof-card {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
     background-color: rgba(8, 10, 9, 0.94) !important;
