@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import {
   buildAuthCallbackUrl,
+  getAuthRedirectOrigin,
   normalizeAuthNextPath,
 } from "@/lib/auth/redirects";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
@@ -22,6 +23,13 @@ export function LoginForm({ nextPath = "/dashboard" }: LoginFormProps) {
   const [state, setState] = useState<LoginFormState>("idle");
   const normalizedNextPath = normalizeAuthNextPath(nextPath);
 
+  function buildRedirectTo() {
+    return buildAuthCallbackUrl(
+      getAuthRedirectOrigin(window.location.origin),
+      normalizedNextPath,
+    );
+  }
+
   async function handleGoogleSignIn() {
     setState("redirecting");
     setMessage(null);
@@ -30,10 +38,10 @@ export function LoginForm({ nextPath = "/dashboard" }: LoginFormProps) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: buildAuthCallbackUrl(
-          window.location.origin,
-          normalizedNextPath,
-        ),
+        queryParams: {
+          prompt: "select_account",
+        },
+        redirectTo: buildRedirectTo(),
       },
     });
 
@@ -49,12 +57,9 @@ export function LoginForm({ nextPath = "/dashboard" }: LoginFormProps) {
     setMessage(null);
 
     const supabase = createSupabaseBrowserClient();
-    const redirectTo = buildAuthCallbackUrl(
-      window.location.origin,
-      normalizedNextPath,
-    );
+    const redirectTo = buildRedirectTo();
     const { error } = await supabase.auth.signInWithOtp({
-      email,
+      email: email.trim().toLowerCase(),
       options: {
         emailRedirectTo: redirectTo,
       },

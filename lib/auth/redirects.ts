@@ -40,3 +40,29 @@ export function buildAuthCallbackUrl(origin: string, nextPath: string) {
 
   return callbackUrl.toString();
 }
+
+export function getAuthRedirectOrigin(currentOrigin: string) {
+  return (
+    normalizeOrigin(process.env.NEXT_PUBLIC_SITE_URL) ??
+    normalizeOrigin(process.env.NEXT_PUBLIC_VERCEL_URL) ??
+    normalizeOrigin(currentOrigin) ??
+    currentOrigin
+  );
+}
+
+function normalizeOrigin(value: string | null | undefined) {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const absoluteUrl = /^https?:\/\//i.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`;
+
+  try {
+    return new URL(absoluteUrl).origin;
+  } catch {
+    return null;
+  }
+}

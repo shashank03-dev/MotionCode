@@ -34,6 +34,30 @@ describe("Supabase auth helpers", () => {
     expect(JSON.stringify(config)).not.toContain("service-role-secret");
   });
 
+  it("does not rely on the shared server-style env helper for browser config", async () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "public-anon-key";
+
+    vi.doMock("@/lib/supabase/config", async (importOriginal) => {
+      const original = await importOriginal<typeof import("@/lib/supabase/config")>();
+      return {
+        ...original,
+        getSupabasePublicConfig: () => {
+          throw new Error("browser config should use direct public env reads");
+        },
+      };
+    });
+
+    const { getSupabaseBrowserConfig } = await import(
+      "@/lib/supabase/browser"
+    );
+
+    expect(getSupabaseBrowserConfig()).toEqual({
+      url: "https://example.supabase.co",
+      publishableKey: "public-anon-key",
+    });
+  });
+
   it("uses auth.getUser for verified current user lookups", async () => {
     const getUser = vi.fn().mockResolvedValue({
       data: { user: { id: "user_123", email: "user@example.com" } },
