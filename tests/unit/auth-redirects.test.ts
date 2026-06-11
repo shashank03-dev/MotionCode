@@ -29,9 +29,16 @@ describe("auth redirect helpers", () => {
     expect(normalizeAuthNextPath(null)).toBe(DEFAULT_AUTH_NEXT_PATH);
   });
 
-  it("omits the next query for the default dashboard destination", () => {
-    expect(loginPathForNext("/dashboard")).toBe("/login");
+  it("omits the next query for the default app destination", () => {
+    expect(DEFAULT_AUTH_NEXT_PATH).toBe("/app");
+    expect(loginPathForNext("/app")).toBe("/login");
     expect(loginPathForNext(null)).toBe("/login");
+  });
+
+  it("preserves dashboard visits as an explicit protected destination", () => {
+    expect(loginPathForNext("/dashboard")).toBe(
+      "/login?next=%2Fdashboard",
+    );
   });
 
   it("preserves non-default protected destinations on the login URL", () => {

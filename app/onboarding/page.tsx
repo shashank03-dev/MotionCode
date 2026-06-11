@@ -6,7 +6,7 @@ import { requireDashboardUser } from "../dashboard/data";
 export const dynamic = "force-dynamic";
 
 export default async function OnboardingPage() {
-  const user = await requireDashboardUser("/onboarding");
+  const user = await requireDashboardUser("/onboarding", { paidOnly: true });
 
   return (
     <AppShell userEmail={user.email}>

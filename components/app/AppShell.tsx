@@ -35,7 +35,7 @@ import { updateAnalysisResultSpec } from "@/lib/motionSpecEditor";
 import { incrementUsage, usagesLeft } from "@/lib/rateLimit";
 
 import styles from "./AppShell.module.css";
-import type { AnalysisStage, ClientAnalysisIds, ScoreKey } from "./types";
+import type { AnalysisStage, ScoreKey } from "./types";
 
 const DEFAULT_ENTITLEMENTS = PLAN_ENTITLEMENTS.free;
 const DEFAULT_FRAME_COUNT = DEFAULT_ENTITLEMENTS.maxFramesPerAnalysis;
@@ -73,7 +73,6 @@ export function AppShell({
 }: AppShellProps = {}) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fileUrlRef = useRef<string | null>(null);
-  const analysisIdsRef = useRef<ClientAnalysisIds>(createClientAnalysisIds());
   const stepTimerRef = useRef<number | null>(null);
   const scannerTimerRef = useRef<number | null>(null);
   const statusTimerRef = useRef<number | null>(null);
@@ -174,7 +173,6 @@ export function AppShell({
 
       setValidationError(null);
       setFile(selectedFile);
-      analysisIdsRef.current = createClientAnalysisIds();
       revokeCurrentFileUrl();
 
       const url = URL.createObjectURL(selectedFile);
@@ -275,7 +273,6 @@ export function AppShell({
     try {
       const analyzed = await analyzeViaApi({
         frames,
-        ids: analysisIdsRef.current,
         planTier: userPlan,
       });
 
@@ -587,16 +584,13 @@ export function AppShell({
 
 async function analyzeViaApi({
   frames,
-  ids,
   planTier,
 }: {
   frames: string[];
-  ids: ClientAnalysisIds;
   planTier: PlanTier;
 }) {
   const response = await fetch("/api/analyze", {
     body: JSON.stringify({
-      ...ids,
       frames,
       model: planTier === "free" ? "gemini-2.5-flash" : "gemini-2.5-pro",
     }),
@@ -624,27 +618,6 @@ async function analyzeViaApi({
 function getStoredTab(): CodeTab | null {
   const savedTab = localStorage.getItem("motioncode_tab");
   return CODE_TABS.includes(savedTab as CodeTab) ? (savedTab as CodeTab) : null;
-}
-
-function createClientAnalysisIds(): ClientAnalysisIds {
-  return {
-    assetId: createUuid(),
-    projectId: createUuid(),
-    versionId: createUuid(),
-  };
-}
-
-function createUuid() {
-  if (globalThis.crypto?.randomUUID) {
-    return globalThis.crypto.randomUUID();
-  }
-
-  return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (char) =>
-    (
-      Number(char) ^
-      (Math.random() * 16) >> (Number(char) / 4)
-    ).toString(16),
-  );
 }
 
 function formatMegabytes(bytes: number) {

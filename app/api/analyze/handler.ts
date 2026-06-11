@@ -59,13 +59,21 @@ type AnalyzeEntitlementSummary = Pick<
   EntitlementSummary,
   "entitlements" | "planTier"
 >;
+type SavedAnalyzeRequestBody = AnalyzeRequestBody &
+  Required<Pick<AnalyzeRequestBody, "assetId" | "projectId" | "versionId">>;
+
+type AnalysisResourceIds = {
+  assetId: string;
+  projectId: string;
+  versionId: string;
+};
 
 export type AnalyzeRouteDeps = {
   abuseGuard?: AnalyzeAbuseGuard;
   audit?: AuditRecorder;
   authorizeAnalysisRequest?: (
     user: CurrentUser,
-    requestBody: AnalyzeRequestBody,
+    requestBody: SavedAnalyzeRequestBody,
   ) => Promise<AnalysisAuthorizationDecision>;
   generateAnalysis?: (input: GeminiAnalyzeInput) => Promise<GeminiAnalysis>;
   generateOpenAiAnalysis?: (input: OpenAIAnalyzeInput) => Promise<GeminiAnalysis>;
@@ -166,10 +174,10 @@ export async function handleAnalyzeRequest(
       model: requestBody.model,
       outcome: "rejected",
       planTier,
-      projectId: requestBody.projectId,
+      projectId: requestBody.projectId ?? null,
       reason: "BILLING_REQUIRED",
       userId: user.id,
-      workspaceId: requestBody.workspaceId,
+      workspaceId: requestBody.workspaceId ?? null,
     });
 
     return apiError(
@@ -195,10 +203,10 @@ export async function handleAnalyzeRequest(
       model: analysisProvider.model,
       outcome: "rejected",
       planTier,
-      projectId: requestBody.projectId,
+      projectId: requestBody.projectId ?? null,
       reason: "preflight_failed",
       userId: user.id,
-      workspaceId: requestBody.workspaceId,
+      workspaceId: requestBody.workspaceId ?? null,
     });
 
     return preflight.response;
@@ -219,7 +227,7 @@ export async function handleAnalyzeRequest(
       model: analysisProvider.model,
       outcome: "rejected",
       planTier,
-      projectId: requestBody.projectId,
+      projectId: requestBody.projectId ?? null,
       reason: abuseDecision.code,
       userId: user.id,
       workspaceId: canonicalWorkspaceId,
@@ -246,6 +254,10 @@ export async function handleAnalyzeRequest(
   }
 
   const analysisId = resolvedDeps.idGenerator();
+  const resourceIds = resolveAnalysisResourceIds(
+    requestBody,
+    resolvedDeps.idGenerator,
+  );
   const createdAt = resolvedDeps.now().toISOString();
   await observeAnalysis({
     analysisId,
@@ -253,7 +265,7 @@ export async function handleAnalyzeRequest(
     model: analysisProvider.model,
     outcome: "started",
     planTier,
-    projectId: requestBody.projectId,
+    projectId: requestBody.projectId ?? null,
     userId: user.id,
     workspaceId: canonicalWorkspaceId,
   });
@@ -263,6 +275,7 @@ export async function handleAnalyzeRequest(
     analysisProvider,
     createdAt,
     planTier,
+    resourceIds,
     requestBody,
     resolvedDeps,
     user,
@@ -280,7 +293,7 @@ export async function handleAnalyzeRequest(
         frameCount: requestBody.frames.length,
         model: analysisProvider.model,
         planTier,
-        projectId: requestBody.projectId,
+        projectId: requestBody.projectId ?? null,
         userId: user.id,
         workspaceId: canonicalWorkspaceId,
       }),
@@ -291,7 +304,7 @@ export async function handleAnalyzeRequest(
           frameCount: requestBody.frames.length,
           model: analysisProvider.model,
           planTier,
-          projectId: requestBody.projectId,
+          projectId: requestBody.projectId ?? null,
         },
         targetId: analysisId,
         targetType: "analysis",
@@ -319,7 +332,7 @@ export async function handleAnalyzeRequest(
       model: analysisProvider.model,
       outcome: "failed",
       planTier,
-      projectId: requestBody.projectId,
+      projectId: requestBody.projectId ?? null,
       reason: persistenceError.code,
       userId: user.id,
       workspaceId: canonicalWorkspaceId,
@@ -336,7 +349,7 @@ export async function handleAnalyzeRequest(
     model: analysisProvider.model,
     outcome: "completed",
     planTier,
-    projectId: requestBody.projectId,
+    projectId: requestBody.projectId ?? null,
     userId: user.id,
     workspaceId: canonicalWorkspaceId,
   });
@@ -408,6 +421,33 @@ function checkContentLength(request: Request) {
   return null;
 }
 
+function hasSavedAnalysisResources(
+  requestBody: AnalyzeRequestBody,
+): requestBody is SavedAnalyzeRequestBody {
+  return Boolean(
+    requestBody.assetId && requestBody.projectId && requestBody.versionId,
+  );
+}
+
+function resolveAnalysisResourceIds(
+  requestBody: AnalyzeRequestBody,
+  idGenerator: () => string,
+): AnalysisResourceIds {
+  if (hasSavedAnalysisResources(requestBody)) {
+    return {
+      assetId: requestBody.assetId,
+      projectId: requestBody.projectId,
+      versionId: requestBody.versionId,
+    };
+  }
+
+  return {
+    assetId: idGenerator(),
+    projectId: idGenerator(),
+    versionId: idGenerator(),
+  };
+}
+
 async function readBoundedJson(request: Request) {
   const text = await readBoundedBodyText(request);
 
@@ -462,6 +502,10 @@ async function runPreflightChecks({
   | { ok: true; workspaceId: string | null }
   | { ok: false; response: Response }
 > {
+  if (!hasSavedAnalysisResources(requestBody)) {
+    return { ok: true, workspaceId: null };
+  }
+
   try {
     const authorization = await resolvedDeps.authorizeAnalysisRequest(
       user,
@@ -518,7 +562,7 @@ async function reserveAnalysisUsage({
       frameCount: requestBody.frames.length,
       model: analysisProvider.model,
       planTier,
-      projectId: requestBody.projectId,
+      projectId: requestBody.projectId ?? null,
       since: startOfUtcDay(resolvedDeps.now()),
       userId: user.id,
       workspaceId,
@@ -530,7 +574,7 @@ async function reserveAnalysisUsage({
         model: analysisProvider.model,
         outcome: "rejected",
         planTier,
-        projectId: requestBody.projectId,
+        projectId: requestBody.projectId ?? null,
         reason: "QUOTA_EXCEEDED",
         userId: user.id,
         workspaceId,
@@ -552,7 +596,7 @@ async function reserveAnalysisUsage({
       model: analysisProvider.model,
       outcome: "failed",
       planTier,
-      projectId: requestBody.projectId,
+      projectId: requestBody.projectId ?? null,
       reason: "usage_reservation_failed",
       userId: user.id,
       workspaceId,
@@ -605,6 +649,7 @@ async function runModelAnalysis({
   analysisProvider,
   createdAt,
   planTier,
+  resourceIds,
   requestBody,
   resolvedDeps,
   user,
@@ -614,6 +659,7 @@ async function runModelAnalysis({
   analysisProvider: ResolvedAnalysisProvider;
   createdAt: string;
   planTier: PlanTier;
+  resourceIds: AnalysisResourceIds;
   requestBody: AnalyzeRequestBody;
   resolvedDeps: ResolvedAnalyzeRouteDeps;
   user: CurrentUser;
@@ -625,15 +671,15 @@ async function runModelAnalysis({
   try {
     const generated = await analysisProvider.generate();
     const result = parseAnalysisResultSchema({
-      assetId: requestBody.assetId,
+      assetId: resourceIds.assetId,
       createdAt,
       frameCount: requestBody.frames.length,
       id: analysisId,
       model: analysisProvider.model,
       outputs: generated.outputs,
-      projectId: requestBody.projectId,
+      projectId: resourceIds.projectId,
       spec: generated.spec,
-      versionId: requestBody.versionId,
+      versionId: resourceIds.versionId,
     });
 
     resolvedDeps.abuseGuard.recordModelSuccess(user.id);
@@ -661,7 +707,7 @@ async function runModelAnalysis({
       model: analysisProvider.model,
       outcome: "failed",
       planTier,
-      projectId: requestBody.projectId,
+      projectId: requestBody.projectId ?? null,
       reason: apiFailure.code,
       userId: user.id,
       workspaceId,

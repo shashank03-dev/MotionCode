@@ -282,6 +282,22 @@ describe("Supabase data foundation migration", () => {
     expect(sql).toMatch(/create trigger generated_outputs_analysis_matches/i);
   });
 
+  it("enforces saved project caps at the direct projects insert policy", () => {
+    expect(sql).toMatch(/create or replace function private\.can_create_project/i);
+    expect(sql).toMatch(
+      /create or replace function private\.active_saved_project_count/i,
+    );
+    expect(sql).toMatch(
+      /create or replace function private\.user_saved_project_limit/i,
+    );
+    expect(sql).toMatch(
+      /status in \('draft', 'uploaded', 'analyzing', 'generated'\)/i,
+    );
+    expect(sql).toMatch(
+      /alter policy "workspace members can create projects"[\s\S]*private\.can_create_project/i,
+    );
+  });
+
   it("keeps server-owned analysis, output, and usage writes out of direct client grants", () => {
     for (const table of ["analyses", "generated_outputs", "usage_events"]) {
       expect(sql).not.toMatch(

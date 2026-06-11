@@ -1,4 +1,4 @@
-import { FolderKanban, Gauge, Plus, Sparkles } from "lucide-react";
+import { FolderKanban, Gauge, Play, Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -6,12 +6,13 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 import { cn } from "@/lib/utils";
 
 type AppShellProps = {
-  active?: "dashboard" | "projects" | "workspaces";
+  active?: "app" | "dashboard" | "projects" | "workspaces";
   children: ReactNode;
   userEmail?: string | null;
 };
 
 const navItems = [
+  { href: "/app", icon: Play, key: "app", label: "App" },
   { href: "/dashboard", icon: Gauge, key: "dashboard", label: "Dashboard" },
   { href: "/dashboard#workspaces", icon: FolderKanban, key: "workspaces", label: "Workspaces" },
   { href: "/dashboard#projects", icon: Sparkles, key: "projects", label: "Projects" },

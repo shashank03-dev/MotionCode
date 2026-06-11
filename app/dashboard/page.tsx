@@ -9,7 +9,7 @@ import { getDashboardData, requireDashboardUser } from "./data";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const user = await requireDashboardUser();
+  const user = await requireDashboardUser("/dashboard", { paidOnly: true });
   const data = await getDashboardData(user);
 
   return (

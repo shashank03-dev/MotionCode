@@ -1,4 +1,4 @@
-export const DEFAULT_AUTH_NEXT_PATH = "/dashboard";
+export const DEFAULT_AUTH_NEXT_PATH = "/app";
 
 const SAME_SITE_BASE_URL = "https://motioncode.local";
 

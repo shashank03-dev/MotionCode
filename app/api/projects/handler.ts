@@ -3,6 +3,10 @@ import { z } from "zod";
 
 import { apiError, apiSuccess, ApiError, isApiError } from "@/lib/server/apiErrors";
 import {
+  getEntitlementSummary as getEntitlementSummaryForUser,
+  type EntitlementSummary,
+} from "@/lib/server/entitlements";
+import {
   createSupabaseServerClient,
   getCurrentUser as getSupabaseCurrentUser,
 } from "@/lib/supabase/server";
@@ -22,6 +26,10 @@ type CurrentUser = Pick<User, "id">;
 type ProjectAccessProject = Pick<ProjectRow, "id" | "owner_id" | "workspace_id"> &
   Partial<ProjectRow>;
 type ProjectMutationResult = Pick<ProjectRow, "id"> & Partial<ProjectRow>;
+type ProjectEntitlementSummary = Pick<
+  EntitlementSummary,
+  "entitlements" | "planTier"
+>;
 
 export type ProjectAccess = {
   isProjectOwner?: boolean;
@@ -59,6 +67,9 @@ export type ProjectRouteDeps = {
     input: CreateProjectVersionInput,
   ) => Promise<ProjectVersionRow>;
   getCurrentUser?: () => Promise<CurrentUser | null>;
+  getEntitlementSummary?: (
+    userId: string,
+  ) => Promise<ProjectEntitlementSummary>;
   getProjectAccess?: (
     userId: string,
     projectId: string,
@@ -179,6 +190,12 @@ export async function handleCreateProjectRequest(
   }
 
   try {
+    await enforceSavedProjectLimit({
+      deps: resolvedDeps,
+      userId: user.id,
+      workspaceId: parsed.data.workspaceId,
+    });
+
     const project = await resolvedDeps.createProject({
       description: parsed.data.description ?? null,
       ownerId: user.id,
@@ -366,12 +383,56 @@ function resolveProjectDeps(deps: ProjectRouteDeps): Required<ProjectRouteDeps> 
     createProjectVersion:
       deps.createProjectVersion ?? createProjectVersionWithSupabase,
     getCurrentUser: deps.getCurrentUser ?? getSupabaseCurrentUser,
+    getEntitlementSummary:
+      deps.getEntitlementSummary ?? getEntitlementSummaryForUser,
     getProjectAccess: deps.getProjectAccess ?? getProjectAccessWithSupabase,
     getProjectVersion: deps.getProjectVersion ?? getProjectVersionWithSupabase,
     getWorkspaceAccess: deps.getWorkspaceAccess ?? getWorkspaceAccessWithSupabase,
     listProjects: deps.listProjects ?? listProjectsWithSupabase,
     updateProject: deps.updateProject ?? updateProjectWithSupabase,
   };
+}
+
+async function enforceSavedProjectLimit({
+  deps,
+  userId,
+  workspaceId,
+}: {
+  deps: Required<ProjectRouteDeps>;
+  userId: string;
+  workspaceId: string;
+}) {
+  const summary = await deps.getEntitlementSummary(userId);
+  const savedProjectLimit = summary.entitlements.savedProjects;
+  const projects = await deps.listProjects(userId, workspaceId);
+  const activeSavedProjectCount = projects.filter((project) =>
+    isActiveSavedProject(project, userId),
+  ).length;
+
+  if (activeSavedProjectCount >= savedProjectLimit) {
+    throw new ApiError(
+      "QUOTA_EXCEEDED",
+      formatSavedProjectLimitMessage(summary.planTier, savedProjectLimit),
+    );
+  }
+}
+
+function isActiveSavedProject(project: Partial<ProjectRow>, userId: string) {
+  if (project.owner_id && project.owner_id !== userId) {
+    return false;
+  }
+
+  return project.status !== "archived";
+}
+
+function formatSavedProjectLimitMessage(
+  planTier: ProjectEntitlementSummary["planTier"],
+  limit: number,
+) {
+  const noun = limit === 1 ? "project" : "projects";
+  const planLabel = planTier === "free" ? "free plan" : `${planTier} plan`;
+
+  return `Your ${planLabel} includes ${limit} active saved ${noun}. Archive or delete a project before creating another.`;
 }
 
 async function requireProjectWriteAccess(

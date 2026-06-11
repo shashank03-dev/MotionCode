@@ -25,7 +25,7 @@ export const PLAN_ENTITLEMENTS: Record<PlanTier, PlanEntitlements> = {
     maxFramesPerAnalysis: 6,
     maxUploadBytes: 25 * 1024 * 1024,
     allowedModels: ["gemini-2.5-flash"],
-    savedProjects: 5,
+    savedProjects: 3,
     shareLinks: false,
     comments: false,
     teamSeats: 1,

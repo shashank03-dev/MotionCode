@@ -15,7 +15,9 @@ type ProjectPageProps = {
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const { projectId } = await params;
-  const user = await requireDashboardUser(`/projects/${projectId}`);
+  const user = await requireDashboardUser(`/projects/${projectId}`, {
+    paidOnly: true,
+  });
   const data = await getProjectPageData(projectId, user);
   const canWrite =
     data.project.owner_id === user.id ||
