@@ -87,7 +87,7 @@ describe("auth callback route", () => {
     );
 
     expect(response.headers.get("location")).toBe(
-      "https://motioncode.test/dashboard",
+      "https://motioncode.test/app",
     );
   });
 
@@ -167,8 +167,10 @@ describe("dashboard page route protection", () => {
 
     const { default: DashboardPage } = await import("@/app/dashboard/page");
 
-    await expect(DashboardPage()).rejects.toThrow("redirect:/login");
-    expect(redirect).toHaveBeenCalledWith("/login");
+    await expect(DashboardPage()).rejects.toThrow(
+      "redirect:/login?next=%2Fdashboard",
+    );
+    expect(redirect).toHaveBeenCalledWith("/login?next=%2Fdashboard");
   });
 
   it("preserves non-default protected routes when redirecting to login", async () => {

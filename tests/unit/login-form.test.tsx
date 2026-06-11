@@ -79,6 +79,30 @@ describe("LoginForm", () => {
     });
   });
 
+  it("defaults new authentication sessions into the app workspace", async () => {
+    const { LoginForm } = await import("@/components/dashboard/login-form");
+
+    await act(async () => {
+      root.render(<LoginForm />);
+    });
+    await settleProviderCheck();
+
+    const button = findButton("Continue with Google");
+    await act(async () => {
+      button.click();
+    });
+
+    expect(signInWithOAuth).toHaveBeenCalledWith({
+      provider: "google",
+      options: {
+        queryParams: {
+          prompt: "select_account",
+        },
+        redirectTo: `${window.location.origin}/auth/callback?next=%2Fapp`,
+      },
+    });
+  });
+
   it("uses the configured site URL for Google OAuth callbacks", async () => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://motioncode.com/";
 

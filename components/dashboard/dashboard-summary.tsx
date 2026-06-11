@@ -37,15 +37,19 @@ export function DashboardSummary({ data }: DashboardSummaryProps) {
         return (
           <div
             key={metric.label}
-            className="border border-[#56544966] bg-[#15160f] px-4 py-4"
+            className="group relative overflow-hidden border border-[var(--border)] bg-[#15160f]/82 px-4 py-4 shadow-[0_18px_44px_rgba(0,0,0,0.22)] transition hover:border-[var(--accent-border)]"
           >
-            <div className="flex items-center justify-between text-[#8f887a]">
-              <span className="text-xs uppercase tracking-[0.18em]">
+            <div
+              className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(0,255,136,0.055),transparent_42%)] opacity-0 transition group-hover:opacity-100"
+              aria-hidden="true"
+            />
+            <div className="relative flex items-center justify-between text-[var(--muted)]">
+              <span className="font-mono text-xs uppercase tracking-[0.16em]">
                 {metric.label}
               </span>
-              <Icon className="size-4" />
+              <Icon className="size-4 text-[var(--accent)]" />
             </div>
-            <div className="mt-5 font-mono text-3xl text-[#fffbf4]">
+            <div className="relative mt-5 font-mono text-3xl text-[var(--text)] [font-variant-numeric:tabular-nums]">
               {metric.value}
             </div>
           </div>

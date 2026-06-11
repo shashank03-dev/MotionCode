@@ -5,6 +5,7 @@ import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 
 import {
+  DEFAULT_AUTH_NEXT_PATH,
   buildAuthCallbackUrl,
   getAuthRedirectOrigin,
   normalizeAuthNextPath,
@@ -24,7 +25,7 @@ const GOOGLE_PROVIDER_DISABLED_MESSAGE =
 const GOOGLE_PROVIDER_UNAVAILABLE_MESSAGE =
   "Google sign-in cannot be verified right now. Use email sign-in while Supabase Auth settings are checked.";
 
-export function LoginForm({ nextPath = "/dashboard" }: LoginFormProps) {
+export function LoginForm({ nextPath = DEFAULT_AUTH_NEXT_PATH }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [state, setState] = useState<LoginFormState>("idle");

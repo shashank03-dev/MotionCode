@@ -46,7 +46,7 @@ export function ArchiveProjectButton({
         type="button"
         onClick={handleClick}
         disabled={isSubmitting}
-        className="inline-flex h-10 items-center justify-center gap-2 border border-[#d8cfbc66] px-4 text-sm text-[#d8cfbc] disabled:opacity-60"
+        className="inline-flex h-10 items-center justify-center gap-2 border border-[var(--accent-border)] px-4 text-sm text-[var(--accent)] transition hover:border-red-300/50 hover:text-red-200 active:translate-y-px disabled:opacity-60"
       >
         {children}
       </button>

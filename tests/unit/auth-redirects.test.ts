@@ -8,6 +8,7 @@ import {
 
 describe("auth redirect helpers", () => {
   it("keeps same-site relative paths including query strings", () => {
+    expect(normalizeAuthNextPath("/app")).toBe("/app");
     expect(normalizeAuthNextPath("/dashboard")).toBe("/dashboard");
     expect(normalizeAuthNextPath("/workspaces/workspace_123")).toBe(
       "/workspaces/workspace_123",
@@ -29,12 +30,13 @@ describe("auth redirect helpers", () => {
     expect(normalizeAuthNextPath(null)).toBe(DEFAULT_AUTH_NEXT_PATH);
   });
 
-  it("omits the next query for the default dashboard destination", () => {
-    expect(loginPathForNext("/dashboard")).toBe("/login");
+  it("omits the next query for the default app destination", () => {
+    expect(loginPathForNext("/app")).toBe("/login");
     expect(loginPathForNext(null)).toBe("/login");
   });
 
   it("preserves non-default protected destinations on the login URL", () => {
+    expect(loginPathForNext("/dashboard")).toBe("/login?next=%2Fdashboard");
     expect(loginPathForNext("/workspaces/workspace_123")).toBe(
       "/login?next=%2Fworkspaces%2Fworkspace_123",
     );
