@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const signInWithOAuth = vi.fn();
 const signInWithOtp = vi.fn();
+const ORIGINAL_ENV = { ...process.env };
 
 vi.mock("@/lib/supabase/browser", () => ({
   createSupabaseBrowserClient: () => ({
@@ -19,6 +20,9 @@ describe("LoginForm", () => {
   let root: Root;
 
   beforeEach(() => {
+    process.env = { ...ORIGINAL_ENV };
+    delete process.env.NEXT_PUBLIC_SITE_URL;
+    delete process.env.NEXT_PUBLIC_VERCEL_URL;
     (
       globalThis as typeof globalThis & {
         IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -36,6 +40,7 @@ describe("LoginForm", () => {
   });
 
   afterEach(() => {
+    process.env = { ...ORIGINAL_ENV };
     act(() => {
       root.unmount();
     });
@@ -57,8 +62,36 @@ describe("LoginForm", () => {
     expect(signInWithOAuth).toHaveBeenCalledWith({
       provider: "google",
       options: {
+        queryParams: {
+          prompt: "select_account",
+        },
         redirectTo:
           `${window.location.origin}/auth/callback?next=%2Fworkspaces%2Fworkspace_123`,
+      },
+    });
+  });
+
+  it("uses the configured site URL for Google OAuth callbacks", async () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://motioncode.com/";
+
+    const { LoginForm } = await import("@/components/dashboard/login-form");
+
+    await act(async () => {
+      root.render(<LoginForm nextPath="/dashboard" />);
+    });
+
+    const button = findButton("Continue with Google");
+    await act(async () => {
+      button.click();
+    });
+
+    expect(signInWithOAuth).toHaveBeenCalledWith({
+      provider: "google",
+      options: {
+        queryParams: {
+          prompt: "select_account",
+        },
+        redirectTo: "https://motioncode.com/auth/callback?next=%2Fdashboard",
       },
     });
   });
@@ -100,6 +133,49 @@ describe("LoginForm", () => {
       options: {
         emailRedirectTo:
           `${window.location.origin}/auth/callback?next=%2Fprojects%2Fproject_123`,
+      },
+    });
+  });
+
+  it("uses the configured site URL and normalized email for magic links", async () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://motioncode.com";
+
+    const { LoginForm } = await import("@/components/dashboard/login-form");
+
+    await act(async () => {
+      root.render(<LoginForm nextPath="/account" />);
+    });
+
+    const input = container.querySelector<HTMLInputElement>("#email");
+    if (!input) {
+      throw new Error("Expected email input.");
+    }
+
+    await act(async () => {
+      const valueSetter = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        "value",
+      )?.set;
+      valueSetter?.call(input, " Founder@Example.COM ");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    const form = container.querySelector("form");
+    if (!form) {
+      throw new Error("Expected login form.");
+    }
+
+    await act(async () => {
+      form.dispatchEvent(
+        new SubmitEvent("submit", { bubbles: true, cancelable: true }),
+      );
+    });
+
+    expect(signInWithOtp).toHaveBeenCalledWith({
+      email: "founder@example.com",
+      options: {
+        emailRedirectTo:
+          "https://motioncode.com/auth/callback?next=%2Faccount",
       },
     });
   });
