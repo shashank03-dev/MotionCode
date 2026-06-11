@@ -40,6 +40,7 @@ MotionCode is in free beta. Free beta analysis uses Gemini only. Pro and Studio 
 - Google provider is enabled in Supabase Auth.
 - Supabase Auth redirect URLs include local, staging, and production `/auth/callback` URLs.
 - Google Cloud OAuth client uses the Supabase Auth provider callback URL, not the app `/auth/callback` URL.
+- `/auth/v1/settings` reports the Google external provider as enabled for the deployment Supabase project.
 - Internal admin bootstrap account verified.
 
 ## Billing And AI Providers

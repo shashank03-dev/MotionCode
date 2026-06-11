@@ -36,6 +36,8 @@ Google OAuth is configured in Supabase Auth, not through MotionCode runtime env 
 
 The app callback route exchanges the Supabase auth code, ensures a `profiles` row exists, and redirects to `/dashboard` or the sanitized `next` path. Sign-out clears only the current browser session through `/auth/signout`.
 
+The login page reads the public Supabase Auth settings endpoint at `/auth/v1/settings` before starting Google OAuth. If the deployment Supabase project reports Google as disabled, or if the settings cannot be verified, the Google button stays unavailable and email sign-in remains usable. To verify production readiness, call the settings endpoint with the anon key and confirm the Google external provider is enabled.
+
 ## Paid-Readiness Billing Variables
 
 Keep these values server-only. Use Razorpay test-mode values only when `MOTIONCODE_ENABLE_RAZORPAY_TEST_CHECKOUT=true`; use live values only when `MOTIONCODE_LAUNCH_PHASE=paid`.

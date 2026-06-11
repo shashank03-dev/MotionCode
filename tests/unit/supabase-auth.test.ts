@@ -16,6 +16,92 @@ afterEach(() => {
 });
 
 describe("Supabase auth helpers", () => {
+  it("reads Supabase external provider settings across Auth response shapes", async () => {
+    const { isExternalAuthProviderEnabled } = await import(
+      "@/lib/supabase/auth-settings"
+    );
+
+    expect(
+      isExternalAuthProviderEnabled({ external: { google: true } }, "google"),
+    ).toBe(true);
+    expect(
+      isExternalAuthProviderEnabled(
+        { external: { google: { enabled: true } } },
+        "google",
+      ),
+    ).toBe(true);
+    expect(
+      isExternalAuthProviderEnabled(
+        { external: { google: { enabled: false } } },
+        "google",
+      ),
+    ).toBe(false);
+    expect(isExternalAuthProviderEnabled({ external: {} }, "google")).toBe(
+      false,
+    );
+  });
+
+  it("fetches public Supabase Auth settings with the anon key", async () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "public-anon-key";
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({ external: { google: { enabled: true } } }),
+        {
+          headers: { "content-type": "application/json" },
+          status: 200,
+        },
+      ),
+    );
+
+    const { getSupabaseAuthSettings } = await import(
+      "@/lib/supabase/auth-settings"
+    );
+
+    await expect(getSupabaseAuthSettings()).resolves.toEqual({
+      external: { google: { enabled: true } },
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://example.supabase.co/auth/v1/settings",
+      expect.objectContaining({
+        cache: "no-store",
+        headers: { apikey: "public-anon-key" },
+      }),
+    );
+  });
+
+  it("does not rely on the shared server-style env helper for browser auth settings", async () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "public-anon-key";
+    vi.doMock("@/lib/supabase/config", async (importOriginal) => {
+      const original =
+        await importOriginal<typeof import("@/lib/supabase/config")>();
+      return {
+        ...original,
+        getSupabasePublicConfig: () => {
+          throw new Error("auth settings should use direct public env reads");
+        },
+      };
+    });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({ external: { google: { enabled: false } } }),
+        {
+          headers: { "content-type": "application/json" },
+          status: 200,
+        },
+      ),
+    );
+
+    const { getSupabaseAuthSettings } = await import(
+      "@/lib/supabase/auth-settings"
+    );
+
+    await expect(getSupabaseAuthSettings()).resolves.toEqual({
+      external: { google: { enabled: false } },
+    });
+  });
+
   it("builds the browser client configuration from public env vars only", async () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "public-anon-key";
