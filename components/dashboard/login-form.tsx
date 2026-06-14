@@ -2,26 +2,62 @@
 
 import { Mail, Send } from "lucide-react";
 import type { FormEvent } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
+  DEFAULT_AUTH_NEXT_PATH,
   buildAuthCallbackUrl,
   getAuthRedirectOrigin,
   normalizeAuthNextPath,
 } from "@/lib/auth/redirects";
+import { isSupabaseExternalProviderEnabled } from "@/lib/supabase/auth-settings";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type LoginFormState = "idle" | "redirecting" | "sending" | "sent" | "error";
+type GoogleProviderState = "checking" | "enabled" | "disabled" | "unavailable";
 
 type LoginFormProps = {
   nextPath?: string;
 };
 
-export function LoginForm({ nextPath = "/dashboard" }: LoginFormProps) {
+const GOOGLE_PROVIDER_DISABLED_MESSAGE =
+  "Google sign-in is not enabled for this Supabase project. Use email sign-in while the Supabase Google provider is configured.";
+const GOOGLE_PROVIDER_UNAVAILABLE_MESSAGE =
+  "Google sign-in cannot be verified right now. Use email sign-in while Supabase Auth settings are checked.";
+
+export function LoginForm({ nextPath = DEFAULT_AUTH_NEXT_PATH }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [state, setState] = useState<LoginFormState>("idle");
+  const [googleProviderState, setGoogleProviderState] =
+    useState<GoogleProviderState>("checking");
   const normalizedNextPath = normalizeAuthNextPath(nextPath);
+  const googleProviderMessage =
+    googleProviderState === "disabled"
+      ? GOOGLE_PROVIDER_DISABLED_MESSAGE
+      : googleProviderState === "unavailable"
+        ? GOOGLE_PROVIDER_UNAVAILABLE_MESSAGE
+        : null;
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    isSupabaseExternalProviderEnabled("google")
+      .then((enabled) => {
+        if (isCurrent) {
+          setGoogleProviderState(enabled ? "enabled" : "disabled");
+        }
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setGoogleProviderState("unavailable");
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, []);
 
   function buildRedirectTo() {
     return buildAuthCallbackUrl(
@@ -31,6 +67,12 @@ export function LoginForm({ nextPath = "/dashboard" }: LoginFormProps) {
   }
 
   async function handleGoogleSignIn() {
+    if (googleProviderState !== "enabled") {
+      setState("error");
+      setMessage(googleProviderMessage ?? GOOGLE_PROVIDER_UNAVAILABLE_MESSAGE);
+      return;
+    }
+
     setState("redirecting");
     setMessage(null);
 
@@ -47,7 +89,7 @@ export function LoginForm({ nextPath = "/dashboard" }: LoginFormProps) {
 
     if (error) {
       setState("error");
-      setMessage(error.message);
+      setMessage(getGoogleSignInErrorMessage(error.message));
     }
   }
 
@@ -79,7 +121,14 @@ export function LoginForm({ nextPath = "/dashboard" }: LoginFormProps) {
     <div className="space-y-5">
       <button
         type="button"
-        disabled={state === "redirecting" || state === "sending"}
+        aria-describedby={
+          googleProviderMessage ? "google-auth-provider-status" : undefined
+        }
+        disabled={
+          state === "redirecting" ||
+          state === "sending" ||
+          googleProviderState !== "enabled"
+        }
         onClick={handleGoogleSignIn}
         className="group inline-flex h-12 w-full items-center justify-center gap-3 border border-[#11120d]/18 bg-[#11120d] px-4 text-sm font-semibold text-[#fffbf4] shadow-[0_12px_28px_rgba(17,18,13,0.16)] transition-[background-color,border-color,transform,box-shadow] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:bg-[#1b1d15] hover:shadow-[0_16px_34px_rgba(17,18,13,0.2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#126137] active:translate-y-px disabled:pointer-events-none disabled:opacity-60"
       >
@@ -89,8 +138,20 @@ export function LoginForm({ nextPath = "/dashboard" }: LoginFormProps) {
         >
           G
         </span>
-        {state === "redirecting" ? "Redirecting" : "Continue with Google"}
+        {state === "redirecting"
+          ? "Redirecting"
+          : googleProviderState === "checking"
+            ? "Checking Google"
+            : "Continue with Google"}
       </button>
+      {googleProviderMessage ? (
+        <p
+          id="google-auth-provider-status"
+          className="border border-red-500/30 bg-red-500/10 px-3 py-2 font-mono text-xs text-red-700"
+        >
+          {googleProviderMessage}
+        </p>
+      ) : null}
 
       <div className="flex items-center gap-3" aria-hidden="true">
         <div className="h-px flex-1 bg-[#11120d]/12" />
@@ -143,4 +204,17 @@ export function LoginForm({ nextPath = "/dashboard" }: LoginFormProps) {
       </form>
     </div>
   );
+}
+
+function getGoogleSignInErrorMessage(message: string) {
+  const normalized = message.toLowerCase();
+
+  if (
+    normalized.includes("unsupported provider") ||
+    (normalized.includes("provider") && normalized.includes("not enabled"))
+  ) {
+    return GOOGLE_PROVIDER_DISABLED_MESSAGE;
+  }
+
+  return message;
 }

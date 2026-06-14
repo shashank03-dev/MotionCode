@@ -37,8 +37,9 @@ MotionCode is in free beta. Free beta analysis uses Gemini only. Pro and Studio 
 - RLS enabled on public tables.
 - `project-assets` bucket remains private.
 - Service role key is configured only in server environments.
-- Google provider is enabled in Supabase Auth.
-- Supabase Auth redirect URLs include local, staging, and production `/auth/callback` URLs.
+- Google Auth provider is enabled with OAuth client ID/secret in Supabase Auth.
+- Supabase Auth Site URL and redirect allowlist include local, staging, and production `/auth/callback` URLs.
+- `/auth/v1/settings` reports the Google external provider as enabled for the deployment Supabase project.
 - Google Cloud OAuth client uses the Supabase Auth provider callback URL, not the app `/auth/callback` URL.
 - Internal admin bootstrap account verified.
 

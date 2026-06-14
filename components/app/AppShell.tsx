@@ -1,5 +1,6 @@
 "use client";
 
+import { Boxes, FolderKanban, Gauge, UserCircle } from "lucide-react";
 import Link from "next/link";
 import {
   useCallback,
@@ -55,6 +56,12 @@ const STATUS_MESSAGES = [
   "Detecting transform paths...",
   "Almost there...",
 ];
+
+const PRODUCT_NAV_ITEMS = [
+  { href: "/dashboard", icon: Gauge, label: "Dashboard" },
+  { href: "/projects", icon: FolderKanban, label: "Projects" },
+  { href: "/workspaces", icon: Boxes, label: "Workspaces" },
+] as const;
 
 type AppShellProps = {
   initialDailyAnalysisUsage?: {
@@ -469,13 +476,27 @@ export function AppShell({
   return (
     <div className={styles.root} id="app-root">
       <nav className={styles.navbar} id="navbar">
-        <Link className={styles.brandLink} href="/">
+        <Link className={styles.brandLink} href="/app">
           &lt;/&gt; MotionCode
         </Link>
+        <div className={styles.productNav} aria-label="Product navigation">
+          <span className={styles.productNavActive}>Analyze</span>
+          {PRODUCT_NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <Link key={item.href} className={styles.productNavLink} href={item.href}>
+                <Icon aria-hidden="true" size={14} strokeWidth={1.8} />
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
         <div className={styles.navActions}>
           <div className={styles.planBadge}>{userPlan.toUpperCase()}</div>
-          <Link className={styles.homeLink} href="/">
-            Back to home
+          <Link className={styles.homeLink} href="/account">
+            <UserCircle aria-hidden="true" size={14} strokeWidth={1.8} />
+            Account
           </Link>
         </div>
       </nav>
