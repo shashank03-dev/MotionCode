@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { MarketingAuthNavActions } from "./auth-nav-actions";
+
 const primaryLinks = [
   { href: "/#features", label: "Features" },
   { href: "/pricing", label: "Pricing" },
@@ -58,13 +60,7 @@ export function SiteHeader() {
             </Link>
           ))}
         </div>
-
-        <Link
-          href="/app"
-          className="inline-flex h-9 items-center border border-[#00ff88] px-4 font-mono text-xs font-bold text-[#00ff88] transition-colors hover:bg-[#00ff88]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00ff88]"
-        >
-          Try Free →
-        </Link>
+        <MarketingAuthNavActions variant="site" />
       </nav>
     </header>
   );

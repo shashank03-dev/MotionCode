@@ -7,6 +7,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Aurora, Magnet } from "@/components/react-bits";
 import { CheckoutButton } from "@/app/pricing/CheckoutButton";
+import { MarketingAuthNavActions } from "@/components/marketing/auth-nav-actions";
 import { ScrollSolutionBridge } from "@/components/marketing/scroll-solution-bridge";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -674,26 +675,7 @@ export default function LandingPage() {
             </Magnet>
           </div>
 
-          <div className="motioncode-nav-actions" aria-label="Account actions">
-            <Magnet
-              padding={36}
-              magnetStrength={8}
-              wrapperClassName="motioncode-nav-auth-magnet"
-            >
-              <Link href="/login" className="motioncode-nav-auth">
-                Sign in
-              </Link>
-            </Magnet>
-            <Magnet
-              padding={38}
-              magnetStrength={8}
-              wrapperClassName="motioncode-nav-cta-magnet"
-            >
-              <Link href="/app" className="motioncode-nav-cta">
-                Try Free
-              </Link>
-            </Magnet>
-          </div>
+          <MarketingAuthNavActions variant="landing" />
         </div>
       </nav>
 

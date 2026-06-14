@@ -1,4 +1,4 @@
-export const DEFAULT_AUTH_NEXT_PATH = "/dashboard";
+export const DEFAULT_AUTH_NEXT_PATH = "/app";
 
 const SAME_SITE_BASE_URL = "https://motioncode.local";
 
@@ -42,12 +42,32 @@ export function buildAuthCallbackUrl(origin: string, nextPath: string) {
 }
 
 export function getAuthRedirectOrigin(currentOrigin: string) {
+  const normalizedCurrentOrigin =
+    normalizeOrigin(currentOrigin) ?? currentOrigin;
+
+  if (isLocalDevelopmentOrigin(normalizedCurrentOrigin)) {
+    return normalizedCurrentOrigin;
+  }
+
   return (
     normalizeOrigin(process.env.NEXT_PUBLIC_SITE_URL) ??
     normalizeOrigin(process.env.NEXT_PUBLIC_VERCEL_URL) ??
-    normalizeOrigin(currentOrigin) ??
-    currentOrigin
+    normalizedCurrentOrigin
   );
+}
+
+function isLocalDevelopmentOrigin(origin: string) {
+  try {
+    const { hostname } = new URL(origin);
+    return (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "[::1]" ||
+      hostname === "::1"
+    );
+  } catch {
+    return false;
+  }
 }
 
 function normalizeOrigin(value: string | null | undefined) {

@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const signInWithOAuth = vi.fn();
 const signInWithOtp = vi.fn();
+const isSupabaseExternalProviderEnabled = vi.fn();
 const ORIGINAL_ENV = { ...process.env };
 
 vi.mock("@/lib/supabase/browser", () => ({
@@ -13,6 +14,10 @@ vi.mock("@/lib/supabase/browser", () => ({
       signInWithOtp,
     },
   }),
+}));
+
+vi.mock("@/lib/supabase/auth-settings", () => ({
+  isSupabaseExternalProviderEnabled,
 }));
 
 describe("LoginForm", () => {
@@ -30,8 +35,10 @@ describe("LoginForm", () => {
     ).IS_REACT_ACT_ENVIRONMENT = true;
     signInWithOAuth.mockReset();
     signInWithOtp.mockReset();
+    isSupabaseExternalProviderEnabled.mockReset();
     signInWithOAuth.mockResolvedValue({ error: null });
     signInWithOtp.mockResolvedValue({ error: null });
+    isSupabaseExternalProviderEnabled.mockResolvedValue(true);
 
     container = document.createElement("div");
     document.body.appendChild(container);
@@ -53,6 +60,7 @@ describe("LoginForm", () => {
     await act(async () => {
       root.render(<LoginForm nextPath="/workspaces/workspace_123" />);
     });
+    await settleProviderCheck();
 
     const button = findButton("Continue with Google");
     await act(async () => {
@@ -71,14 +79,13 @@ describe("LoginForm", () => {
     });
   });
 
-  it("uses the configured site URL for Google OAuth callbacks", async () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://motioncode.com/";
-
+  it("defaults new authentication sessions into the app workspace", async () => {
     const { LoginForm } = await import("@/components/dashboard/login-form");
 
     await act(async () => {
-      root.render(<LoginForm nextPath="/dashboard" />);
+      root.render(<LoginForm />);
     });
+    await settleProviderCheck();
 
     const button = findButton("Continue with Google");
     await act(async () => {
@@ -91,7 +98,33 @@ describe("LoginForm", () => {
         queryParams: {
           prompt: "select_account",
         },
-        redirectTo: "https://motioncode.com/auth/callback?next=%2Fdashboard",
+        redirectTo: `${window.location.origin}/auth/callback?next=%2Fapp`,
+      },
+    });
+  });
+
+  it("keeps Google OAuth callbacks on localhost during local development", async () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://motioncode.com/";
+
+    const { LoginForm } = await import("@/components/dashboard/login-form");
+
+    await act(async () => {
+      root.render(<LoginForm nextPath="/dashboard" />);
+    });
+    await settleProviderCheck();
+
+    const button = findButton("Continue with Google");
+    await act(async () => {
+      button.click();
+    });
+
+    expect(signInWithOAuth).toHaveBeenCalledWith({
+      provider: "google",
+      options: {
+        queryParams: {
+          prompt: "select_account",
+        },
+        redirectTo: `${window.location.origin}/auth/callback?next=%2Fdashboard`,
       },
     });
   });
@@ -102,6 +135,7 @@ describe("LoginForm", () => {
     await act(async () => {
       root.render(<LoginForm nextPath="/projects/project_123" />);
     });
+    await settleProviderCheck();
 
     const input = container.querySelector<HTMLInputElement>("#email");
     if (!input) {
@@ -137,7 +171,7 @@ describe("LoginForm", () => {
     });
   });
 
-  it("uses the configured site URL and normalized email for magic links", async () => {
+  it("keeps magic-link callbacks on localhost during local development", async () => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://motioncode.com";
 
     const { LoginForm } = await import("@/components/dashboard/login-form");
@@ -145,6 +179,7 @@ describe("LoginForm", () => {
     await act(async () => {
       root.render(<LoginForm nextPath="/account" />);
     });
+    await settleProviderCheck();
 
     const input = container.querySelector<HTMLInputElement>("#email");
     if (!input) {
@@ -175,9 +210,70 @@ describe("LoginForm", () => {
       email: "founder@example.com",
       options: {
         emailRedirectTo:
-          "https://motioncode.com/auth/callback?next=%2Faccount",
+          `${window.location.origin}/auth/callback?next=%2Faccount`,
       },
     });
+  });
+
+  it("does not start Google OAuth when Supabase reports Google is disabled", async () => {
+    isSupabaseExternalProviderEnabled.mockResolvedValue(false);
+
+    const { LoginForm } = await import("@/components/dashboard/login-form");
+
+    await act(async () => {
+      root.render(<LoginForm nextPath="/dashboard" />);
+    });
+    await settleProviderCheck();
+
+    const button = findButton("Continue with Google");
+    expect(button.disabled).toBe(true);
+    expect(container.textContent).toContain(
+      "Google sign-in is not enabled for this Supabase project.",
+    );
+    expect(signInWithOAuth).not.toHaveBeenCalled();
+  });
+
+  it("does not start Google OAuth when Supabase Auth settings cannot be verified", async () => {
+    isSupabaseExternalProviderEnabled.mockRejectedValue(
+      new Error("settings unavailable"),
+    );
+
+    const { LoginForm } = await import("@/components/dashboard/login-form");
+
+    await act(async () => {
+      root.render(<LoginForm nextPath="/dashboard" />);
+    });
+    await settleProviderCheck();
+
+    const button = findButton("Continue with Google");
+    expect(button.disabled).toBe(true);
+    expect(container.textContent).toContain(
+      "Google sign-in cannot be verified right now.",
+    );
+    expect(signInWithOAuth).not.toHaveBeenCalled();
+  });
+
+  it("maps Supabase provider-disabled OAuth errors to an operator action", async () => {
+    signInWithOAuth.mockResolvedValue({
+      error: { message: "Unsupported provider: provider is not enabled" },
+    });
+
+    const { LoginForm } = await import("@/components/dashboard/login-form");
+
+    await act(async () => {
+      root.render(<LoginForm nextPath="/dashboard" />);
+    });
+    await settleProviderCheck();
+
+    const button = findButton("Continue with Google");
+    await act(async () => {
+      button.click();
+    });
+
+    expect(container.textContent).toContain(
+      "Google sign-in is not enabled for this Supabase project.",
+    );
+    expect(container.textContent).not.toContain("Unsupported provider");
   });
 
   function findButton(name: string) {
@@ -188,5 +284,12 @@ describe("LoginForm", () => {
       throw new Error(`Expected button named ${name}.`);
     }
     return button as HTMLButtonElement;
+  }
+
+  async function settleProviderCheck() {
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
   }
 });

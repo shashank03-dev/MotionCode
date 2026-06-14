@@ -31,7 +31,7 @@ export default async function VersionPage({ params }: VersionPageProps) {
       <div className="mx-auto max-w-6xl space-y-8">
         <Link
           href={`/projects/${data.project.id}`}
-          className="inline-flex text-sm text-[#d8cfbc]"
+          className="inline-flex font-mono text-sm text-[var(--accent)] transition hover:text-[var(--text)]"
         >
           Back to project
         </Link>
