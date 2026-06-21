@@ -7,6 +7,8 @@ import { useEffect, useState } from "react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
+import { AccountMenu } from "./account-menu";
+
 type MarketingAuthNavActionsProps = {
   variant: "landing" | "site";
 };
@@ -62,19 +64,13 @@ export function MarketingAuthNavActions({
   if (authState === "signed-in") {
     return variant === "landing" ? (
       <div className="motioncode-nav-actions" aria-label="Account actions">
-        <span className="hidden border border-[rgba(216,207,188,0.18)] bg-[rgba(11,12,9,0.72)] px-3 py-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[rgba(216,207,188,0.72)] xl:inline-flex">
-          {userEmail ?? "Signed in"}
-        </span>
         <Link href="/dashboard" className="motioncode-nav-auth">
           Dashboard
         </Link>
         <Link href="/app" className="motioncode-nav-cta">
           Open App
         </Link>
-        <SignOutButton
-          className="border-[rgba(216,207,188,0.18)] bg-[rgba(11,12,9,0.72)] px-4 font-mono text-xs uppercase tracking-[0.08em] text-[rgba(255,251,244,0.82)] hover:border-[rgba(0,255,136,0.34)] hover:text-[#00ff88]"
-          label="Out"
-        />
+        <AccountMenu email={userEmail} />
       </div>
     ) : (
       <div className="flex items-center gap-2">
