@@ -4,12 +4,12 @@ import * as React from "react";
 import {
   motion,
   type MotionValue,
-  useReducedMotion,
   useScroll,
   useSpring,
   useTransform,
 } from "framer-motion";
 
+import { useHydratedReducedMotion } from "@/lib/hooks/use-hydrated-reduced-motion";
 import { cn } from "@/lib/utils";
 
 type ContainerScrollProps = {
@@ -109,7 +109,7 @@ function ContainerScroll({
   cardClassName,
 }: ContainerScrollProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useHydratedReducedMotion();
 
   const { scrollYProgress } = useScroll({
     target: containerRef,

@@ -129,11 +129,31 @@ export default function Aurora(props: AuroraProps) {
     const ctn = ctnDom.current;
     if (!ctn) return;
 
-    const renderer = new Renderer({
+    const canvas = document.createElement('canvas');
+    const contextAttributes = {
       alpha: true,
       premultipliedAlpha: true,
       antialias: true
-    });
+    };
+    const webglContext =
+      canvas.getContext('webgl2', contextAttributes) ??
+      canvas.getContext('webgl', contextAttributes);
+
+    if (!webglContext) {
+      return;
+    }
+
+    let renderer: Renderer;
+
+    try {
+      renderer = new Renderer({
+        canvas,
+        ...contextAttributes
+      });
+    } catch {
+      return;
+    }
+
     const gl = renderer.gl;
     gl.clearColor(0, 0, 0, 0);
     gl.enable(gl.BLEND);
