@@ -1,14 +1,26 @@
-# MotionCode
+<div align="center">
 
-**Turn any UI animation into production-ready code.**
+<a href="https://motioncode.live">
+  <img src=".github/assets/banner.svg" alt="MotionCode — turn any animation into production code" width="100%" />
+</a>
 
-MotionCode takes a short motion reference — a screen recording or GIF — extracts representative frames, analyzes the motion server‑side with AI, and returns a normalized motion spec plus starter code for **CSS**, **GSAP**, and **Framer Motion**.
+<br/>
 
-🔗 Live: **[motioncode.live](https://motioncode.live)**
+**Turn a short UI motion reference into a normalized motion spec and starter code for CSS, GSAP, and Framer Motion.**
 
-> Status: **free beta.** Analysis runs on Gemini with a per‑user daily quota. Pro and Studio are early‑access tracks; paid checkout (Razorpay) and OpenAI‑backed analysis stay gated behind launch‑phase flags until paid‑readiness gates pass.
+[![Live](https://img.shields.io/badge/live-motioncode.live-9ef0c0?style=flat-square&labelColor=10120d)](https://motioncode.live)
+[![Next.js 16](https://img.shields.io/badge/Next.js-16-fffbf4?style=flat-square&logo=nextdotjs&labelColor=10120d)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?style=flat-square&logo=typescript&logoColor=white&labelColor=10120d)](https://www.typescriptlang.org)
+[![Supabase](https://img.shields.io/badge/Supabase-Postgres%20%2B%20RLS-3ecf8e?style=flat-square&logo=supabase&logoColor=white&labelColor=10120d)](https://supabase.com)
+[![Tests](https://img.shields.io/badge/tests-vitest%20%2B%20playwright-ffd166?style=flat-square&labelColor=10120d)](#testing)
+
+[Live site](https://motioncode.live) · [How it works](#how-it-works) · [Getting started](#getting-started) · [Security model](#security-model) · [Docs](#documentation)
+
+</div>
 
 ---
+
+> **Status: free beta.** Analysis runs on Gemini with a per‑user daily quota. Pro and Studio are early‑access tracks; paid checkout (Razorpay) and OpenAI‑backed analysis stay gated behind launch‑phase flags until paid‑readiness gates pass.
 
 ## Contents
 

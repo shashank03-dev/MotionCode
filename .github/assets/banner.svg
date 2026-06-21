@@ -1,0 +1,85 @@
+<svg width="1280" height="340" viewBox="0 0 1280 340" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MotionCode — turn any animation into production code">
+  <defs>
+    <linearGradient id="topline" x1="0" y1="0" x2="1280" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9ef0c0" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#9ef0c0" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#9ef0c0" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="glowGreen" cx="0.5" cy="0.5" r="0.5">
+      <stop stop-color="#9ef0c0" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#9ef0c0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowCoral" cx="0.5" cy="0.5" r="0.5">
+      <stop stop-color="#f58f7c" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#f58f7c" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#fffbf4" stroke-opacity="0.035" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <!-- canvas -->
+  <rect width="1280" height="340" rx="0" fill="#10120d"/>
+  <rect width="1280" height="340" fill="url(#grid)"/>
+  <circle cx="1180" cy="20" r="320" fill="url(#glowGreen)"/>
+  <circle cx="120" cy="360" r="300" fill="url(#glowCoral)"/>
+  <rect x="0" y="0" width="1280" height="2" fill="url(#topline)"/>
+
+  <!-- wordmark -->
+  <g font-family="'JetBrains Mono','SFMono-Regular',Consolas,monospace">
+    <text x="64" y="86" fill="#ffd166" font-size="15" letter-spacing="5">MOTION REFERENCE → STARTER CODE</text>
+
+    <rect x="64" y="108" width="58" height="58" rx="10" fill="none" stroke="#9ef0c0" stroke-opacity="0.85" stroke-width="2"/>
+    <text x="93" y="148" fill="#9ef0c0" font-size="28" font-weight="700" text-anchor="middle">{ }</text>
+    <text x="140" y="156" fill="#fffbf4" font-size="46" font-weight="700">MotionCode</text>
+
+    <text x="66" y="212" fill="#d8cfbc" font-size="22">Turn any animation into production code.</text>
+
+    <!-- output tags -->
+    <g font-size="13" letter-spacing="1">
+      <rect x="64" y="244" width="62" height="30" rx="6" fill="none" stroke="#9ef0c0" stroke-opacity="0.4"/>
+      <text x="95" y="264" fill="#9ef0c0" text-anchor="middle">CSS</text>
+      <rect x="134" y="244" width="74" height="30" rx="6" fill="none" stroke="#9ef0c0" stroke-opacity="0.4"/>
+      <text x="171" y="264" fill="#9ef0c0" text-anchor="middle">GSAP</text>
+      <rect x="216" y="244" width="150" height="30" rx="6" fill="none" stroke="#9ef0c0" stroke-opacity="0.4"/>
+      <text x="291" y="264" fill="#9ef0c0" text-anchor="middle">Framer Motion</text>
+    </g>
+  </g>
+
+  <!-- signature: motion-lab panel (frames tracing motion → code) -->
+  <g font-family="'JetBrains Mono','SFMono-Regular',Consolas,monospace">
+    <rect x="700" y="58" width="516" height="224" rx="16" fill="#fffbf4" fill-opacity="0.03" stroke="#d8cfbc" stroke-opacity="0.16"/>
+    <circle cx="722" cy="80" r="3.5" fill="#f58f7c"/>
+    <circle cx="736" cy="80" r="3.5" fill="#ffd166"/>
+    <circle cx="750" cy="80" r="3.5" fill="#9ef0c0"/>
+    <text x="1196" y="84" fill="#8f887a" font-size="12" letter-spacing="2" text-anchor="end">MOTION LAB</text>
+
+    <!-- sampled frames; dot traces an ease-out arc across them -->
+    <g>
+      <rect x="722" y="104" width="64" height="64" rx="8" fill="#0d0f0b" stroke="#d8cfbc" stroke-opacity="0.22"/>
+      <circle cx="738" cy="152" r="6" fill="#9ef0c0" fill-opacity="0.55"/>
+      <rect x="798" y="104" width="64" height="64" rx="8" fill="#0d0f0b" stroke="#d8cfbc" stroke-opacity="0.22"/>
+      <circle cx="822" cy="138" r="6" fill="#9ef0c0" fill-opacity="0.7"/>
+      <rect x="874" y="104" width="64" height="64" rx="8" fill="#0d0f0b" stroke="#d8cfbc" stroke-opacity="0.22"/>
+      <circle cx="910" cy="124" r="6" fill="#9ef0c0" fill-opacity="0.85"/>
+      <rect x="950" y="104" width="64" height="64" rx="8" fill="#0d0f0b" stroke="#9ef0c0" stroke-opacity="0.5"/>
+      <circle cx="998" cy="118" r="6" fill="#9ef0c0"/>
+      <path d="M738 152 Q860 92 998 118" fill="none" stroke="#9ef0c0" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="3 4"/>
+
+      <text x="1030" y="142" fill="#9ef0c0" font-size="26">→</text>
+    </g>
+
+    <!-- resolved code -->
+    <g font-size="13.5">
+      <text x="724" y="202" fill="#9ef0c0">&gt;</text>
+      <text x="744" y="202" fill="#d8cfbc">duration  </text>
+      <text x="838" y="202" fill="#fffbf4">640ms</text>
+      <text x="724" y="226" fill="#9ef0c0">&gt;</text>
+      <text x="744" y="226" fill="#d8cfbc">ease      </text>
+      <text x="838" y="226" fill="#fffbf4">cubic-bezier(.16,1,.3,1)</text>
+      <text x="724" y="250" fill="#9ef0c0">&gt;</text>
+      <text x="744" y="250" fill="#d8cfbc">transform </text>
+      <text x="838" y="250" fill="#fffbf4">translateY(-24px)</text>
+    </g>
+  </g>
+</svg>
