@@ -48,3 +48,10 @@ next-env.d.ts
 
 # Graphify generated context
 /graphify-out/
+/.graphifyignore
+
+# agent / local dev tooling (not part of the product)
+/.codex/
+/.agents/
+/.codex-*.png
+/build_log.txt
