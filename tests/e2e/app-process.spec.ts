@@ -186,9 +186,9 @@ function expectAnalyzeRequest(request: Request) {
   };
 
   expect(body.model).toBe("gemini-2.5-flash");
-  expect(body.assetId).toEqual(expect.stringMatching(UUID_PATTERN));
-  expect(body.projectId).toEqual(expect.stringMatching(UUID_PATTERN));
-  expect(body.versionId).toEqual(expect.stringMatching(UUID_PATTERN));
+  expect(body.assetId).toBeUndefined();
+  expect(body.projectId).toBeUndefined();
+  expect(body.versionId).toBeUndefined();
   expect(body.frames).toHaveLength(1);
   expect(body.frames?.[0]).toEqual(expect.any(String));
   expect(body.frames?.[0]?.length).toBeGreaterThan(0);
@@ -256,6 +256,3 @@ function createDeferred() {
 
   return { promise, resolve };
 }
-
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

@@ -32,14 +32,23 @@ export const Base64JpegFrameSchema = z
 
 export const AnalyzeRequestSchema = z
   .object({
-    assetId: ResourceIdSchema,
+    assetId: ResourceIdSchema.optional(),
     frames: z.array(Base64JpegFrameSchema).min(1).max(MAX_ANALYZE_FRAMES),
     model: z.enum(GEMINI_MODELS).default("gemini-2.5-flash"),
-    projectId: ResourceIdSchema,
-    versionId: ResourceIdSchema,
+    projectId: ResourceIdSchema.optional(),
+    versionId: ResourceIdSchema.optional(),
     workspaceId: ResourceIdSchema.optional(),
   })
-  .strict();
+  .strict()
+  .refine(
+    (value) =>
+      Boolean(value.assetId) === Boolean(value.projectId) &&
+      Boolean(value.projectId) === Boolean(value.versionId),
+    {
+      message:
+        "Saved analysis requests must include assetId, projectId, and versionId.",
+    },
+  );
 
 export type AnalyzeRequestBody = z.infer<typeof AnalyzeRequestSchema>;
 

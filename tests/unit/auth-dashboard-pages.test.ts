@@ -91,6 +91,34 @@ describe("auth callback route", () => {
     );
   });
 
+  it("defaults successful callbacks into the processing app", async () => {
+    const exchangeCodeForSession = vi.fn(async () => ({
+      data: { session: { access_token: "token" } },
+      error: null,
+    }));
+    const getUser = vi.fn(async () => ({
+      data: { user: { email: "founder@example.com", id: "user_123" } },
+      error: null,
+    }));
+    vi.doMock("@/lib/supabase/server", () => ({
+      createSupabaseServerClient: () => ({
+        auth: { exchangeCodeForSession, getUser },
+      }),
+    }));
+    vi.doMock("@/lib/server/profiles", () => ({
+      ensureProfileForUser: vi.fn(async () => undefined),
+    }));
+
+    const { GET } = await import("@/app/auth/callback/route");
+    const response = await GET(
+      new Request("https://motioncode.test/auth/callback?code=oauth-code"),
+    );
+
+    expect(response.headers.get("location")).toBe(
+      "https://motioncode.test/app",
+    );
+  });
+
   it("redirects safely when the callback code is missing", async () => {
     const observeAuthError = vi.fn(async () => undefined);
     vi.doMock("@/lib/server/observability", () => ({
@@ -191,6 +219,62 @@ describe("dashboard page route protection", () => {
     expect(redirect).toHaveBeenCalledWith(
       "/login?next=%2Fworkspaces%2Fworkspace_123",
     );
+  });
+
+  it("redirects signed-in free users away from paid dashboard surfaces", async () => {
+    const redirect = vi.fn((path: string) => {
+      throw new Error(`redirect:${path}`);
+    });
+    const getEntitlementSummary = vi.fn(async () => ({
+      planTier: "free",
+    }));
+    vi.doMock("next/navigation", () => ({ redirect }));
+    vi.doMock("@/lib/supabase/server", () => ({
+      createSupabaseServerClient: () => ({}),
+      getCurrentUser: vi.fn(async () => ({
+        email: "free@example.com",
+        id: "user_free",
+      })),
+    }));
+    vi.doMock("@/lib/server/entitlements", () => ({
+      getEntitlementSummary,
+    }));
+
+    const { requireDashboardUser } = await import("@/app/dashboard/data");
+
+    await expect(
+      requireDashboardUser("/dashboard", { paidOnly: true }),
+    ).rejects.toThrow("redirect:/app");
+    expect(getEntitlementSummary).toHaveBeenCalledWith("user_free");
+    expect(redirect).toHaveBeenCalledWith("/app");
+  });
+
+  it("allows paid users through paid dashboard checks", async () => {
+    const redirect = vi.fn((path: string) => {
+      throw new Error(`redirect:${path}`);
+    });
+    const getEntitlementSummary = vi.fn(async () => ({
+      planTier: "pro",
+    }));
+    vi.doMock("next/navigation", () => ({ redirect }));
+    vi.doMock("@/lib/supabase/server", () => ({
+      createSupabaseServerClient: () => ({}),
+      getCurrentUser: vi.fn(async () => ({
+        email: "pro@example.com",
+        id: "user_pro",
+      })),
+    }));
+    vi.doMock("@/lib/server/entitlements", () => ({
+      getEntitlementSummary,
+    }));
+
+    const { requireDashboardUser } = await import("@/app/dashboard/data");
+
+    await expect(
+      requireDashboardUser("/dashboard", { paidOnly: true }),
+    ).resolves.toMatchObject({ id: "user_pro" });
+    expect(getEntitlementSummary).toHaveBeenCalledWith("user_pro");
+    expect(redirect).not.toHaveBeenCalled();
   });
 });
 

@@ -2,6 +2,7 @@ import type { User } from "@supabase/supabase-js";
 import * as navigation from "next/navigation";
 
 import { loginPathForNext } from "@/lib/auth/redirects";
+import { getEntitlementSummary } from "@/lib/server/entitlements";
 import {
   createSupabaseServerClient,
   getCurrentUser,
@@ -44,11 +45,26 @@ export type VersionPageData = ProjectPageData & {
   version: ProjectVersionRow;
 };
 
-export async function requireDashboardUser(nextPath?: string) {
+type DashboardUserOptions = {
+  paidOnly?: boolean;
+};
+
+export async function requireDashboardUser(
+  nextPath?: string,
+  options: DashboardUserOptions = {},
+) {
   const user = await getCurrentUser();
 
   if (!user) {
     navigation.redirect(loginPathForNext(nextPath));
+  }
+
+  if (options.paidOnly) {
+    const summary = await getEntitlementSummary(user.id);
+
+    if (summary.planTier === "free") {
+      navigation.redirect("/app");
+    }
   }
 
   return user;

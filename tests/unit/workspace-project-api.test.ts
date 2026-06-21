@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { ApiResponse } from "@/lib/contracts/errors";
+import { PLAN_ENTITLEMENTS } from "@/lib/contracts/plans";
 
 const USER_ID = "11111111-1111-4111-8111-111111111111";
 const WORKSPACE_ID = "22222222-2222-4222-8222-222222222222";
@@ -12,6 +13,22 @@ const jsonRequest = (url: string, body: unknown, method = "POST") =>
     headers: { "content-type": "application/json" },
     method,
   });
+
+const projectRow = (
+  id: string,
+  status: "draft" | "uploaded" | "analyzing" | "generated" | "archived",
+) => ({
+  created_at: "2026-06-06T00:00:00.000Z",
+  description: null,
+  id,
+  latest_version_id: null,
+  owner_id: USER_ID,
+  source_type: "prompt" as const,
+  status,
+  title: "Checkout hover",
+  updated_at: "2026-06-06T00:00:00.000Z",
+  workspace_id: WORKSPACE_ID,
+});
 
 afterEach(() => {
   vi.resetModules();
@@ -143,6 +160,109 @@ describe("project API handlers", () => {
       ok: false,
     });
     expect(createProject).not.toHaveBeenCalled();
+  });
+
+  it("rejects a fourth active project for free workspaces before repository writes", async () => {
+    const { handleCreateProjectRequest } = await import(
+      "@/app/api/projects/handler"
+    );
+    const createProject = vi.fn();
+    const listProjects = vi.fn(async () => [
+      projectRow("44444444-4444-4444-8444-444444444441", "draft"),
+      projectRow("44444444-4444-4444-8444-444444444442", "uploaded"),
+      projectRow("44444444-4444-4444-8444-444444444443", "generated"),
+    ]);
+
+    const response = await handleCreateProjectRequest(
+      jsonRequest("https://motioncode.test/api/projects", {
+        sourceType: "prompt",
+        title: "Checkout hover",
+        workspaceId: WORKSPACE_ID,
+      }),
+      {
+        createProject,
+        getEntitlementSummary: vi.fn(async () => ({
+          entitlements: PLAN_ENTITLEMENTS.free,
+          planTier: "free" as const,
+        })),
+        getCurrentUser: vi.fn(async () => ({ id: USER_ID })),
+        getWorkspaceAccess: vi.fn(async () => ({
+          role: "owner" as const,
+          workspace: {
+            id: WORKSPACE_ID,
+            owner_id: USER_ID,
+            plan_tier: "free" as const,
+          },
+        })),
+        listProjects,
+      },
+    );
+    const json = (await response.json()) as ApiResponse<unknown>;
+
+    expect(response.status).toBe(429);
+    expect(json).toEqual({
+      code: "QUOTA_EXCEEDED",
+      message:
+        "Your free plan includes 3 active saved projects. Archive or delete a project before creating another.",
+      ok: false,
+    });
+    expect(listProjects).toHaveBeenCalledWith(USER_ID, WORKSPACE_ID);
+    expect(createProject).not.toHaveBeenCalled();
+  });
+
+  it("allows free users to create a project after archiving one", async () => {
+    const { handleCreateProjectRequest } = await import(
+      "@/app/api/projects/handler"
+    );
+    const createProject = vi.fn(async () => ({
+      id: PROJECT_ID,
+      status: "draft" as const,
+    }));
+    const listProjects = vi.fn(async () => [
+      projectRow("44444444-4444-4444-8444-444444444441", "draft"),
+      projectRow("44444444-4444-4444-8444-444444444442", "generated"),
+      projectRow("44444444-4444-4444-8444-444444444443", "archived"),
+    ]);
+
+    const response = await handleCreateProjectRequest(
+      jsonRequest("https://motioncode.test/api/projects", {
+        sourceType: "prompt",
+        title: "Checkout hover",
+        workspaceId: WORKSPACE_ID,
+      }),
+      {
+        createProject,
+        getEntitlementSummary: vi.fn(async () => ({
+          entitlements: PLAN_ENTITLEMENTS.free,
+          planTier: "free" as const,
+        })),
+        getCurrentUser: vi.fn(async () => ({ id: USER_ID })),
+        getWorkspaceAccess: vi.fn(async () => ({
+          role: "owner" as const,
+          workspace: {
+            id: WORKSPACE_ID,
+            owner_id: USER_ID,
+            plan_tier: "free" as const,
+          },
+        })),
+        listProjects,
+      },
+    );
+    const json = (await response.json()) as ApiResponse<unknown>;
+
+    expect(response.status).toBe(201);
+    expect(json).toMatchObject({
+      data: { id: PROJECT_ID, status: "draft" },
+      ok: true,
+    });
+    expect(listProjects).toHaveBeenCalledWith(USER_ID, WORKSPACE_ID);
+    expect(createProject).toHaveBeenCalledWith({
+      description: null,
+      ownerId: USER_ID,
+      sourceType: "prompt",
+      title: "Checkout hover",
+      workspaceId: WORKSPACE_ID,
+    });
   });
 
   it("archives projects instead of deleting Supabase rows", async () => {

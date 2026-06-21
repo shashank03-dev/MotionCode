@@ -101,8 +101,17 @@ MotionCode uses Supabase-managed Google OAuth. Do not add Google OAuth client se
    - `http://localhost:3000/auth/callback`
    - the staging app callback URL
    - the production app callback URL based on `NEXT_PUBLIC_SITE_URL`
-4. Smoke test `/login`: Google OAuth should return to `/auth/callback`, then to `/dashboard` or the preserved `next` path. Magic-link email remains available as fallback.
-5. Sign-out is local to the current browser session and posts to `/auth/signout`.
+4. Verify the public Auth settings report Google as enabled before shipping the Google button:
+
+```bash
+curl -s "$NEXT_PUBLIC_SUPABASE_URL/auth/v1/settings" \
+  -H "apikey: $NEXT_PUBLIC_SUPABASE_ANON_KEY"
+```
+
+The response must include Google as an enabled external provider. If it does not, the login page keeps Google sign-in unavailable and users should use email sign-in.
+
+5. Smoke test `/login`: Google OAuth should return to `/auth/callback`, then to `/dashboard` or the preserved `next` path. Magic-link email remains available as fallback.
+6. Sign-out is local to the current browser session and posts to `/auth/signout`.
 
 ## Paid Checkout Setup
 

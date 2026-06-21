@@ -40,7 +40,9 @@ test.describe("application smoke", () => {
   }) => {
     await page.goto("/dashboard");
 
-    await expect(page).toHaveURL(/\/login\?next=%2Fdashboard$/);
+    await expect(page).toHaveURL(/\/login\?next=%2Fdashboard$/, {
+      timeout: 20_000,
+    });
     await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
   });
 });

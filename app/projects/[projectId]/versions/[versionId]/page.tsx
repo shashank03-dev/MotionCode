@@ -23,6 +23,7 @@ export default async function VersionPage({ params }: VersionPageProps) {
   const { projectId, versionId } = await params;
   const user = await requireDashboardUser(
     `/projects/${projectId}/versions/${versionId}`,
+    { paidOnly: true },
   );
   const data = await getVersionPageData(projectId, versionId, user);
 

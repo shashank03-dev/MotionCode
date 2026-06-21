@@ -128,6 +128,17 @@ const generated = {
   spec,
 };
 
+const TRANSIENT_ANALYSIS_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+const TRANSIENT_ASSET_ID = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+const TRANSIENT_PROJECT_ID = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+const TRANSIENT_VERSION_ID = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+const TRANSIENT_IDS = [
+  TRANSIENT_ANALYSIS_ID,
+  TRANSIENT_ASSET_ID,
+  TRANSIENT_PROJECT_ID,
+  TRANSIENT_VERSION_ID,
+];
+
 function createSelectClient(
   rowForTable: (
     table: string,
@@ -158,8 +169,15 @@ function createSelectClient(
   };
 }
 
-function createDeps(options: { planTier?: PlanTier; userId?: string | null } = {}) {
+function createDeps(
+  options: {
+    ids?: string[];
+    planTier?: PlanTier;
+    userId?: string | null;
+  } = {},
+) {
   const planTier = options.planTier ?? "free";
+  const ids = options.ids ?? ["analysis_123"];
 
   return {
     audit: { record: vi.fn(async () => undefined) },
@@ -176,7 +194,7 @@ function createDeps(options: { planTier?: PlanTier; userId?: string | null } = {
       planTier,
     })),
     getPlanTier: vi.fn(async () => planTier),
-    idGenerator: vi.fn(() => "analysis_123"),
+    idGenerator: vi.fn(() => ids.shift() ?? "analysis_123"),
     now: vi.fn(() => new Date("2026-06-06T12:00:00.000Z")),
     reserveDailyAnalysisUsage: vi.fn(async () => true),
     usage: { record: vi.fn(async () => undefined) },
@@ -368,6 +386,57 @@ describe("POST /api/analyze", () => {
     expect(deps.reserveDailyAnalysisUsage).not.toHaveBeenCalled();
     expect(deps.usage.record).not.toHaveBeenCalled();
     expect(deps.audit.record).not.toHaveBeenCalled();
+  });
+
+  it("allows signed-in processing app analysis without saved project resources", async () => {
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
+    const deps = createDeps({ ids: [...TRANSIENT_IDS] });
+
+    const response = await handleAnalyzeRequest(
+      makeRequest({
+        frames: [VALID_JPEG_BASE64],
+        model: "gemini-2.5-flash",
+      }),
+      deps,
+    );
+    const json = (await response.json()) as ApiResponse<AnalysisResult>;
+
+    expect(response.status).toBe(200);
+    expect(json).toEqual({
+      data: {
+        assetId: TRANSIENT_ASSET_ID,
+        createdAt: "2026-06-06T12:00:00.000Z",
+        frameCount: 1,
+        id: TRANSIENT_ANALYSIS_ID,
+        model: "gemini-2.5-flash",
+        outputs: generated.outputs,
+        projectId: TRANSIENT_PROJECT_ID,
+        spec,
+        versionId: TRANSIENT_VERSION_ID,
+      },
+      ok: true,
+    });
+    expect(deps.authorizeAnalysisRequest).not.toHaveBeenCalled();
+    expect(deps.reserveDailyAnalysisUsage).toHaveBeenCalledWith({
+      dailyLimit: 1,
+      eventType: "analysis.started",
+      frameCount: 1,
+      model: "gemini-2.5-flash",
+      planTier: "free",
+      projectId: null,
+      since: new Date("2026-06-06T00:00:00.000Z"),
+      userId: "user_123",
+      workspaceId: null,
+    });
+    expect(deps.usage.record).toHaveBeenCalledWith({
+      eventType: "analysis.completed",
+      frameCount: 1,
+      model: "gemini-2.5-flash",
+      planTier: "free",
+      projectId: null,
+      userId: "user_123",
+      workspaceId: null,
+    });
   });
 
   it("returns quota exceeded when the daily plan limit is already used", async () => {
