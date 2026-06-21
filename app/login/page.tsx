@@ -37,7 +37,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps = {}) {
               aria-hidden="true"
             >
               <div className="absolute inset-0 bg-[linear-gradient(rgba(17,18,13,0.055)_1px,transparent_1px),linear-gradient(90deg,rgba(17,18,13,0.04)_1px,transparent_1px)] bg-[size:38px_38px]" />
-              <div className="absolute right-[-18%] top-[-22%] h-[32rem] w-[32rem] rotate-12 bg-[conic-gradient(from_210deg_at_50%_50%,transparent_0_16%,rgba(0,255,136,0.20)_18%,rgba(255,0,128,0.12)_25%,rgba(0,174,255,0.14)_33%,transparent_47%_100%)] blur-2xl" />
+              <div className="absolute right-[-18%] top-[-22%] h-[32rem] w-[32rem] rotate-12 bg-[conic-gradient(from_210deg_at_50%_50%,transparent_0_16%,rgba(0,255,136,0.20)_18%,rgba(216,207,188,0.12)_25%,rgba(158,240,192,0.14)_33%,transparent_47%_100%)] blur-2xl" />
             </div>
 
             <div className="relative mx-auto flex w-full max-w-[360px] flex-1 flex-col justify-center">
@@ -95,7 +95,7 @@ function MotionLabPreview() {
     <div className="relative hidden min-h-[620px] overflow-hidden bg-[#080908] p-8 text-[#fffbf4] lg:block">
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,251,244,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,251,244,0.04)_1px,transparent_1px)] bg-[size:34px_34px] opacity-70" />
       <div className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(0,255,136,0.64),transparent)]" />
-      <div className="absolute -right-24 top-10 h-[34rem] w-[34rem] rotate-12 bg-[conic-gradient(from_210deg_at_50%_50%,transparent_0_14%,rgba(0,255,136,0.22)_18%,rgba(255,0,128,0.17)_25%,rgba(0,174,255,0.18)_33%,transparent_47%_100%)] blur-2xl" />
+      <div className="absolute -right-24 top-10 h-[34rem] w-[34rem] rotate-12 bg-[conic-gradient(from_210deg_at_50%_50%,transparent_0_14%,rgba(0,255,136,0.22)_18%,rgba(216,207,188,0.17)_25%,rgba(158,240,192,0.18)_33%,transparent_47%_100%)] blur-2xl" />
       <div className="absolute -left-24 bottom-[-10rem] h-[28rem] w-[28rem] rotate-[-14deg] bg-[conic-gradient(from_120deg_at_50%_50%,transparent_0_20%,rgba(216,207,188,0.13)_24%,rgba(0,255,136,0.14)_34%,transparent_48%_100%)] blur-xl" />
 
       <div className="relative z-10 flex h-full flex-col justify-between">

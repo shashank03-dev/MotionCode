@@ -111,7 +111,7 @@ export function AdminUsersTable({ initialUsers }: AdminUsersTableProps) {
       <div className="flex flex-col gap-2 border-b border-[var(--border)] p-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h2 className="text-lg font-semibold">Admin Users</h2>
-          <p className="mt-1 text-sm text-[#b9c0ba]">
+          <p className="mt-1 text-sm text-[#d8cfbc]">
             Apply temporary or manual plan overrides with an audit trail.
           </p>
         </div>
@@ -130,7 +130,7 @@ export function AdminUsersTable({ initialUsers }: AdminUsersTableProps) {
       </div>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1080px] border-collapse text-left text-sm">
-          <thead className="bg-[#0f140f] text-xs uppercase text-[#b9c0ba]">
+          <thead className="bg-[#0f140f] text-xs uppercase text-[#d8cfbc]">
             <tr>
               <th className="px-4 py-3 font-medium">User</th>
               <th className="px-4 py-3 font-medium">Current Plan</th>
@@ -155,7 +155,7 @@ export function AdminUsersTable({ initialUsers }: AdminUsersTableProps) {
                     <div className="flex items-start gap-2">
                       {user.isInternalAdmin ? (
                         <ShieldCheck
-                          className="mt-0.5 size-4 text-[#8fd6ff]"
+                          className="mt-0.5 size-4 text-[#00ff88]"
                           aria-label="Internal admin"
                         />
                       ) : null}
@@ -163,7 +163,7 @@ export function AdminUsersTable({ initialUsers }: AdminUsersTableProps) {
                         <div className="font-medium text-[var(--text)]">
                           {user.displayName ?? user.email}
                         </div>
-                        <div className="text-xs text-[#b9c0ba]">{user.email}</div>
+                        <div className="text-xs text-[#d8cfbc]">{user.email}</div>
                         <div className="mt-1 font-mono text-xs text-[#737b75]">
                           {user.id}
                         </div>
@@ -173,16 +173,16 @@ export function AdminUsersTable({ initialUsers }: AdminUsersTableProps) {
                   <td className="px-4 py-3">
                     <PlanPill tier={user.planTier} />
                   </td>
-                  <td className="max-w-[260px] px-4 py-3 text-[#d8e0dc]">
+                  <td className="max-w-[260px] px-4 py-3 text-[#fffbf4]">
                     {user.latestOverride ? (
                       <div>
                         <PlanPill tier={user.latestOverride.planTier} />
-                        <p className="mt-2 line-clamp-2 text-xs leading-5 text-[#b9c0ba]">
+                        <p className="mt-2 line-clamp-2 text-xs leading-5 text-[#d8cfbc]">
                           {user.latestOverride.reason}
                         </p>
                       </div>
                     ) : (
-                      <span className="text-[#b9c0ba]">None</span>
+                      <span className="text-[#d8cfbc]">None</span>
                     )}
                   </td>
                   <td className="px-4 py-3">
@@ -228,7 +228,7 @@ export function AdminUsersTable({ initialUsers }: AdminUsersTableProps) {
                   <td className="px-4 py-3">
                     <button
                       aria-label={`Apply plan override for ${user.email}`}
-                      className="inline-flex size-8 items-center justify-center rounded-lg border border-[var(--border)] text-[#d8e0dc] hover:border-[#8fd6ff]/50 hover:text-[#8fd6ff] disabled:opacity-50"
+                      className="inline-flex size-8 items-center justify-center rounded-lg border border-[var(--border)] text-[#fffbf4] hover:border-[#00ff88]/50 hover:text-[#00ff88] disabled:opacity-50"
                       disabled={disabled}
                       onClick={() => submitOverride(user)}
                       title="Apply override"
@@ -248,7 +248,7 @@ export function AdminUsersTable({ initialUsers }: AdminUsersTableProps) {
         </table>
       </div>
       {users.length === 0 ? (
-        <div className="p-6 text-sm text-[#b9c0ba]">No users found.</div>
+        <div className="p-6 text-sm text-[#d8cfbc]">No users found.</div>
       ) : null}
     </section>
   );
@@ -257,10 +257,10 @@ export function AdminUsersTable({ initialUsers }: AdminUsersTableProps) {
 function PlanPill({ tier }: { tier: PlanTier }) {
   const tone =
     tier === "studio"
-      ? "border-[#8fd6ff]/50 bg-[#8fd6ff]/12 text-[#e7f7ff]"
+      ? "border-[#00ff88]/50 bg-[#00ff88]/12 text-[#fffbf4]"
       : tier === "pro"
         ? "border-[#82e6a0]/50 bg-[#82e6a0]/12 text-[#d8ffe2]"
-        : "border-[var(--border)] bg-[#0f140f] text-[#d8e0dc]";
+        : "border-[var(--border)] bg-[#0f140f] text-[#fffbf4]";
 
   return (
     <span className={`inline-flex rounded-lg border px-2 py-1 text-xs ${tone}`}>

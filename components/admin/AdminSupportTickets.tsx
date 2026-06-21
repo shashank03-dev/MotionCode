@@ -73,7 +73,7 @@ export function AdminSupportTickets({
       <div className="flex flex-col gap-2 border-b border-[var(--border)] p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold">Support Queue</h2>
-          <p className="mt-1 text-sm text-[#b9c0ba]">
+          <p className="mt-1 text-sm text-[#d8cfbc]">
             {openCount} active tickets across the visible queue.
           </p>
         </div>
@@ -85,7 +85,7 @@ export function AdminSupportTickets({
       </div>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[920px] border-collapse text-left text-sm">
-          <thead className="bg-[#0f140f] text-xs uppercase text-[#b9c0ba]">
+          <thead className="bg-[#0f140f] text-xs uppercase text-[#d8cfbc]">
             <tr>
               <th className="px-4 py-3 font-medium">Ticket</th>
               <th className="px-4 py-3 font-medium">Requester</th>
@@ -108,11 +108,11 @@ export function AdminSupportTickets({
                     <div className="font-medium text-[var(--text)]">
                       {ticket.subject}
                     </div>
-                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#b9c0ba]">
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#d8cfbc]">
                       {ticket.body}
                     </p>
                   </td>
-                  <td className="px-4 py-3 text-[#d8e0dc]">
+                  <td className="px-4 py-3 text-[#fffbf4]">
                     <ProfileLabel
                       fallbackId={ticket.userId}
                       profile={ticket.requester}
@@ -154,24 +154,24 @@ export function AdminSupportTickets({
                       ))}
                     </select>
                   </td>
-                  <td className="px-4 py-3 text-[#d8e0dc]">
+                  <td className="px-4 py-3 text-[#fffbf4]">
                     {ticket.assignee ? (
                       <ProfileLabel
                         fallbackId={ticket.assignedAdminId ?? ""}
                         profile={ticket.assignee}
                       />
                     ) : (
-                      <span className="text-[#b9c0ba]">Unassigned</span>
+                      <span className="text-[#d8cfbc]">Unassigned</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-[#b9c0ba]">
+                  <td className="px-4 py-3 text-[#d8cfbc]">
                     {formatDate(ticket.updatedAt)}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
                       <button
                         aria-label="Assign ticket to me"
-                        className="inline-flex size-8 items-center justify-center rounded-lg border border-[var(--border)] text-[#d8e0dc] hover:border-[#8fd6ff]/50 hover:text-[#8fd6ff] disabled:opacity-50"
+                        className="inline-flex size-8 items-center justify-center rounded-lg border border-[var(--border)] text-[#fffbf4] hover:border-[#00ff88]/50 hover:text-[#00ff88] disabled:opacity-50"
                         disabled={disabled}
                         onClick={() =>
                           updateTicket(ticket.id, {
@@ -189,7 +189,7 @@ export function AdminSupportTickets({
                       </button>
                       <button
                         aria-label="Unassign ticket"
-                        className="inline-flex size-8 items-center justify-center rounded-lg border border-[var(--border)] text-[#d8e0dc] hover:border-[#8fd6ff]/50 hover:text-[#8fd6ff] disabled:opacity-50"
+                        className="inline-flex size-8 items-center justify-center rounded-lg border border-[var(--border)] text-[#fffbf4] hover:border-[#00ff88]/50 hover:text-[#00ff88] disabled:opacity-50"
                         disabled={disabled}
                         onClick={() =>
                           updateTicket(ticket.id, { assignedAdminId: null })
@@ -208,7 +208,7 @@ export function AdminSupportTickets({
         </table>
       </div>
       {tickets.length === 0 ? (
-        <div className="p-6 text-sm text-[#b9c0ba]">No support tickets yet.</div>
+        <div className="p-6 text-sm text-[#d8cfbc]">No support tickets yet.</div>
       ) : null}
     </section>
   );
@@ -228,7 +228,7 @@ function ProfileLabel({
   return (
     <span>
       {profile.displayName ? `${profile.displayName} ` : ""}
-      <span className="text-[#b9c0ba]">{profile.email}</span>
+      <span className="text-[#d8cfbc]">{profile.email}</span>
     </span>
   );
 }

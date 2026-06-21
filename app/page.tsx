@@ -1011,7 +1011,7 @@ export default function LandingPage() {
                }}>
         <div className="motioncode-aurora-layer" aria-hidden="true">
           <Aurora
-            colorStops={["#D8CFBC", "#00FF88", "#7C5CFF"]}
+            colorStops={["#D8CFBC", "#00FF88", "#126137"]}
             amplitude={1.25}
             blend={0.46}
             speed={0.62}
@@ -1664,7 +1664,7 @@ export default function LandingPage() {
                    opacity: i === 0 ? 1 : 0, transform: i === 0 ? "scale(1)" : "scale(1.05)", filter: i === 0 ? "blur(0px)" : "blur(8px)", transition: "opacity 0.25s ease, filter 0.25s ease, transform 0.25s ease", willChange: "transform"
                  }}>
               <div style={{ fontFamily: "var(--font-mono)", fontSize: "160px", fontWeight: 800, color: "#ffffff08", userSelect: "none" }}>{ft.num}</div>
-              <div className="feature-title" style={{ fontFamily: "var(--font-mono)", fontSize: "28px", color: "#e2e8f0", marginTop: "-30px", zIndex: 10, willChange: "transform" }}>{ft.title}</div>
+              <div className="feature-title" style={{ fontFamily: "var(--font-mono)", fontSize: "28px", color: "#fffbf4", marginTop: "-30px", zIndex: 10, willChange: "transform" }}>{ft.title}</div>
               <div className="feature-desc" style={{ fontFamily: "var(--font-body)", fontSize: "15px", color: "var(--muted)", maxWidth: "320px", textAlign: "center", marginTop: "16px", lineHeight: 1.7, zIndex: 10, willChange: "transform" }}>{ft.desc}</div>
               <div
                 data-testid="feature-code-snippet"

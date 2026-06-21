@@ -42,11 +42,11 @@ const DEFAULT_ENTITLEMENTS = PLAN_ENTITLEMENTS.free;
 const DEFAULT_FRAME_COUNT = DEFAULT_ENTITLEMENTS.maxFramesPerAnalysis;
 
 const INTENT_COLORS: Record<string, string> = {
-  entrance: "#3b82f6",
-  exit: "#ef4444",
-  hover: "#f59e0b",
-  loading: "#8b5cf6",
-  loop: "#10b981",
+  entrance: "#9ef0c0",
+  exit: "#f58f7c",
+  hover: "#ffd166",
+  loading: "#d8cfbc",
+  loop: "#82e6a0",
   morph: "#00ff88",
 };
 
