@@ -4,10 +4,10 @@
   --process-panel-strong: color-mix(in srgb, var(--surface) 68%, var(--accent) 9%);
   --process-line: color-mix(in srgb, var(--border) 66%, var(--accent) 34%);
   --process-muted: color-mix(in srgb, var(--muted) 68%, var(--text) 32%);
-  --process-danger: #ff5b5f;
+  --process-danger: #f58f7c;
   --process-success: #00ff88;
-  --process-cyan: #8bdff6;
-  --process-blueprint: color-mix(in srgb, #0b1420 72%, var(--surface) 28%);
+  --process-cyan: #9ef0c0;
+  --process-blueprint: color-mix(in srgb, #0f140f 72%, var(--surface) 28%);
   --process-ease: cubic-bezier(0.22, 1, 0.36, 1);
   background:
     radial-gradient(circle at 78% 8%, color-mix(in srgb, var(--process-cyan) 12%, transparent), transparent 30%),

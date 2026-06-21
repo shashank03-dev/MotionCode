@@ -68,7 +68,7 @@ export function AnalysisStatus({
               )}
               <div
                 style={{
-                  color: isActive ? "#e2e8f0" : "#3a3a4a",
+                  color: isActive ? "#fffbf4" : "#565449",
                   fontFamily: "Space Mono, monospace",
                   fontSize: 12,
                 }}

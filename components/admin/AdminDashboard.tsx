@@ -49,42 +49,42 @@ export function AdminDashboard({
                   <p className="truncate text-sm font-medium text-[var(--text)]">
                     {user.displayName ?? user.email}
                   </p>
-                  <p className="truncate text-xs text-[#b9c0ba]">{user.email}</p>
+                  <p className="truncate text-xs text-[#d8cfbc]">{user.email}</p>
                 </div>
-                <span className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[#d8e0dc]">
+                <span className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[#fffbf4]">
                   {user.planTier}
                 </span>
               </div>
             ))}
             {dashboard.recentUsers.length === 0 ? (
-              <div className="p-4 text-sm text-[#b9c0ba]">No users found.</div>
+              <div className="p-4 text-sm text-[#d8cfbc]">No users found.</div>
             ) : null}
           </div>
         </div>
 
         <div className="rounded-lg border border-[var(--border)] bg-[#151913]">
           <div className="flex items-center gap-2 border-b border-[var(--border)] p-4">
-            <Activity className="size-4 text-[#8fd6ff]" aria-hidden="true" />
+            <Activity className="size-4 text-[#00ff88]" aria-hidden="true" />
             <h2 className="text-lg font-semibold">Recent Audit Events</h2>
           </div>
           <div className="divide-y divide-[var(--border)]">
             {dashboard.recentAuditEvents.map((event) => (
               <div className="grid gap-1 p-4 text-sm" key={event.id}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-mono text-xs text-[#8fd6ff]">
+                  <span className="font-mono text-xs text-[#00ff88]">
                     {event.eventType}
                   </span>
-                  <span className="text-xs text-[#b9c0ba]">
+                  <span className="text-xs text-[#d8cfbc]">
                     {formatDate(event.createdAt)}
                   </span>
                 </div>
-                <p className="truncate text-xs text-[#b9c0ba]">
+                <p className="truncate text-xs text-[#d8cfbc]">
                   {event.targetType ?? "system"} {event.targetId ?? ""}
                 </p>
               </div>
             ))}
             {dashboard.recentAuditEvents.length === 0 ? (
-              <div className="p-4 text-sm text-[#b9c0ba]">No audit events yet.</div>
+              <div className="p-4 text-sm text-[#d8cfbc]">No audit events yet.</div>
             ) : null}
           </div>
         </div>
@@ -105,8 +105,8 @@ function MetricCard({
 }) {
   return (
     <div className="rounded-lg border border-[var(--border)] bg-[#151913] p-4">
-      <div className="mb-3 flex items-center gap-2 text-sm text-[#b9c0ba]">
-        <span className="text-[#8fd6ff]">{icon}</span>
+      <div className="mb-3 flex items-center gap-2 text-sm text-[#d8cfbc]">
+        <span className="text-[#00ff88]">{icon}</span>
         {label}
       </div>
       <div className="text-3xl font-semibold text-[var(--text)]">{value}</div>
