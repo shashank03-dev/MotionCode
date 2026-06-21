@@ -18,6 +18,14 @@ export function normalizeAuthNextPath(value: string | null | undefined) {
       return DEFAULT_AUTH_NEXT_PATH;
     }
 
+    // Inputs like "/..//evil.com" pass the leading-"//" check above but the URL
+    // parser collapses the "../" segment into a protocol-relative pathname
+    // ("//evil.com"). Reflected into a redirect, that sends the user off-site,
+    // so reject any resolved path that is still protocol-relative.
+    if (url.pathname.startsWith("//") || url.pathname.startsWith("/\\")) {
+      return DEFAULT_AUTH_NEXT_PATH;
+    }
+
     return `${url.pathname}${url.search}${url.hash}`;
   } catch {
     return DEFAULT_AUTH_NEXT_PATH;

@@ -31,6 +31,14 @@ describe("auth redirect helpers", () => {
     expect(normalizeAuthNextPath(null)).toBe(DEFAULT_AUTH_NEXT_PATH);
   });
 
+  it("rejects paths that collapse into a protocol-relative redirect", () => {
+    expect(normalizeAuthNextPath("/..//evil.test")).toBe(DEFAULT_AUTH_NEXT_PATH);
+    expect(normalizeAuthNextPath("/./..//evil.test/path")).toBe(
+      DEFAULT_AUTH_NEXT_PATH,
+    );
+    expect(normalizeAuthNextPath("/\\evil.test")).toBe(DEFAULT_AUTH_NEXT_PATH);
+  });
+
   it("omits the next query for the default app destination", () => {
     expect(loginPathForNext("/app")).toBe("/login");
     expect(loginPathForNext(null)).toBe("/login");

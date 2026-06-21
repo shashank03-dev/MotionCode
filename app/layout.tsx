@@ -26,8 +26,10 @@ const bridgeMono = JetBrains_Mono({
   display: "swap",
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://motioncode.live";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://motioncode.vercel.app"),
+  metadataBase: new URL(siteUrl),
   title: {
     default: "MotionCode - Turn Animations Into Production Code",
     template: "%s | MotionCode",
@@ -38,7 +40,6 @@ export const metadata: Metadata = {
     title: "MotionCode",
     description:
       "Turn animations into production code with MotionCode.",
-    images: ["/opengraph-image"],
   },
 };
 
