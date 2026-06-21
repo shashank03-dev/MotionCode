@@ -79,12 +79,13 @@ describe("LoginForm", () => {
     });
   });
 
-  it("defaults new authentication sessions into the processing app", async () => {
+  it("defaults new authentication sessions into the app workspace", async () => {
     const { LoginForm } = await import("@/components/dashboard/login-form");
 
     await act(async () => {
       root.render(<LoginForm />);
     });
+    await settleProviderCheck();
 
     const button = findButton("Continue with Google");
     await act(async () => {
@@ -102,7 +103,7 @@ describe("LoginForm", () => {
     });
   });
 
-  it("uses the configured site URL for Google OAuth callbacks", async () => {
+  it("keeps Google OAuth callbacks on localhost during local development", async () => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://motioncode.com/";
 
     const { LoginForm } = await import("@/components/dashboard/login-form");
@@ -123,7 +124,7 @@ describe("LoginForm", () => {
         queryParams: {
           prompt: "select_account",
         },
-        redirectTo: "https://motioncode.com/auth/callback?next=%2Fdashboard",
+        redirectTo: `${window.location.origin}/auth/callback?next=%2Fdashboard`,
       },
     });
   });
@@ -170,7 +171,7 @@ describe("LoginForm", () => {
     });
   });
 
-  it("uses the configured site URL and normalized email for magic links", async () => {
+  it("keeps magic-link callbacks on localhost during local development", async () => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://motioncode.com";
 
     const { LoginForm } = await import("@/components/dashboard/login-form");
@@ -209,7 +210,7 @@ describe("LoginForm", () => {
       email: "founder@example.com",
       options: {
         emailRedirectTo:
-          "https://motioncode.com/auth/callback?next=%2Faccount",
+          `${window.location.origin}/auth/callback?next=%2Faccount`,
       },
     });
   });

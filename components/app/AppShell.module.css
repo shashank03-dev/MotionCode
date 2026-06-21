@@ -61,6 +61,58 @@
   gap: 14px;
 }
 
+.productNav {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.productNav::-webkit-scrollbar {
+  display: none;
+}
+
+.productNavActive,
+.productNavLink {
+  display: inline-flex;
+  height: 34px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid transparent;
+  padding: 0 11px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-decoration: none;
+  transition:
+    border-color 220ms var(--app-ease),
+    background-color 220ms var(--app-ease),
+    color 220ms var(--app-ease),
+    transform 220ms var(--app-ease);
+}
+
+.productNavActive {
+  border-color: color-mix(in srgb, var(--accent-border) 86%, transparent);
+  background: var(--accent-dim);
+  color: var(--text);
+}
+
+.productNavLink {
+  color: var(--accent);
+}
+
+.productNavLink:hover {
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.productNavLink:active {
+  transform: translateY(1px);
+}
+
 .planBadge {
   border: 1px solid color-mix(in srgb, var(--accent-border) 76%, transparent);
   border-radius: 4px;
@@ -77,6 +129,9 @@
 }
 
 .homeLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   color: var(--muted);
   font-size: 0.82rem;
   text-decoration: none;
@@ -217,6 +272,21 @@
   .navActions {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .productNav {
+    order: 3;
+    width: 100%;
+    gap: 4px;
+    justify-content: flex-start;
+  }
+
+  .productNavActive,
+  .productNavLink {
+    height: 32px;
+    gap: 5px;
+    padding: 0 7px;
+    font-size: 0.62rem;
   }
 
   .toast {

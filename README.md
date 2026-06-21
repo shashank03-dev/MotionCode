@@ -71,8 +71,19 @@ Paid-readiness and admin operations:
 
 1. Create a Supabase project.
 2. Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`.
-3. Apply migrations from `supabase/migrations`.
-4. Verify RLS policy coverage:
+3. In Supabase Auth, enable the Google provider and add the Google OAuth client ID/secret. In Google Cloud, add the Supabase Auth callback URL from the provider page as an authorized redirect URI.
+4. Set the Supabase Auth Site URL to `NEXT_PUBLIC_SITE_URL`, then add local, staging, and production `/auth/callback` URLs to the redirect allowlist.
+5. Verify the public Auth settings report Google as enabled before shipping the Google button:
+
+```bash
+curl -s "$NEXT_PUBLIC_SUPABASE_URL/auth/v1/settings" \
+  -H "apikey: $NEXT_PUBLIC_SUPABASE_ANON_KEY"
+```
+
+The response must include Google as an enabled external provider. If it does not, the login page will keep Google sign-in unavailable and users should use email sign-in.
+
+6. Apply migrations from `supabase/migrations`.
+7. Verify RLS policy coverage:
 
 ```bash
 npm run test -- tests/integration/rls-policies.test.ts

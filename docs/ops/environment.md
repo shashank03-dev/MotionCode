@@ -34,7 +34,9 @@ Google OAuth is configured in Supabase Auth, not through MotionCode runtime env 
 | `http://localhost:3000/auth/callback` | Supabase Auth redirect allowlist | Local OAuth and magic-link callback during development. |
 | Staging and production `/auth/callback` URLs | Supabase Auth redirect allowlist | Hosted environments. Production should match `NEXT_PUBLIC_SITE_URL`. |
 
-The app callback route exchanges the Supabase auth code, ensures a `profiles` row exists, and redirects to `/dashboard` or the sanitized `next` path. Sign-out clears only the current browser session through `/auth/signout`.
+The app callback route exchanges the Supabase auth code, ensures a `profiles` row exists, and redirects to the sanitized `next` path or the default app workspace. Sign-out clears only the current browser session through `/auth/signout`.
+
+The login page reads the public Supabase Auth settings endpoint at `/auth/v1/settings` before starting Google OAuth. If the deployment Supabase project reports Google as disabled, the Google button stays unavailable and email sign-in remains usable. To verify production readiness, call the settings endpoint with the anon key and confirm the Google external provider is enabled.
 
 The login page reads the public Supabase Auth settings endpoint at `/auth/v1/settings` before starting Google OAuth. If the deployment Supabase project reports Google as disabled, or if the settings cannot be verified, the Google button stays unavailable and email sign-in remains usable. To verify production readiness, call the settings endpoint with the anon key and confirm the Google external provider is enabled.
 

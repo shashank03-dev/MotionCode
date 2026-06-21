@@ -18,6 +18,14 @@ export function normalizeAuthNextPath(value: string | null | undefined) {
       return DEFAULT_AUTH_NEXT_PATH;
     }
 
+    // Inputs like "/..//evil.com" pass the leading-"//" check above but the URL
+    // parser collapses the "../" segment into a protocol-relative pathname
+    // ("//evil.com"). Reflected into a redirect, that sends the user off-site,
+    // so reject any resolved path that is still protocol-relative.
+    if (url.pathname.startsWith("//") || url.pathname.startsWith("/\\")) {
+      return DEFAULT_AUTH_NEXT_PATH;
+    }
+
     return `${url.pathname}${url.search}${url.hash}`;
   } catch {
     return DEFAULT_AUTH_NEXT_PATH;
@@ -42,12 +50,32 @@ export function buildAuthCallbackUrl(origin: string, nextPath: string) {
 }
 
 export function getAuthRedirectOrigin(currentOrigin: string) {
+  const normalizedCurrentOrigin =
+    normalizeOrigin(currentOrigin) ?? currentOrigin;
+
+  if (isLocalDevelopmentOrigin(normalizedCurrentOrigin)) {
+    return normalizedCurrentOrigin;
+  }
+
   return (
     normalizeOrigin(process.env.NEXT_PUBLIC_SITE_URL) ??
     normalizeOrigin(process.env.NEXT_PUBLIC_VERCEL_URL) ??
-    normalizeOrigin(currentOrigin) ??
-    currentOrigin
+    normalizedCurrentOrigin
   );
+}
+
+function isLocalDevelopmentOrigin(origin: string) {
+  try {
+    const { hostname } = new URL(origin);
+    return (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "[::1]" ||
+      hostname === "::1"
+    );
+  } catch {
+    return false;
+  }
 }
 
 function normalizeOrigin(value: string | null | undefined) {
