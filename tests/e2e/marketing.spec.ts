@@ -51,7 +51,9 @@ test.describe("marketing surface", () => {
       hero.getByText("into production", { exact: true }),
     ).toBeVisible();
     await expect(hero.getByText("code.", { exact: true })).toBeVisible();
-    await expect(page.getByText("TRUSTED BY DEVELOPERS AT")).toBeVisible();
+    await expect(
+      page.getByText("Fits beside the tools motion teams already use"),
+    ).toBeVisible();
 
     await expect(
       page.getByRole("link", { name: /Start for free/i }),
@@ -160,18 +162,23 @@ test.describe("marketing surface", () => {
     expect(await logos.count()).toBeGreaterThanOrEqual(8);
     await expect(marquee).toHaveCSS("animation-play-state", "running");
 
-    for (const brand of [
-      "Vercel",
-      "Razorpay",
-      "Linear",
-      "Figma",
-      "Notion",
-      "Loom",
-      "Raycast",
-      "Resend",
+    // Logos are decorative (alt="" aria-hidden) in the redesigned strip, so
+    // assert each brand icon is present by its simpleicons CDN source rather
+    // than by an accessible name.
+    for (const icon of [
+      "vercel",
+      "razorpay",
+      "linear",
+      "figma",
+      "notion",
+      "loom",
+      "raycast",
+      "resend",
     ]) {
-      const logo = logoStrip.getByRole("img", { name: `${brand} logo` }).first();
-      await expect(logo).toBeVisible();
+      const logo = logoStrip
+        .locator(`img[src*="cdn.simpleicons.org/${icon}/"]`)
+        .first();
+      await expect(logo).toBeAttached();
       await expect(logo).toHaveAttribute("src", /cdn\.simpleicons\.org/);
     }
 
