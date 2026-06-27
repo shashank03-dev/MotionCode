@@ -5779,6 +5779,46 @@ body::after {
   filter: drop-shadow(0 0 10px rgba(216, 207, 188, 0.1));
 }
 
+/* Branded glyph tile shared by the real icon and the monogram fallback so every
+   mark keeps one deterministic footprint and reads as intentional, not pulled
+   straight from a generic icon CDN. */
+.motioncode-logo-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  border: 1px solid rgba(216, 207, 188, 0.1);
+  background: linear-gradient(
+    160deg,
+    rgba(216, 207, 188, 0.06),
+    rgba(216, 207, 188, 0.02)
+  );
+  box-shadow: inset 0 1px 0 rgba(255, 251, 244, 0.04);
+  transition: border-color 220ms ease, background 220ms ease, box-shadow 220ms ease;
+}
+
+.motioncode-logo-mark:hover .motioncode-logo-glyph {
+  border-color: rgba(0, 255, 136, 0.36);
+  background: linear-gradient(
+    160deg,
+    rgba(0, 255, 136, 0.1),
+    rgba(216, 207, 188, 0.03)
+  );
+  box-shadow: inset 0 1px 0 rgba(255, 251, 244, 0.06),
+    0 0 16px rgba(0, 255, 136, 0.12);
+}
+
+.motioncode-logo-monogram {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent);
+}
+
 @media (max-width: 1023px) {
   .motioncode-scroll-bridge-container {
     min-height: 0 !important;
