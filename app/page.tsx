@@ -1232,7 +1232,7 @@ export default function LandingPage() {
           03 /
         </div>
 
-        <div className="motioncode-feature-list" style={{ width: "48%", padding: "60px 40px", borderRight: "1px solid var(--border)", display: "flex", flexDirection: "column" }}>
+        <div className="motioncode-feature-list" style={{ width: "48%", padding: "60px 40px", position: "relative", display: "flex", flexDirection: "column" }}>
           <div style={{ fontFamily: "var(--font-mono)", fontSize: "9px", color: "#3a3a4a", letterSpacing: "3px" }}>PRODUCT</div>
           <div style={{ fontFamily: "var(--font-mono)", fontSize: "28px", color: "var(--text)", marginBottom: "18px", marginTop: "16px" }}>Everything you need to ship motion.</div>
           <div className="motioncode-feature-status-line">

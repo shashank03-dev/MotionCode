@@ -3000,7 +3000,31 @@ body::after {
   gap: 24px;
 }
 
+/* Soft, inset column divider for the pinned features section. Replaces a hard
+   full-height border so the line never collides with the logo strip seam above;
+   it fades out top and bottom and reads as an intentional split. */
+.motioncode-feature-list::after {
+  content: "";
+  position: absolute;
+  top: 14%;
+  bottom: 14%;
+  right: 0;
+  width: 1px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    var(--border) 16%,
+    var(--border) 84%,
+    transparent
+  );
+  pointer-events: none;
+}
+
 @media (max-width: 767px) {
+  .motioncode-feature-list::after {
+    display: none;
+  }
+
   .motioncode-march-shell {
     overflow-x: hidden;
   }
