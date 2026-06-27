@@ -36,7 +36,7 @@ export function FrameStrip({
             }`}
             key={`${thumb}-${index}`}
           >
-            <img alt={`Frame ${index + 1}`} src={thumb} />
+            <img alt={`Frame ${index + 1}`} src={thumb} decoding="async" />
           </div>
         ))}
       </div>
@@ -51,7 +51,7 @@ export function FrameStrip({
       </div>
       <div className={styles.thumbRail}>
         {thumbs.map((thumb, index) => (
-          <img alt={`Frame ${index + 1}`} key={`${thumb}-${index}`} src={thumb} />
+          <img alt={`Frame ${index + 1}`} key={`${thumb}-${index}`} src={thumb} loading="lazy" decoding="async" />
         ))}
       </div>
     </section>

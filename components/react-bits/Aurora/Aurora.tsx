@@ -199,6 +199,22 @@ export default function Aurora(props: AuroraProps) {
     ctn.appendChild(gl.canvas);
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
+    // Cache the resolved color-stop array so we only recompute it when the
+    // hex values actually change, instead of allocating Color objects per frame.
+    let cachedColorKey = '';
+    let cachedColorValue: number[][] = colorStopsArray;
+    const resolveColorStops = (stops: string[]): number[][] => {
+      const key = stops.join(',');
+      if (key !== cachedColorKey) {
+        cachedColorKey = key;
+        cachedColorValue = stops.map((hex: string) => {
+          const c = new Color(hex);
+          return [c.r, c.g, c.b];
+        });
+      }
+      return cachedColorValue;
+    };
+
     let animateId = 0;
     const renderFrame = (t: number) => {
       const { time = t * 0.01, speed = 1.0 } = propsRef.current;
@@ -207,10 +223,7 @@ export default function Aurora(props: AuroraProps) {
         program.uniforms.uAmplitude.value = propsRef.current.amplitude ?? 1.0;
         program.uniforms.uBlend.value = propsRef.current.blend ?? blend;
         const stops = propsRef.current.colorStops ?? colorStops;
-        program.uniforms.uColorStops.value = stops.map((hex: string) => {
-          const c = new Color(hex);
-          return [c.r, c.g, c.b];
-        });
+        program.uniforms.uColorStops.value = resolveColorStops(stops);
         renderer.render({ scene: mesh });
       }
     };
@@ -220,14 +233,46 @@ export default function Aurora(props: AuroraProps) {
       animateId = requestAnimationFrame(update);
     };
 
+    // Only run the rAF loop while the canvas is on-screen and the tab is
+    // visible. This keeps the WebGL shader from draining GPU/CPU in the
+    // background, which is the main cause of jank on weaker devices.
+    let running = false;
+    let onScreen = true;
+    const start = () => {
+      if (running || reduceMotion.matches) return;
+      running = true;
+      animateId = requestAnimationFrame(update);
+    };
+    const stop = () => {
+      running = false;
+      cancelAnimationFrame(animateId);
+    };
+    const syncPlayback = () => {
+      if (onScreen && document.visibilityState === 'visible') {
+        start();
+      } else {
+        stop();
+      }
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        onScreen = entries[0]?.isIntersecting ?? true;
+        syncPlayback();
+      },
+      { threshold: 0 },
+    );
+    observer.observe(ctn);
+    document.addEventListener('visibilitychange', syncPlayback);
+
     resize();
     renderFrame(0);
-    if (!reduceMotion.matches) {
-      animateId = requestAnimationFrame(update);
-    }
+    syncPlayback();
 
     return () => {
-      cancelAnimationFrame(animateId);
+      stop();
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', syncPlayback);
       window.removeEventListener('resize', resize);
       if (ctn && gl.canvas.parentNode === ctn) {
         ctn.removeChild(gl.canvas);

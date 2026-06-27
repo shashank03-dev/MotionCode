@@ -209,7 +209,7 @@ export function ProcessCanvas({
                   style={{ "--frame-index": index } as StyleVars}
                 >
                   {thumb ? (
-                    <img alt={`Sampled frame ${index + 1}`} src={thumb} />
+                    <img alt={`Sampled frame ${index + 1}`} src={thumb} loading="lazy" decoding="async" />
                   ) : (
                     <span aria-hidden="true" className={styles.frameGlyph}>
                       {String(index + 1).padStart(2, "0")}

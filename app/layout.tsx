@@ -2,15 +2,10 @@ import type { Metadata } from "next";
 import { Archivo, Geist, Geist_Mono, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
+// Primary body + display fonts are above-the-fold, so they preload.
 const geistSans = Geist({
   subsets: ["latin"],
   variable: "--font-geist-sans",
-  display: "swap",
-});
-
-const geistMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-geist-mono",
   display: "swap",
 });
 
@@ -20,10 +15,19 @@ const bridgeDisplay = Archivo({
   display: "swap",
 });
 
+// Mono fonts are used for smaller UI accents; don't let them block render.
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
+  display: "swap",
+  preload: false,
+});
+
 const bridgeMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-bridge-mono",
   display: "swap",
+  preload: false,
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://motioncode.live";

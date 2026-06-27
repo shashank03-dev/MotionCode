@@ -53,6 +53,21 @@ export const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
+  // Tree-shake large icon/animation packages so only used exports ship.
+  experimental: {
+    optimizePackageImports: [
+      "lucide-react",
+      "framer-motion",
+      "@gsap/react",
+    ],
+  },
+  compiler: {
+    // Strip console.* (except errors/warnings) from production bundles.
+    removeConsole:
+      process.env.NODE_ENV === "production"
+        ? { exclude: ["error", "warn"] }
+        : false,
+  },
   async headers() {
     return [
       {

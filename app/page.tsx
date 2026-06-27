@@ -3,10 +3,18 @@
 /* eslint-disable @next/next/no-img-element -- Partner logos are tiny external Simple Icons SVG marks, not LCP content. */
 import React, { useEffect, useRef } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
-import { Aurora, Magnet } from "@/components/react-bits";
+import { Magnet } from "@/components/react-bits";
+
+// Aurora is a WebGL/OGL background that cannot render on the server. Loading it
+// lazily keeps the ~ogl shader code out of the initial bundle so the hero text
+// paints first; the decorative canvas hydrates in just after.
+const Aurora = dynamic(() => import("@/components/react-bits/Aurora/Aurora"), {
+  ssr: false,
+});
 import { CheckoutButton } from "@/app/pricing/CheckoutButton";
 import { MarketingAuthNavActions } from "@/components/marketing/auth-nav-actions";
 import { ScrollSolutionBridge } from "@/components/marketing/scroll-solution-bridge";
