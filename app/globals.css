@@ -6607,3 +6607,229 @@ body::after {
     opacity: 1 !important;
   }
 }
+
+/* ============================================================
+   HERO V2 — "ambient depth field"
+   The motion-lab cluster is promoted from a right-side card to a
+   full-bleed background layer behind a readability scrim, and the
+   text becomes a normal-flow left column so larger type reflows
+   without re-tuning a stack of absolute offsets.
+   Scoped under [data-hero-v2] so it cleanly overrides the legacy
+   hero rules and is trivial to revert.
+   ============================================================ */
+
+.motioncode-hero-section[data-hero-v2] {
+  display: flex;
+  align-items: center;
+  padding-block: clamp(118px, 17vh, 196px) clamp(72px, 11vh, 132px);
+}
+
+.motioncode-hero-section[data-hero-v2] .motioncode-hero-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(20px, 2.4vh, 30px);
+  width: min(70vw, 1180px);
+  max-width: calc(100vw - 2 * clamp(34px, 6vw, 148px));
+  margin-left: clamp(34px, 6vw, 148px);
+  pointer-events: none;
+}
+
+/* Drop every absolute magic-number offset — flow + gap own spacing now. */
+.motioncode-hero-section[data-hero-v2] .hero-eyebrow,
+.motioncode-hero-section[data-hero-v2] .motioncode-hero-headline,
+.motioncode-hero-section[data-hero-v2] .motioncode-hero-subtext,
+.motioncode-hero-section[data-hero-v2] .motioncode-hero-actions,
+.motioncode-hero-section[data-hero-v2] .motioncode-hero-badges {
+  position: static !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  margin: 0 !important;
+  width: auto !important;
+  max-width: 100% !important;
+}
+
+/* Visual order: eyebrow -> headline -> subtext -> CTAs -> badges. */
+.motioncode-hero-section[data-hero-v2] .motioncode-hero-badges {
+  order: 1;
+  line-height: 2 !important;
+}
+
+/* Bigger, louder headline. */
+.motioncode-hero-section[data-hero-v2] .motioncode-hero-headline > div > div {
+  font-size: clamp(50px, 5.4vw, 100px) !important;
+  line-height: 1.04 !important;
+  white-space: nowrap;
+  width: max-content;
+}
+
+.motioncode-hero-section[data-hero-v2] .motioncode-hero-subtext {
+  font-size: 17px !important;
+  line-height: 1.65 !important;
+  max-width: 480px !important;
+  color: rgba(216, 207, 188, 0.8) !important;
+}
+
+/* Bigger, more visible CTAs (cream primary, outlined secondary). */
+.motioncode-hero-section[data-hero-v2] .motioncode-hero-actions {
+  gap: 14px !important;
+  pointer-events: auto;
+}
+
+.motioncode-hero-section[data-hero-v2] .motioncode-hero-actions a {
+  min-height: 54px !important;
+  padding: 0 30px !important;
+}
+
+.motioncode-hero-section[data-hero-v2] .motioncode-hero-action {
+  min-width: 170px !important;
+  font-size: 14px !important;
+  letter-spacing: 0.01em !important;
+}
+
+/* Readability scrim above the panels, below the text column. */
+.motioncode-hero-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      100deg,
+      var(--bg) 0%,
+      rgba(7, 9, 8, 0.92) 34%,
+      rgba(7, 9, 8, 0.5) 58%,
+      transparent 80%
+    ),
+    linear-gradient(180deg, transparent 58%, rgba(7, 9, 8, 0.55));
+}
+
+/* ---- motion-lab promoted to a full-bleed ambient background ---- */
+.motioncode-hero-section[data-hero-v2] .motion-lab-bg {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  transform: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  filter: saturate(1.03) blur(0.5px);
+  opacity: 0.6;
+  z-index: 1 !important;
+  pointer-events: none !important;
+}
+
+.motioncode-hero-section[data-hero-v2] .motion-lab-bg::before,
+.motioncode-hero-section[data-hero-v2] .motion-lab-bg::after {
+  display: none !important;
+}
+
+/* Spread the panels across the hero: terminal center-right (behind text),
+   sampler / curve / export stacked on the far-right rail. */
+.motioncode-hero-section[data-hero-v2] .motion-lab-bg .motion-lab-console {
+  left: auto !important;
+  right: 22% !important;
+  top: 34% !important;
+  width: min(340px, 25vw) !important;
+  max-width: 340px !important;
+}
+
+.motioncode-hero-section[data-hero-v2] .motion-lab-bg .motion-lab-panel-sampler {
+  left: auto !important;
+  right: 4% !important;
+  top: 13% !important;
+  width: 154px !important;
+}
+
+.motioncode-hero-section[data-hero-v2] .motion-lab-bg .motion-lab-panel-curve {
+  left: auto !important;
+  right: 4% !important;
+  top: 38% !important;
+  bottom: auto !important;
+  width: 154px !important;
+}
+
+.motioncode-hero-section[data-hero-v2] .motion-lab-bg .motion-lab-panel-export {
+  left: auto !important;
+  right: 4% !important;
+  top: 63% !important;
+  bottom: auto !important;
+  width: 154px !important;
+}
+
+.motioncode-hero-section[data-hero-v2] .motion-lab-bg .motion-lab-status-strip {
+  left: 40% !important;
+  right: 16% !important;
+  bottom: 8% !important;
+}
+
+/* The small bottom-left depth card would sit under the CTAs — drop it here. */
+.motioncode-hero-section[data-hero-v2] .motion-lab-bg .motion-lab-depth-card-energy {
+  display: none !important;
+}
+
+/* Top microcopy duplicates the frame-sampler panel and collides with it in
+   the ambient layout — drop it. */
+.motioncode-hero-section[data-hero-v2] .motioncode-hero-microcopy-top {
+  display: none !important;
+}
+
+/* Tablet/large-laptop: tighten the column + panel sizing. */
+@media (max-width: 1279px) {
+  .motioncode-hero-section[data-hero-v2] .motion-lab-bg .motion-lab-console {
+    right: 20% !important;
+    top: 33% !important;
+    width: min(300px, 26vw) !important;
+  }
+
+  .motioncode-hero-section[data-hero-v2] .motion-lab-bg .motion-lab-panel-sampler,
+  .motioncode-hero-section[data-hero-v2] .motion-lab-bg .motion-lab-panel-curve,
+  .motioncode-hero-section[data-hero-v2] .motion-lab-bg .motion-lab-panel-export {
+    right: 3% !important;
+    width: 138px !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  .motioncode-hero-section[data-hero-v2] .motioncode-hero-content {
+    width: min(92vw, 700px);
+    gap: clamp(18px, 2.2vh, 26px);
+  }
+}
+
+@media (max-width: 767px) {
+  .motioncode-hero-section[data-hero-v2] {
+    padding-block: clamp(104px, 16vh, 150px) 64px;
+  }
+
+  .motioncode-hero-section[data-hero-v2] .motioncode-hero-content {
+    width: 100%;
+    margin-left: 22px;
+    margin-right: 22px;
+    max-width: calc(100vw - 44px);
+  }
+
+  .motioncode-hero-section[data-hero-v2] .motioncode-hero-headline > div > div {
+    font-size: clamp(34px, 11vw, 56px) !important;
+    white-space: normal !important;
+    width: auto !important;
+  }
+
+  .motioncode-hero-section[data-hero-v2] .motioncode-hero-actions {
+    flex-direction: column !important;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .motioncode-hero-section[data-hero-v2] .motioncode-hero-action {
+    width: 100%;
+  }
+}

@@ -221,7 +221,7 @@ test.describe("marketing surface", () => {
     ).toBeVisible();
   });
 
-  test("landing hero includes an interactive motion lab preview", async ({
+  test("landing hero renders the ambient motion lab background", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -270,21 +270,17 @@ test.describe("marketing surface", () => {
     await expect(preview.getByText("export stack")).toBeVisible();
     await expect(preview.getByText("morph vector")).toBeVisible();
 
-    const beforeTransform = await preview.evaluate(
-      (node) => getComputedStyle(node).transform,
-    );
-
-    await preview.hover();
-
-    await expect(preview).toHaveAttribute("data-hovered", "true");
-    await expect(preview).toHaveCSS("border-color", "rgba(216, 207, 188, 0.42)");
-
-    await expect
-      .poll(
-        () => preview.evaluate((node) => getComputedStyle(node).transform),
-        { message: "motion lab preview should move on hover" },
-      )
-      .not.toBe(beforeTransform);
+    // The motion lab is now an ambient background layer: it sits behind the
+    // headline (lower z-index, non-interactive) so the copy stays clickable.
+    const layering = await preview.evaluate((node) => {
+      const styles = getComputedStyle(node);
+      return {
+        pointerEvents: styles.pointerEvents,
+        zIndex: Number.parseInt(styles.zIndex, 10),
+      };
+    });
+    expect(layering.pointerEvents).toBe("none");
+    expect(layering.zIndex).toBeLessThan(10);
 
     const panelBoxes = await Promise.all(
       ["motion-lab-sampler", "motion-lab-curve", "motion-lab-export"].map(

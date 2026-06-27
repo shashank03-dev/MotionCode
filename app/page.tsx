@@ -385,33 +385,6 @@ export default function LandingPage() {
     };
   }, []);
 
-  const handleMotionLabPointer = (event: React.MouseEvent<HTMLDivElement>) => {
-    const bounds = event.currentTarget.getBoundingClientRect();
-    const x = ((event.clientX - bounds.left) / bounds.width) * 100;
-    const y = ((event.clientY - bounds.top) / bounds.height) * 100;
-
-    event.currentTarget.style.setProperty("--cursor-x", `${x.toFixed(2)}%`);
-    event.currentTarget.style.setProperty("--cursor-y", `${y.toFixed(2)}%`);
-  };
-
-  const setMotionLabHover = (
-    event: React.MouseEvent<HTMLDivElement>,
-    hovered: boolean,
-  ) => {
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-
-    event.currentTarget.setAttribute("data-hovered", hovered ? "true" : "false");
-    event.currentTarget.style.borderColor = hovered
-      ? "rgba(216, 207, 188, 0.42)"
-      : "rgba(216, 207, 188, 0.18)";
-    event.currentTarget.style.transform =
-      hovered && !prefersReducedMotion
-        ? "translateY(-50%) scale(1.018)"
-        : "translateY(-50%)";
-  };
-
   const setInteractiveHover = (
     event: React.MouseEvent<HTMLElement>,
     hovered: boolean,
@@ -427,6 +400,61 @@ export default function LandingPage() {
 
       const terminalLines = heroTermLinesRef.current.filter(Boolean);
       gsap.set(terminalLines, { autoAlpha: 1, y: 0 });
+
+      // Give the ambient background terminal a heartbeat: loop a gentle
+      // line-by-line "re-analyze" pulse, paused whenever the hero is offscreen
+      // so it never burns compositor work nobody can see.
+      if (!reduceMotion && terminalLines.length) {
+        const termLoop = gsap.timeline({ repeat: -1, repeatDelay: 1.6 });
+        terminalLines.forEach((line) => {
+          termLoop.fromTo(
+            line,
+            { opacity: 0.42 },
+            { opacity: 1, duration: 0.32, ease: "power2.out" },
+            ">-0.14",
+          );
+        });
+        termLoop.to({}, { duration: 0.9 });
+        if (heroSectionRef.current) {
+          ScrollTrigger.create({
+            trigger: heroSectionRef.current,
+            start: "top bottom",
+            end: "bottom top",
+            onToggle: (self) =>
+              self.isActive ? termLoop.play() : termLoop.pause(),
+          });
+        }
+      }
+
+      // Count up the motion-lab metrics (intent %, morph vector) when the hero
+      // scrolls into view — static final values under reduced-motion.
+      gsap.utils.toArray<HTMLElement>("[data-countup]").forEach((el) => {
+        const target = parseFloat(el.dataset.countup ?? "0");
+        const decimals = parseInt(el.dataset.countupDecimals ?? "0", 10);
+        const suffix = el.dataset.countupSuffix ?? "";
+        const format = (value: number) => `${value.toFixed(decimals)}${suffix}`;
+
+        if (reduceMotion) {
+          el.textContent = format(target);
+          return;
+        }
+
+        const counter = { value: 0 };
+        el.textContent = format(0);
+        gsap.to(counter, {
+          value: target,
+          duration: 1.5,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: heroSectionRef.current,
+            start: "top 85%",
+            once: true,
+          },
+          onUpdate: () => {
+            el.textContent = format(counter.value);
+          },
+        });
+      });
 
       // Setup Hero Animation — gated behind reduced-motion so the page honours
       // the accessibility promise it advertises.
@@ -779,6 +807,7 @@ export default function LandingPage() {
 
       {/* SECTION 2 - HERO */}
       <section ref={heroSectionRef}
+               data-hero-v2
                className="motioncode-hero-section relative w-full overflow-hidden"
                style={{
                  minHeight: "100dvh",
@@ -792,6 +821,10 @@ export default function LandingPage() {
             speed={0.62}
           />
         </div>
+
+        {/* Readability scrim — sits above the ambient motion-lab layer but below
+            the headline column so text stays crisp over the live panels. */}
+        <div className="motioncode-hero-scrim" aria-hidden="true" />
 
         <div style={{ position: "absolute", left: "20px", top: "50%", transform: "translateY(-50%)", writingMode: "vertical-rl", textOrientation: "mixed", fontFamily: "var(--font-mono)", fontSize: "9px", color: "#1a1a1a", letterSpacing: "3px" }}>
           01 /
@@ -822,6 +855,7 @@ export default function LandingPage() {
           <strong>composite only</strong>
         </div>
 
+        <div className="motioncode-hero-content">
         <div
           ref={heroEyebrowRef}
           data-testid="hero-eyebrow"
@@ -964,15 +998,14 @@ export default function LandingPage() {
             See it work ↓
           </Link>
         </div>
+        </div>
 
         <div
           ref={heroTerminalRef}
           data-testid="motion-lab-preview"
           data-hovered="false"
-          className="motion-lab-preview hidden xl:block"
-          onMouseEnter={(event) => setMotionLabHover(event, true)}
-          onMouseMove={handleMotionLabPointer}
-          onMouseLeave={(event) => setMotionLabHover(event, false)}
+          className="motion-lab-preview motion-lab-bg hidden lg:block"
+          aria-hidden="true"
         >
           <div
             ref={heroVisualStageRef}
@@ -1085,7 +1118,7 @@ export default function LandingPage() {
               }}
             >
               <span>intent</span>
-              <strong>94%</strong>
+              <strong data-countup="94" data-countup-suffix="%">94%</strong>
             </div>
             <div
               className="motion-lab-depth-card motion-lab-depth-card-energy"
@@ -1198,7 +1231,7 @@ export default function LandingPage() {
               </div>
               <div className="motion-lab-vector-row">
                 <span>morph vector</span>
-                <strong>0.84</strong>
+                <strong data-countup="0.84" data-countup-decimals="2">0.84</strong>
               </div>
             </div>
 
