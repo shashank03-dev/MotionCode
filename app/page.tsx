@@ -421,44 +421,69 @@ export default function LandingPage() {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Setup Hero Animation
-      gsap.fromTo(
-        heroLinesRef.current,
-        { y: "100%", opacity: 0 },
-        { y: "0%", opacity: 1, duration: 0.8, stagger: 0.15, ease: "power3.out" }
-      );
-
-      gsap.fromTo(
-        heroSubtextRef.current,
-        { opacity: 0 },
-        { opacity: 1, duration: 1, delay: 0.6, ease: "power2.out" }
-      );
+      const reduceMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
 
       const terminalLines = heroTermLinesRef.current.filter(Boolean);
       gsap.set(terminalLines, { autoAlpha: 1, y: 0 });
 
-      gsap.fromTo(
-        ".motioncode-hero-field-line, .motioncode-hero-field-tick",
-        { opacity: 0, scaleX: 0.45, transformOrigin: "left center" },
-        {
+      // Setup Hero Animation — gated behind reduced-motion so the page honours
+      // the accessibility promise it advertises.
+      if (reduceMotion) {
+        gsap.set(heroLinesRef.current, { y: "0%", opacity: 1 });
+        gsap.set(heroSubtextRef.current, { opacity: 1 });
+        gsap.set(".motioncode-hero-field-line, .motioncode-hero-field-tick", {
           opacity: 1,
           scaleX: 1,
-          duration: 1.2,
-          stagger: 0.14,
-          delay: 0.35,
-          ease: "power2.out",
-        },
-      );
+        });
+      } else {
+        gsap.fromTo(
+          heroLinesRef.current,
+          { y: "100%", opacity: 0 },
+          { y: "0%", opacity: 1, duration: 0.8, stagger: 0.15, ease: "power3.out" }
+        );
 
-      gsap.to(".motioncode-hero-field-line-b", {
-        x: "-8%",
-        duration: 7,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut",
-      });
+        gsap.fromTo(
+          heroSubtextRef.current,
+          { opacity: 0 },
+          { opacity: 1, duration: 1, delay: 0.6, ease: "power2.out" }
+        );
 
-      if (heroSectionRef.current) {
+        gsap.fromTo(
+          ".motioncode-hero-field-line, .motioncode-hero-field-tick",
+          { opacity: 0, scaleX: 0.45, transformOrigin: "left center" },
+          {
+            opacity: 1,
+            scaleX: 1,
+            duration: 1.2,
+            stagger: 0.14,
+            delay: 0.35,
+            ease: "power2.out",
+          },
+        );
+
+        // Infinite drift — pause it whenever the hero scrolls offscreen so it
+        // isn't burning compositor work for animation nobody can see.
+        const fieldDrift = gsap.to(".motioncode-hero-field-line-b", {
+          x: "-8%",
+          duration: 7,
+          repeat: -1,
+          yoyo: true,
+          ease: "sine.inOut",
+        });
+        if (heroSectionRef.current) {
+          ScrollTrigger.create({
+            trigger: heroSectionRef.current,
+            start: "top bottom",
+            end: "bottom top",
+            onToggle: (self) =>
+              self.isActive ? fieldDrift.play() : fieldDrift.pause(),
+          });
+        }
+      }
+
+      if (!reduceMotion && heroSectionRef.current) {
         const heroChromeTimeline = gsap.timeline({
           scrollTrigger: {
             trigger: heroSectionRef.current,
@@ -512,76 +537,63 @@ export default function LandingPage() {
       let featureTrigger: ReturnType<typeof ScrollTrigger.create> | null = null;
       const compactFeaturesQuery = window.matchMedia("(max-width: 767px)");
 
+      // Drive the active feature purely through data-active attributes — the
+      // visual states live in CSS. onUpdate fires every frame while the section
+      // is pinned, so we bail out unless the index actually changed; that is the
+      // difference between a smooth pin and the per-frame style thrash that was
+      // here before.
       const activateFeature = (index: number) => {
-        const changed = lastIndex !== index;
+        if (index === lastIndex) return;
+        const prevIndex = lastIndex;
+        lastIndex = index;
+
         leftCardsRef.current.forEach((card, i) => {
-          if (!card) return;
-          card.dataset.active = i === index ? "true" : "false";
-          card.style.opacity = i === index ? "1" : "0.62";
-          card.style.borderColor = i === index ? "var(--accent)" : "var(--border)";
-          card.style.borderLeft = i === index ? "3px solid #00ff88" : "1px solid var(--border)";
-          card.style.background = i === index ? "rgba(216, 207, 188, 0.16)" : "rgba(18, 20, 15, 0.72)";
-          const numEl = card.querySelector('.card-num') as HTMLElement;
-          if (numEl) {
-            numEl.style.textShadow = i === index ? "0 0 12px #00ff8860" : "none";
-          }
+          if (card) card.dataset.active = i === index ? "true" : "false";
         });
+
         rightPanelsRef.current.forEach((panel, i) => {
           if (!panel) return;
-          panel.dataset.active = i === index ? "true" : "false";
-          if (i === index) {
-            panel.style.opacity = "1";
-            panel.style.transform = "scale(1)";
-            panel.style.filter = "blur(0px)";
+          const isActive = i === index;
+          panel.dataset.active = isActive ? "true" : "false";
 
-            if (changed) {
-              const titleEl = panel.querySelector('.feature-title') as HTMLElement;
-              const descEl = panel.querySelector('.feature-desc') as HTMLElement;
-              const codeEl = panel.querySelector('.feature-code-snippet') as HTMLElement;
+          const titleEl = panel.querySelector(".feature-title") as HTMLElement | null;
+          const descEl = panel.querySelector(".feature-desc") as HTMLElement | null;
+
+          if (isActive) {
+            const codeLines = panel.querySelectorAll(".feature-code-line");
+            if (reduceMotion) {
+              if (titleEl) titleEl.innerText = FEATURES_DATA[i].title;
+              if (descEl) descEl.innerText = FEATURES_DATA[i].desc;
+              gsap.set(codeLines, { autoAlpha: 1, x: 0 });
+            } else {
               if (titleEl) scrambleText(titleEl, FEATURES_DATA[i].title, false);
               if (descEl) scrambleText(descEl, FEATURES_DATA[i].desc, false);
-              if (codeEl) {
-                gsap.fromTo(
-                  codeEl,
-                  { opacity: 0.3, y: 18, filter: "blur(4px)" },
-                  { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.46, ease: "power2.out" }
-                );
-              }
+              gsap.fromTo(
+                codeLines,
+                { autoAlpha: 0, x: -10 },
+                {
+                  autoAlpha: 1,
+                  x: 0,
+                  duration: 0.34,
+                  stagger: 0.05,
+                  ease: "power2.out",
+                  overwrite: true,
+                },
+              );
             }
-          } else {
-            panel.style.opacity = "0";
-            panel.style.transform = "scale(1.05)";
-            panel.style.filter = "blur(8px)";
-            if (changed && i === lastIndex) {
-              const titleEl = panel.querySelector('.feature-title') as HTMLElement;
-              const descEl = panel.querySelector('.feature-desc') as HTMLElement;
-              if (titleEl) scrambleText(titleEl, FEATURES_DATA[i].title, true);
-              if (descEl) scrambleText(descEl, FEATURES_DATA[i].desc, true);
-            }
+          } else if (!reduceMotion && i === prevIndex) {
+            if (titleEl) scrambleText(titleEl, FEATURES_DATA[i].title, true);
+            if (descEl) scrambleText(descEl, FEATURES_DATA[i].desc, true);
           }
         });
-        lastIndex = index;
       };
 
       const resetFeatureCards = () => {
         leftCardsRef.current.forEach((card) => {
-          if (!card) return;
-          card.dataset.active = "false";
-          card.style.opacity = "1";
-          card.style.borderColor = "var(--border)";
-          card.style.borderLeft = "1px solid var(--border)";
-          card.style.background = "rgba(18, 20, 15, 0.72)";
-          const numEl = card.querySelector('.card-num') as HTMLElement;
-          if (numEl) {
-            numEl.style.textShadow = "none";
-          }
+          if (card) card.dataset.active = "false";
         });
         rightPanelsRef.current.forEach((panel) => {
-          if (!panel) return;
-          panel.dataset.active = "false";
-          panel.style.opacity = "";
-          panel.style.transform = "";
-          panel.style.filter = "";
+          if (panel) panel.dataset.active = "false";
         });
       };
 
@@ -608,8 +620,12 @@ export default function LandingPage() {
           start: "top top",
           end: () => `+=${NUM_FEATURES * window.innerHeight}`,
           pin: true,
-          pinSpacing: false,
+          // Let ScrollTrigger own the pin spacer instead of the old
+          // `pinSpacing: false` + manual marginBottom hack — that mismatch is
+          // what made the section snap/jump at the moment it pinned.
+          pinSpacing: true,
           anticipatePin: 1,
+          invalidateOnRefresh: true,
           onUpdate: (self) => {
             const index = Math.min(
               Math.floor(self.progress * NUM_FEATURES + 0.35),
@@ -626,12 +642,28 @@ export default function LandingPage() {
       applyFeatureLayout();
       compactFeaturesQuery.addEventListener("change", applyFeatureLayout);
 
+      // Entrance: the left step cards rise + fade in with a stagger the first
+      // time the section approaches the viewport, so they never read as static.
+      // clearProps hands control back to the CSS hover/active transforms.
+      if (!reduceMotion && featuresSectionRef.current) {
+        const cards = leftCardsRef.current.filter(Boolean) as HTMLElement[];
+        gsap.from(cards, {
+          autoAlpha: 0,
+          y: 24,
+          duration: 0.55,
+          stagger: 0.08,
+          ease: "power3.out",
+          clearProps: "transform,opacity,visibility",
+          scrollTrigger: {
+            trigger: featuresSectionRef.current,
+            start: "top 78%",
+            once: true,
+          },
+        });
+      }
+
       // Setup Process Steps Animation
       if (processSectionRef.current && processStepsRef.current.length > 0) {
-        const reduceMotion = window.matchMedia(
-          "(prefers-reduced-motion: reduce)",
-        ).matches;
-
         if (reduceMotion) {
           gsap.set(processStepsRef.current, { opacity: 1, y: 0 });
         } else {
@@ -656,6 +688,15 @@ export default function LandingPage() {
       return () => {
         compactFeaturesQuery.removeEventListener("change", applyFeatureLayout);
         clearFeatureTrigger();
+        // scrambleText runs on setInterval outside GSAP's control — clear any
+        // in-flight scrambles so they don't fire on a detached node.
+        rightPanelsRef.current.forEach((panel) => {
+          panel?.querySelectorAll<HTMLElement>("[data-interval-id]").forEach((el) => {
+            const id = el.getAttribute("data-interval-id");
+            if (id) clearInterval(parseInt(id, 10));
+            el.removeAttribute("data-interval-id");
+          });
+        });
       };
     });
 
@@ -1226,7 +1267,7 @@ export default function LandingPage() {
 
       {/* SECTION 5 - LOGO/FEATURES (STICKY SCROLL) */}
       <section id="features" ref={featuresSectionRef} className="motioncode-feature-section"
-               style={{ position: "relative", height: "100vh", overflow: "hidden", display: "flex", borderBottom: "1px solid var(--border)", marginBottom: `${(FEATURES_DATA.length - 1) * 100}vh` }}>
+               style={{ position: "relative", height: "100vh", overflow: "hidden", display: "flex", borderBottom: "1px solid var(--border)" }}>
 
         <div style={{ position: "absolute", left: "20px", top: "50%", transform: "translateY(-50%)", writingMode: "vertical-rl", textOrientation: "mixed", fontFamily: "var(--font-mono)", fontSize: "9px", color: "#1a1a1a", letterSpacing: "3px" }}>
           03 /
@@ -1248,17 +1289,9 @@ export default function LandingPage() {
                  data-testid="feature-card"
                  data-active={i === 0 ? "true" : "false"}
                  className="motioncode-feature-card"
-                 style={{
-                   padding: "24px 28px",
-                   border: "1px solid var(--border)",
-                   borderLeft: i === 0 ? "3px solid #00ff88" : "1px solid var(--border)",
-                   marginBottom: "10px",
-                   borderRadius: "10px",
-                   transition: "all 0.35s ease",
-                   opacity: i === 0 ? 1 : 0.62,
-                   background: i === 0 ? "rgba(216, 207, 188, 0.16)" : "rgba(18, 20, 15, 0.72)"
-                 }}>
-              <div className="card-num" style={{ fontFamily: "var(--font-mono)", fontSize: "13px", color: "var(--accent)", letterSpacing: "1px", transition: "text-shadow 0.3s ease", textShadow: i === 0 ? "0 0 12px #00ff8860" : "none" }}>{ft.num}</div>
+                 style={{ "--card-index": i } as React.CSSProperties}>
+              <span className="motioncode-feature-card-bar" aria-hidden="true" />
+              <div className="card-num" style={{ fontFamily: "var(--font-mono)", fontSize: "13px", color: "var(--accent)", letterSpacing: "1px" }}>{ft.num}</div>
               <div className="motioncode-feature-card-title" style={{ fontFamily: "var(--font-mono)", fontSize: "18px", color: "var(--text)", fontWeight: 700, margin: "6px 0" }}>{ft.title}</div>
               <div className="motioncode-feature-card-desc" style={{ fontSize: "13px", lineHeight: 1.6 }}>{ft.desc}</div>
             </div>
@@ -1272,21 +1305,24 @@ export default function LandingPage() {
                  ref={el => { rightPanelsRef.current[i] = el; }}
                  data-testid="feature-panel"
                  data-active={i === 0 ? "true" : "false"}
+                 className="motioncode-feature-panel"
                  style={{
-                   position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px",
-                   opacity: i === 0 ? 1 : 0, transform: i === 0 ? "scale(1)" : "scale(1.05)", filter: i === 0 ? "blur(0px)" : "blur(8px)", transition: "opacity 0.25s ease, filter 0.25s ease, transform 0.25s ease", willChange: "transform"
+                   position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px"
                  }}>
-              <div style={{ fontFamily: "var(--font-mono)", fontSize: "160px", fontWeight: 800, color: "#ffffff08", userSelect: "none" }}>{ft.num}</div>
-              <div className="feature-title" style={{ fontFamily: "var(--font-mono)", fontSize: "28px", color: "#fffbf4", marginTop: "-30px", zIndex: 10, willChange: "transform" }}>{ft.title}</div>
-              <div className="feature-desc" style={{ fontFamily: "var(--font-body)", fontSize: "15px", color: "var(--muted)", maxWidth: "320px", textAlign: "center", marginTop: "16px", lineHeight: 1.7, zIndex: 10, willChange: "transform" }}>{ft.desc}</div>
+              <div className="motioncode-feature-panel-ghost" style={{ fontFamily: "var(--font-mono)", fontSize: "160px", fontWeight: 800, color: "#ffffff08", userSelect: "none" }}>{ft.num}</div>
+              <div className="feature-title" style={{ fontFamily: "var(--font-mono)", fontSize: "28px", color: "#fffbf4", marginTop: "-30px", zIndex: 10 }}>{ft.title}</div>
+              <div className="feature-desc" style={{ fontFamily: "var(--font-body)", fontSize: "15px", color: "var(--muted)", maxWidth: "320px", textAlign: "center", marginTop: "16px", lineHeight: 1.7, zIndex: 10 }}>{ft.desc}</div>
               <div
                 data-testid="feature-code-snippet"
                 className="feature-code-snippet"
                 style={{
                 marginTop: "32px", width: "280px", padding: "16px",
-                fontFamily: "var(--font-mono)", fontSize: "11px", zIndex: 10, whiteSpace: "pre-line", textAlign: "left"
+                fontFamily: "var(--font-mono)", fontSize: "11px", zIndex: 10, textAlign: "left"
               }}>
-                {ft.code}
+                {ft.code.split("\n").map((line, li) => (
+                  <span className="feature-code-line" key={li}>{line || " "}</span>
+                ))}
+                <span className="feature-code-cursor" aria-hidden="true" />
               </div>
             </div>
           ))}
