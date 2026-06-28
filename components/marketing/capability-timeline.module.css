@@ -1,0 +1,696 @@
+/* Capability timeline — "the analysis scrubber".
+   A pinned motion-editor timeline: a fixed read-head at center, a ruler that
+   tracks scroll progress, and a row of capability cards that slide horizontally
+   under the head. The card under the head goes live and plays its signature
+   visualization. All motion is transform / opacity / stroke based.
+
+   Defaults here are the *finished* state (curve drawn, bars full, gauge at
+   target). JavaScript only animates them up from zero when motion is on, so the
+   section reads correctly with no JS and under prefers-reduced-motion. */
+
+.section {
+  position: relative;
+  width: 100%;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  /* Min height drives the static (mobile / reduced-motion) layout; the pinned
+     desktop layout overrides height to one viewport via JS-set inline style. */
+}
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 3vh, 40px);
+  width: 100%;
+  height: 100%;
+  padding: clamp(64px, 9vh, 104px) clamp(20px, 5vw, 72px) clamp(36px, 5vh, 60px);
+}
+
+/* ---- Header --------------------------------------------------------------- */
+
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.headerText {
+  max-width: min(560px, 48vw);
+}
+
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.kicker::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #00ff88;
+  box-shadow: 0 0 14px rgba(0, 255, 136, 0.7);
+  animation: livePulse 2.4s ease-in-out infinite;
+}
+
+.title {
+  margin: 14px 0 0;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: clamp(25px, 3vw, 38px);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  text-wrap: balance;
+}
+
+.title em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+/* Live numeric readout, top-right — the "transport display" of the scrubber. */
+.readout {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 4px 18px;
+  align-content: end;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.readout dt {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 10px;
+}
+
+.readout dd {
+  margin: 0;
+  text-align: right;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.readout dd b {
+  color: #00ff88;
+  font-weight: 600;
+}
+
+/* ---- Ruler ---------------------------------------------------------------- */
+
+.ruler {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* progress fill that grows along the ruler as you scroll the section */
+.rulerFill {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  height: 2px;
+  width: var(--mc-progress, 0%);
+  background: linear-gradient(90deg, rgba(216, 207, 188, 0.5), #00ff88);
+  box-shadow: 0 0 12px rgba(0, 255, 136, 0.5);
+}
+
+.tick {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  transition: color 0.3s ease;
+}
+
+.tick::before {
+  content: "";
+  width: 1px;
+  height: 9px;
+  background: var(--border);
+  transition: background 0.3s ease, height 0.3s ease;
+}
+
+.tick[data-live="true"] {
+  color: var(--text);
+}
+
+.tick[data-live="true"]::before {
+  height: 14px;
+  background: #00ff88;
+}
+
+/* ---- Viewport + sliding track -------------------------------------------- */
+
+.viewport {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* The fixed read-head: a vertical guide at viewport center with a tab on top.
+   Cards pass under it; the centered one is "being read". */
+.readhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  transform: translateX(-50%);
+  z-index: 4;
+  pointer-events: none;
+}
+
+.readhead::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(0, 255, 136, 0.42) 12%,
+    rgba(0, 255, 136, 0.42) 88%,
+    transparent
+  );
+}
+
+.readhead::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  transform: translateX(-50%) rotate(45deg);
+  background: #00ff88;
+  box-shadow: 0 0 14px rgba(0, 255, 136, 0.7);
+}
+
+.track {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: clamp(24px, 3vw, 52px);
+  will-change: transform;
+}
+
+/* ---- Capability card ------------------------------------------------------ */
+
+.card {
+  --mc-card-accent: 216, 207, 188;
+  position: relative;
+  flex: 0 0 auto;
+  width: clamp(290px, 58vw, 460px);
+  height: min(78%, 540px);
+  display: flex;
+  flex-direction: column;
+  padding: clamp(22px, 2.6vw, 32px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 251, 244, 0.04),
+    rgba(255, 251, 244, 0.014)
+  );
+  opacity: 0.52;
+  transform: scale(0.95);
+  transition:
+    opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.5s ease;
+}
+
+.card[data-active="true"] {
+  opacity: 1;
+  transform: scale(1);
+  border-color: rgba(var(--mc-card-accent), 0.42);
+  box-shadow:
+    0 30px 80px -40px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 251, 244, 0.06);
+}
+
+.card[data-active="true"]::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    160deg,
+    rgba(216, 207, 188, 0.38),
+    transparent 46%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.cardHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: var(--font-mono);
+}
+
+.cardFrame {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.card[data-active="true"] .cardFrame {
+  color: rgb(var(--mc-card-accent));
+}
+
+.cardStep {
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.cardTitle {
+  margin: 14px 0 0;
+  font-family: var(--font-mono);
+  font-size: clamp(19px, 2vw, 24px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+/* DecryptedText: encrypted glyphs read dimmer than resolved ones. */
+.cardTitle :global(.mc-enc) {
+  color: rgba(216, 207, 188, 0.5);
+}
+
+.cardBody {
+  margin: 10px 0 0;
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  line-height: 1.62;
+  color: #9c958a;
+  max-width: 36ch;
+}
+
+/* The signature visualization sits at the bottom of every card. */
+.stage {
+  position: relative;
+  margin-top: auto;
+  padding-top: 20px;
+}
+
+/* ---- Signature: frame strip ---------------------------------------------- */
+
+.frames {
+  display: flex;
+  gap: 6px;
+}
+
+.frame {
+  flex: 1;
+  aspect-ratio: 3 / 4;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 6px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.3);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--muted);
+}
+
+.card[data-active="true"] .frame {
+  border-color: rgba(216, 207, 188, 0.28);
+  color: var(--accent);
+}
+
+.framesCaption {
+  margin-top: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.framesCaption b {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ---- Signature: easing curve --------------------------------------------- */
+
+.curveWrap {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background:
+    linear-gradient(rgba(216, 207, 188, 0.05) 1px, transparent 1px) 0 0 / 100% 25%,
+    linear-gradient(90deg, rgba(216, 207, 188, 0.05) 1px, transparent 1px) 0 0 / 25% 100%,
+    rgba(0, 0, 0, 0.28);
+  padding: 6px;
+}
+
+.curveSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.curveTrace {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px rgba(216, 207, 188, 0.35));
+}
+
+.curveNode {
+  fill: var(--bg);
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+/* The node sitting under the read head reads as the live one. */
+.curveNode:last-of-type {
+  fill: #00ff88;
+  stroke: #00ff88;
+}
+
+.curveGuide {
+  stroke: rgba(216, 207, 188, 0.28);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+}
+
+.curveReadout {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.curveReadout b {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* ---- Signature: export stack --------------------------------------------- */
+
+.exports {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.exportRow {
+  display: grid;
+  grid-template-columns: 58px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text);
+}
+
+.exportTrack {
+  position: relative;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(216, 207, 188, 0.12);
+  overflow: hidden;
+}
+
+.exportFill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  transform-origin: left center;
+  transform: scaleX(var(--mc-fill, 1));
+  background: linear-gradient(90deg, rgba(216, 207, 188, 0.42), var(--accent));
+}
+
+.exportState {
+  color: var(--muted);
+}
+
+.card[data-active="true"] .exportRow[data-done="true"] .exportState {
+  color: var(--accent);
+}
+
+/* ---- Signature: render score gauge --------------------------------------- */
+
+.gauge {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.gaugeDial {
+  position: relative;
+  width: 92px;
+  height: 92px;
+  flex: 0 0 auto;
+}
+
+.gaugeDial svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.gaugeTrackRing {
+  fill: none;
+  stroke: rgba(216, 207, 188, 0.14);
+  stroke-width: 7;
+}
+
+.gaugeValueRing {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 7;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px rgba(216, 207, 188, 0.3));
+}
+
+.gaugeNumber {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.gaugeMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.gaugeMeta b {
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* ---- Signature: accessibility checks ------------------------------------- */
+
+.a11y {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.28);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+}
+
+.switchTrack {
+  position: relative;
+  width: 38px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(216, 207, 188, 0.16);
+  transition: background 0.4s ease;
+}
+
+.switchTrack::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.card[data-active="true"] .switchTrack {
+  background: rgba(0, 255, 136, 0.32);
+}
+
+.card[data-active="true"] .switchTrack::after {
+  transform: translateX(18px);
+  background: #00ff88;
+}
+
+.checkRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.checkRow svg {
+  flex: 0 0 auto;
+  color: #00ff88;
+}
+
+.card[data-active="true"] .checkRow {
+  color: var(--text);
+}
+
+/* ---- Footer progress dots ------------------------------------------------ */
+
+.dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(216, 207, 188, 0.22);
+  transition: width 0.4s ease, background 0.4s ease;
+}
+
+.dot[data-live="true"] {
+  width: 26px;
+  border-radius: 999px;
+  background: #00ff88;
+}
+
+/* ---- Hint ----------------------------------------------------------------- */
+
+.hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ---- Static layout (mobile + reduced motion + no JS) --------------------- */
+
+/* Static is the DEFAULT: with no JS (and before hydration) the section renders
+   as a plain vertical stack of full-width cards, each viz already in its
+   finished state. JS upgrades to the pinned horizontal scrubber only on
+   desktop with motion enabled, by setting data-mode="pinned". */
+.section[data-mode="pinned"] {
+  height: 100vh;
+}
+
+.section:not([data-mode="pinned"]) .viewport {
+  overflow: visible;
+}
+
+.section:not([data-mode="pinned"]) .readhead {
+  display: none;
+}
+
+.section:not([data-mode="pinned"]) .track {
+  position: relative;
+  flex-direction: column;
+  gap: 18px;
+  inset: auto;
+  transform: none !important;
+}
+
+.section:not([data-mode="pinned"]) .card {
+  width: 100%;
+  height: auto;
+  opacity: 1;
+  transform: none;
+  border-color: rgba(216, 207, 188, 0.2);
+}
+
+.section:not([data-mode="pinned"]) .card[data-active="true"] {
+  box-shadow: none;
+}
+
+@media (max-width: 860px) {
+  .header {
+    align-items: flex-start;
+  }
+  .readout {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kicker::before,
+  .livePulse {
+    animation: none;
+  }
+}
+
+@keyframes livePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.8); }
+}

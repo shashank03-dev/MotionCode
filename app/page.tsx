@@ -23,6 +23,13 @@ const Aurora = dynamic(() => import("@/components/react-bits/Aurora/Aurora"), {
 const HandoffBridge = dynamic(
   () => import("@/components/marketing/handoff-bridge"),
 );
+
+// The capability timeline is a pinned, scroll-scrubbed motion-editor section
+// with its own GSAP setup and React Bits DecryptedText titles. Below the fold,
+// so it code-splits like the handoff diagram above.
+const CapabilityTimeline = dynamic(
+  () => import("@/components/marketing/capability-timeline"),
+);
 import { CheckoutButton } from "@/app/pricing/CheckoutButton";
 import { MarketingAuthNavActions } from "@/components/marketing/auth-nav-actions";
 import { ScrollSolutionBridge } from "@/components/marketing/scroll-solution-bridge";
@@ -67,56 +74,6 @@ function writeMotionPreference(next: boolean) {
   }
   motionPreferenceListeners.forEach((listener) => listener());
 }
-
-const GLITCH_CHARS = "!<>-_\\/[]{}-=+*^?#________";
-const scrambleText = (element: HTMLElement | null, finalString: string, goingOut: boolean = false) => {
-  if (!element) return;
-  let iteration = 0;
-  const intervalId = element.getAttribute('data-interval-id');
-  if (intervalId) clearInterval(parseInt(intervalId));
-
-  const stepTime = 20;
-  const totalSteps = 12;
-  const charsPerStep = Math.max(1, finalString.length / totalSteps);
-
-  const interval = setInterval(() => {
-    // textContent (not innerText): innerText is layout-aware and forces a
-    // reflow on every write — and this runs every 20ms while a panel
-    // transition fires during the pinned scroll. textContent skips that.
-    element.textContent = finalString
-      .split("")
-      .map((letter, index) => {
-        if (!goingOut) {
-          if (index < iteration) return finalString[index];
-          return GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)];
-        } else {
-          if (index < iteration) return GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)];
-          return finalString[index];
-        }
-      })
-      .join("");
-
-    if(iteration >= finalString.length) {
-      clearInterval(interval);
-      element.removeAttribute('data-interval-id');
-      if (!goingOut) {
-        element.textContent = finalString;
-      }
-    }
-
-    iteration += charsPerStep;
-  }, stepTime);
-
-  element.setAttribute('data-interval-id', interval.toString());
-};
-
-const FEATURES_DATA = [
-  { num: "01", title: "Upload Any Format", desc: "Drag in MP4, GIF, WebM, or Lottie files. Our engine handles any animation source with frame-perfect accuracy.", code: "// 8 frames extracted\n> format: MP4 → JPEG\n> resolution: 1920×1080" },
-  { num: "02", title: "AI Frame Analysis", desc: "Neural networks decompose motion into discrete keyframes, easing curves, and transform paths automatically.", code: "// motion analyzed\n> keyframes: 12\n> easing: cubic-bezier(...)" },
-  { num: "03", title: "Multi-Framework Output", desc: "Get production-ready CSS, GSAP, and Framer Motion code. Copy, paste, ship.", code: "// output ready\n> CSS  ✓\n> GSAP  ✓\n> Framer ✓" },
-  { num: "04", title: "Performance Scorer", desc: "Every generated animation is benchmarked for jank, repaints, and composite layer usage with a 0-100 score.", code: "// perf score\n> GPU layers: yes\n> score: 94/100" },
-  { num: "05", title: "Accessibility Audit", desc: "Automatic prefers-reduced-motion fallbacks and WCAG compliance checks on every export.", code: "// a11y check\n> reduced-motion: ✓\n> WCAG AA: pass" }
-];
 
 const FRAME_SAMPLES = ["00", "04", "08", "12", "16", "20", "24", "28"];
 const CURVE_POINTS = [
@@ -322,10 +279,6 @@ export default function LandingPage() {
   const heroVisualStageRef = useRef<HTMLDivElement>(null);
   const heroTermLinesRef = useRef<(HTMLDivElement | null)[]>([]);
   const heroGlowRef = useRef<HTMLDivElement>(null);
-
-  const featuresSectionRef = useRef<HTMLDivElement>(null);
-  const leftCardsRef = useRef<(HTMLDivElement | null)[]>([]);
-  const rightPanelsRef = useRef<(HTMLDivElement | null)[]>([]);
 
   const processSectionRef = useRef<HTMLElement>(null);
   const processStepsRef = useRef<(HTMLElement | null)[]>([]);
@@ -719,215 +672,6 @@ export default function LandingPage() {
         }
       }
 
-      // Setup Features Section ScrollTrigger
-      const NUM_FEATURES = FEATURES_DATA.length;
-      let lastIndex = -1;
-      let featureTrigger: ReturnType<typeof ScrollTrigger.create> | null = null;
-      let featureTimeline: ReturnType<typeof gsap.timeline> | null = null;
-      const compactFeaturesQuery = window.matchMedia("(max-width: 767px)");
-
-      // Drive the active feature purely through data-active attributes — the
-      // visual states live in CSS. onUpdate fires every frame while the section
-      // is pinned, so we bail out unless the index actually changed; that is the
-      // difference between a smooth pin and the per-frame style thrash that was
-      // here before.
-      const activateFeature = (index: number) => {
-        if (index === lastIndex) return;
-        const prevIndex = lastIndex;
-        lastIndex = index;
-
-        leftCardsRef.current.forEach((card, i) => {
-          if (card) card.dataset.active = i === index ? "true" : "false";
-        });
-
-        rightPanelsRef.current.forEach((panel, i) => {
-          if (!panel) return;
-          const isActive = i === index;
-          panel.dataset.active = isActive ? "true" : "false";
-
-          const titleEl = panel.querySelector(".feature-title") as HTMLElement | null;
-          const descEl = panel.querySelector(".feature-desc") as HTMLElement | null;
-
-          if (isActive) {
-            const codeLines = panel.querySelectorAll(".feature-code-line");
-            if (reduceMotion) {
-              if (titleEl) titleEl.textContent = FEATURES_DATA[i].title;
-              if (descEl) descEl.textContent = FEATURES_DATA[i].desc;
-              gsap.set(codeLines, { autoAlpha: 1, x: 0 });
-            } else {
-              if (titleEl) scrambleText(titleEl, FEATURES_DATA[i].title, false);
-              if (descEl) scrambleText(descEl, FEATURES_DATA[i].desc, false);
-              gsap.fromTo(
-                codeLines,
-                { autoAlpha: 0, x: -10 },
-                {
-                  autoAlpha: 1,
-                  x: 0,
-                  duration: 0.34,
-                  stagger: 0.05,
-                  ease: "power2.out",
-                  overwrite: true,
-                },
-              );
-            }
-          } else if (!reduceMotion && i === prevIndex) {
-            if (titleEl) scrambleText(titleEl, FEATURES_DATA[i].title, true);
-            if (descEl) scrambleText(descEl, FEATURES_DATA[i].desc, true);
-          }
-        });
-      };
-
-      const resetFeatureCards = () => {
-        leftCardsRef.current.forEach((card) => {
-          if (card) card.dataset.active = "false";
-        });
-        rightPanelsRef.current.forEach((panel) => {
-          if (panel) panel.dataset.active = "false";
-        });
-      };
-
-      const clearFeatureTrigger = () => {
-        if (featureTimeline) {
-          // Killing the timeline kills its ScrollTrigger (and unpins) too.
-          featureTimeline.scrollTrigger?.kill();
-          featureTimeline.kill();
-          featureTimeline = null;
-        }
-        if (featureTrigger) {
-          featureTrigger.kill();
-          featureTrigger = null;
-        }
-        // Hand the panels back to CSS: drop the inline transition lock and the
-        // opacity/visibility/transform the scrub timeline was driving, so a
-        // re-layout (e.g. resize into the compact breakpoint) starts clean.
-        rightPanelsRef.current.forEach((panel) => {
-          if (!panel) return;
-          panel.style.transition = "";
-          gsap.set(panel, { clearProps: "opacity,visibility,transform" });
-        });
-      };
-
-      const applyFeatureLayout = () => {
-        clearFeatureTrigger();
-        lastIndex = -1;
-
-        if (!featuresSectionRef.current) return;
-
-        if (compactFeaturesQuery.matches) {
-          resetFeatureCards();
-          ScrollTrigger.refresh();
-          return;
-        }
-
-        // One viewport of scroll per *transition* between panels. With
-        // NUM_FEATURES panels there are NUM_FEATURES - 1 transitions, so the pin
-        // lasts that many viewports and progress maps linearly: panel i rests at
-        // progress i / lastFeatureIndex. Every panel gets an identical dwell.
-        // The old `* NUM_FEATURES + 0.35` mapping gave panel 1 only ~13% of the
-        // scroll and the last panel ~27% — a rushed first card, a draggy last.
-        const lastFeatureIndex = NUM_FEATURES - 1;
-        const pinConfig = {
-          trigger: featuresSectionRef.current,
-          start: "top top",
-          end: () => `+=${lastFeatureIndex * window.innerHeight}`,
-          pin: true,
-          // Let ScrollTrigger own the pin spacer instead of the old
-          // `pinSpacing: false` + manual marginBottom hack — that mismatch is
-          // what made the section snap/jump at the moment it pinned.
-          pinSpacing: true,
-          anticipatePin: 1,
-          invalidateOnRefresh: true,
-        } as const;
-
-        if (reduceMotion) {
-          // Reduced motion: no scroll-scrubbed motion — instant, discrete swaps
-          // driven by the CSS `data-active` states.
-          featureTrigger = ScrollTrigger.create({
-            ...pinConfig,
-            onUpdate: (self) => {
-              const index = Math.round(self.progress * lastFeatureIndex);
-              activateFeature(index);
-            },
-          });
-          activateFeature(0);
-          ScrollTrigger.refresh();
-          return;
-        }
-
-        // Motion on: drive the right-hand panel crossfade from a scroll-scrubbed
-        // timeline so the fade tracks scroll position 1:1 and stays smooth at any
-        // scroll speed — instead of firing a fixed-duration CSS transition on each
-        // discrete index flip (which can't keep up with a normal/fast scroll and
-        // reads as a stutter). GSAP owns opacity/visibility/transform here, so we
-        // disable the CSS transition that would otherwise lag the scrub.
-        // Keep index alignment with FEATURES_DATA (activateFeature indexes the
-        // same ref array), so no filtering — just guard nulls.
-        const panels = rightPanelsRef.current;
-        panels.forEach((panel, i) => {
-          if (!panel) return;
-          panel.style.transition = "none";
-          gsap.set(panel, {
-            autoAlpha: i === 0 ? 1 : 0,
-            y: i === 0 ? 0 : 18,
-            scale: i === 0 ? 1 : 0.985,
-          });
-        });
-
-        featureTimeline = gsap.timeline({
-          // ease:"none" keeps the fade linear against scroll; `scrub` adds the
-          // brief catch-up that makes fast flings feel buttery instead of abrupt.
-          defaults: { ease: "none" },
-          scrollTrigger: {
-            ...pinConfig,
-            scrub: 0.5,
-            onUpdate: (self) => {
-              const index = Math.round(self.progress * lastFeatureIndex);
-              activateFeature(index);
-            },
-          },
-        });
-
-        // Each segment [i, i+1] crossfades panel i out and panel i+1 in over one
-        // viewport of scroll. At every integer point exactly one panel rests fully
-        // visible, so the dwell per feature is identical.
-        for (let i = 0; i < lastFeatureIndex; i++) {
-          const outgoing = panels[i];
-          const incoming = panels[i + 1];
-          if (!outgoing || !incoming) continue;
-          featureTimeline
-            .to(outgoing, { autoAlpha: 0, y: -18, scale: 0.985 }, i)
-            .to(incoming, { autoAlpha: 1, y: 0, scale: 1 }, i);
-        }
-
-        featureTrigger = featureTimeline.scrollTrigger ?? null;
-
-        activateFeature(0);
-        ScrollTrigger.refresh();
-      };
-
-      applyFeatureLayout();
-      compactFeaturesQuery.addEventListener("change", applyFeatureLayout);
-
-      // Entrance: the left step cards rise + fade in with a stagger the first
-      // time the section approaches the viewport, so they never read as static.
-      // clearProps hands control back to the CSS hover/active transforms.
-      if (!reduceMotion && featuresSectionRef.current) {
-        const cards = leftCardsRef.current.filter(Boolean) as HTMLElement[];
-        gsap.from(cards, {
-          autoAlpha: 0,
-          y: 24,
-          duration: 0.55,
-          stagger: 0.08,
-          ease: "power3.out",
-          clearProps: "transform,opacity,visibility",
-          scrollTrigger: {
-            trigger: featuresSectionRef.current,
-            start: "top 78%",
-            once: true,
-          },
-        });
-      }
-
       // Setup Process Steps Animation
       if (processSectionRef.current && processStepsRef.current.length > 0) {
         if (reduceMotion) {
@@ -950,20 +694,6 @@ export default function LandingPage() {
           );
         }
       }
-
-      return () => {
-        compactFeaturesQuery.removeEventListener("change", applyFeatureLayout);
-        clearFeatureTrigger();
-        // scrambleText runs on setInterval outside GSAP's control — clear any
-        // in-flight scrambles so they don't fire on a detached node.
-        rightPanelsRef.current.forEach((panel) => {
-          panel?.querySelectorAll<HTMLElement>("[data-interval-id]").forEach((el) => {
-            const id = el.getAttribute("data-interval-id");
-            if (id) clearInterval(parseInt(id, 10));
-            el.removeAttribute("data-interval-id");
-          });
-        });
-      };
     });
 
     return () => {
@@ -1537,70 +1267,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* SECTION 5 - LOGO/FEATURES (STICKY SCROLL) */}
-      <section id="features" ref={featuresSectionRef} className="motioncode-feature-section"
-               style={{ position: "relative", height: "100vh", overflow: "hidden", display: "flex", borderBottom: "1px solid var(--border)" }}>
-
-        <div style={{ position: "absolute", left: "20px", top: "50%", transform: "translateY(-50%)", writingMode: "vertical-rl", textOrientation: "mixed", fontFamily: "var(--font-mono)", fontSize: "9px", color: "#1a1a1a", letterSpacing: "3px" }}>
-          03 /
-        </div>
-
-        <div className="motioncode-feature-list" style={{ width: "48%", padding: "60px 40px", position: "relative", display: "flex", flexDirection: "column" }}>
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: "9px", color: "#3a3a4a", letterSpacing: "3px" }}>PRODUCT</div>
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: "28px", color: "var(--text)", marginBottom: "18px", marginTop: "16px" }}>Everything you need to ship motion.</div>
-          <div className="motioncode-feature-status-line">
-            <InlineMotionBadge tone="capture" delay="0.15s">source locked</InlineMotionBadge>
-            <InlineMotionBadge tone="analyze" delay="0.45s">motion read</InlineMotionBadge>
-            <InlineMotionBadge tone="quiet" variant="dot">review pulse</InlineMotionBadge>
-          </div>
-
-          <div className="motioncode-feature-list-inner" style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-          {FEATURES_DATA.map((ft, i) => (
-            <div key={ft.num}
-                 ref={el => { leftCardsRef.current[i] = el; }}
-                 data-testid="feature-card"
-                 data-active={i === 0 ? "true" : "false"}
-                 className="motioncode-feature-card"
-                 style={{ "--card-index": i } as React.CSSProperties}>
-              <span className="motioncode-feature-card-bar" aria-hidden="true" />
-              <div className="card-num" style={{ fontFamily: "var(--font-mono)", fontSize: "13px", color: "var(--accent)", letterSpacing: "1px" }}>{ft.num}</div>
-              <div className="motioncode-feature-card-title" style={{ fontFamily: "var(--font-mono)", fontSize: "18px", color: "var(--text)", fontWeight: 700, margin: "6px 0" }}>{ft.title}</div>
-              <div className="motioncode-feature-card-desc" style={{ fontSize: "13px", lineHeight: 1.6 }}>{ft.desc}</div>
-            </div>
-          ))}
-          </div>
-        </div>
-
-        <div className="motioncode-feature-visual" style={{ flex: 1, position: "relative", overflow: "hidden" }}>
-          {FEATURES_DATA.map((ft, i) => (
-            <div key={ft.num}
-                 ref={el => { rightPanelsRef.current[i] = el; }}
-                 data-testid="feature-panel"
-                 data-active={i === 0 ? "true" : "false"}
-                 className="motioncode-feature-panel"
-                 style={{
-                   position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px"
-                 }}>
-              <div className="motioncode-feature-panel-ghost" style={{ fontFamily: "var(--font-mono)", fontSize: "160px", fontWeight: 800, color: "#ffffff08", userSelect: "none" }}>{ft.num}</div>
-              <div className="feature-title" style={{ fontFamily: "var(--font-mono)", fontSize: "28px", color: "#fffbf4", marginTop: "-30px", zIndex: 10 }}>{ft.title}</div>
-              <div className="feature-desc" style={{ fontFamily: "var(--font-body)", fontSize: "15px", color: "var(--muted)", maxWidth: "320px", textAlign: "center", marginTop: "16px", lineHeight: 1.7, zIndex: 10 }}>{ft.desc}</div>
-              <div
-                data-testid="feature-code-snippet"
-                className="feature-code-snippet"
-                style={{
-                marginTop: "32px", width: "280px", padding: "16px",
-                fontFamily: "var(--font-mono)", fontSize: "11px", zIndex: 10, textAlign: "left"
-              }}>
-                {ft.code.split("\n").map((line, li) => (
-                  <span className="feature-code-line" key={li}>{line || " "}</span>
-                ))}
-                <span className="feature-code-cursor" aria-hidden="true" />
-              </div>
-            </div>
-          ))}
-        </div>
-
-      </section>
+      {/* SECTION 5 - CAPABILITIES (PINNED MOTION-TIMELINE SCRUBBER) */}
+      <CapabilityTimeline />
 
       {/* SECTION 6 - HOW IT WORKS */}
       <section

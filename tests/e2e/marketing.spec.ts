@@ -66,7 +66,7 @@ test.describe("marketing surface", () => {
     ).toHaveAttribute("href", "/app");
 
     await expect(
-      page.locator("#features").getByText("Everything you need to ship motion."),
+      page.locator("#features").getByText("Everything one clip becomes"),
     ).toBeVisible();
     await expect(
       page
@@ -304,28 +304,26 @@ test.describe("marketing surface", () => {
     expect(overlaps(panelBoxes[1], panelBoxes[2])).toBe(false);
   });
 
-  test("feature cards stay active, interactive, and readable", async ({
+  test("capability timeline renders its cards and live read head", async ({
     page,
   }) => {
     await page.goto("/");
 
-    const cards = page.getByTestId("feature-card");
+    const section = page.locator("#features");
+    await expect(section).toBeVisible();
+
+    const cards = page.getByTestId("capability-card");
     await expect(cards).toHaveCount(5);
+
+    // The card under the read head is the live one on load.
     await expect(cards.first()).toHaveAttribute("data-active", "true");
-    await expect(cards.first()).toHaveCSS("border-radius", "10px");
+
+    // Titles are bold, readable, and resolve to their real (decoded) text.
+    const firstTitle = cards.first().locator("h3");
+    await expect(firstTitle).toHaveCSS("font-weight", "700");
+    await expect(firstTitle).toHaveText("Decode the source");
     await expect(
-      cards.first().locator(".motioncode-feature-card-title"),
-    ).toHaveCSS("font-weight", "700");
-
-    await cards.nth(1).scrollIntoViewIfNeeded();
-    await cards.nth(1).hover();
-    const hoverTransform = await cards.nth(1).evaluate(
-      (node) => getComputedStyle(node).transform,
-    );
-    expect(hoverTransform).not.toBe("none");
-
-    const snippet = page.getByTestId("feature-code-snippet").first();
-    await expect(snippet).toHaveCSS("color", "rgb(255, 251, 244)");
-    await expect(snippet).toHaveCSS("animation-name", /terminal/i);
+      section.getByText("Keep it accessible"),
+    ).toBeVisible();
   });
 });
