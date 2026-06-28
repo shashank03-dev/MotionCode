@@ -29,6 +29,45 @@ import { ScrollSolutionBridge } from "@/components/marketing/scroll-solution-bri
 
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
+// Motion preference lives in localStorage and is read through an external
+// store so the component never sets state inside an effect. The server (and
+// first client paint) always report "enabled" to avoid a hydration mismatch;
+// after hydration the real preference — an explicit saved choice, else the OS
+// reduced-motion setting — is read on the client.
+const MOTION_PREFERENCE_KEY = "motioncode:motion";
+const motionPreferenceListeners = new Set<() => void>();
+
+function readMotionPreference(): boolean {
+  try {
+    const saved = window.localStorage.getItem(MOTION_PREFERENCE_KEY);
+    if (saved === "off") return false;
+    if (saved === "on") return true;
+  } catch {
+    /* localStorage blocked (private mode) — fall through to OS preference. */
+  }
+  try {
+    return !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  } catch {
+    return true;
+  }
+}
+
+function subscribeMotionPreference(onChange: () => void) {
+  motionPreferenceListeners.add(onChange);
+  return () => {
+    motionPreferenceListeners.delete(onChange);
+  };
+}
+
+function writeMotionPreference(next: boolean) {
+  try {
+    window.localStorage.setItem(MOTION_PREFERENCE_KEY, next ? "on" : "off");
+  } catch {
+    /* ignore persistence failures; the in-memory choice still applies. */
+  }
+  motionPreferenceListeners.forEach((listener) => listener());
+}
+
 const GLITCH_CHARS = "!<>-_\\/[]{}-=+*^?#________";
 const scrambleText = (element: HTMLElement | null, finalString: string, goingOut: boolean = false) => {
   if (!element) return;
@@ -294,40 +333,20 @@ export default function LandingPage() {
   const logoStripRef = useRef<HTMLElement>(null);
 
   // Motion is the user's call: on by default, with an explicit toggle that
-  // persists in localStorage. We start `true` so SSR and first client paint
-  // agree (no hydration mismatch), then apply any saved "off" choice in an
-  // effect. The whole GSAP setup keys off this flag, so flipping it tears the
-  // animations down and rebuilds them (or builds the static version).
-  const [motionEnabled, setMotionEnabled] = React.useState(true);
-
-  useEffect(() => {
-    let saved: string | null = null;
-    try {
-      saved = window.localStorage.getItem("motioncode:motion");
-    } catch {
-      /* localStorage blocked (private mode) — fall through to OS preference. */
-    }
-
-    // An explicit in-page choice always wins. Otherwise seed the default from
-    // the OS reduced-motion setting, so motion-sensitive visitors start with
-    // animations off until they opt in via the footer toggle.
-    if (saved === "off" || saved === "on") {
-      setMotionEnabled(saved === "on");
-    } else if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setMotionEnabled(false);
-    }
-  }, []);
+  // persists in localStorage. Reading through useSyncExternalStore keeps SSR
+  // and first client paint at `true` (no hydration mismatch) while applying any
+  // saved "off" choice — or the OS reduced-motion default — right after
+  // hydration, without setting state inside an effect. The whole GSAP setup
+  // keys off this flag, so flipping it tears the animations down and rebuilds
+  // them (or builds the static version).
+  const motionEnabled = React.useSyncExternalStore(
+    subscribeMotionPreference,
+    readMotionPreference,
+    () => true,
+  );
 
   const toggleMotion = React.useCallback(() => {
-    setMotionEnabled((prev) => {
-      const next = !prev;
-      try {
-        window.localStorage.setItem("motioncode:motion", next ? "on" : "off");
-      } catch {
-        /* ignore persistence failures; the in-memory choice still applies. */
-      }
-      return next;
-    });
+    writeMotionPreference(!readMotionPreference());
   }, []);
 
   useEffect(() => {
