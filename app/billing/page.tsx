@@ -5,6 +5,7 @@ import { ArrowUpRight, CreditCard, Receipt, Shield } from "lucide-react";
 import { type PlanTier } from "@/lib/contracts/plans";
 import { getEntitlementSummary } from "@/lib/server/entitlements";
 import {
+  getRazorpaySubscriptionSchedule,
   listRazorpaySubscriptionInvoices,
   type RazorpayInvoiceSummary,
 } from "@/lib/server/razorpay";
@@ -53,6 +54,10 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
   const invoices = subscriptionId
     ? await safeListInvoices(subscriptionId)
     : [];
+  const hasScheduledChange =
+    subscriptionId && !subscription?.cancel_at_period_end
+      ? await safeHasScheduledChange(subscriptionId)
+      : false;
 
   const notice = resolveNotice(resolvedSearchParams);
 
@@ -129,18 +134,31 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
             ) : (
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-3">
-                  <p className="text-sm leading-6 text-[var(--muted)]">
-                    {planTier === "pro"
-                      ? "Upgrade to Studio for more seats, workspaces, and analyses. Takes effect immediately."
-                      : "Switch to Pro. The change applies at the end of your current billing cycle."}
-                  </p>
-                  {planTier === "pro" ? (
-                    <ChangePlanButton
-                      label="Upgrade to Studio"
-                      targetPlanTier="studio"
-                    />
+                  {hasScheduledChange ? (
+                    <p className="text-sm leading-6 text-[var(--muted)]">
+                      A plan change is already scheduled for the end of your
+                      current billing cycle. It will apply automatically on{" "}
+                      {renewalLabel}.
+                    </p>
                   ) : (
-                    <ChangePlanButton label="Switch to Pro" targetPlanTier="pro" />
+                    <>
+                      <p className="text-sm leading-6 text-[var(--muted)]">
+                        {planTier === "pro"
+                          ? "Upgrade to Studio for more seats, workspaces, and analyses. Takes effect immediately."
+                          : "Switch to Pro. The change applies at the end of your current billing cycle."}
+                      </p>
+                      {planTier === "pro" ? (
+                        <ChangePlanButton
+                          label="Upgrade to Studio"
+                          targetPlanTier="studio"
+                        />
+                      ) : (
+                        <ChangePlanButton
+                          label="Switch to Pro"
+                          targetPlanTier="pro"
+                        />
+                      )}
+                    </>
                   )}
                 </div>
 
@@ -225,6 +243,15 @@ async function safeListInvoices(
     return await listRazorpaySubscriptionInvoices(subscriptionId);
   } catch {
     return [];
+  }
+}
+
+async function safeHasScheduledChange(subscriptionId: string): Promise<boolean> {
+  try {
+    const schedule = await getRazorpaySubscriptionSchedule(subscriptionId);
+    return schedule.hasScheduledChanges;
+  } catch {
+    return false;
   }
 }
 

@@ -96,6 +96,7 @@ export type RazorpayWebhookDeps = RazorpayDeps & {
 type RazorpaySubscriptionEntity = {
   current_end?: number | null;
   customer_id?: string | null;
+  has_scheduled_changes?: boolean | null;
   id?: string;
   notes?: unknown;
   plan_id?: string | null;
@@ -256,16 +257,25 @@ export async function cancelRazorpaySubscription(
     );
   }
 
+  if (subscription.cancel_at_period_end === true) {
+    throw new ApiError(
+      "INVALID_REQUEST",
+      "This subscription is already scheduled to cancel.",
+    );
+  }
+
   const entity = await (deps.cancelSubscription ?? cancelRazorpaySubscriptionApi)(
     subscriptionId,
   );
   const razorpayStatus = getString(entity.status) ?? "active";
   const status = normalizeRazorpayStatus(razorpayStatus);
+  const currentPeriodEnd = timestampToIso(entity.current_end ?? null);
 
   await updateSubscriptionByRazorpayId(client, subscriptionId, {
     cancel_at_period_end: true,
-    current_period_end: timestampToIso(entity.current_end ?? null),
     status,
+    // Preserve the known renewal date when Razorpay omits current_end.
+    ...(currentPeriodEnd ? { current_period_end: currentPeriodEnd } : {}),
   });
   await recordBillingAudit(client, {
     actorId: input.userId,
@@ -282,7 +292,7 @@ export async function cancelRazorpaySubscription(
 
   return {
     cancelAtPeriodEnd: true as const,
-    currentPeriodEnd: timestampToIso(entity.current_end ?? null),
+    currentPeriodEnd,
     status,
   };
 }
@@ -300,6 +310,13 @@ export async function changeRazorpaySubscriptionPlan(
     throw new ApiError(
       "INVALID_REQUEST",
       "No active Razorpay subscription to change.",
+    );
+  }
+
+  if (subscription.cancel_at_period_end === true) {
+    throw new ApiError(
+      "INVALID_REQUEST",
+      "This subscription is scheduled to cancel. Subscribe again from pricing to change plans.",
     );
   }
 
@@ -359,6 +376,17 @@ export async function listRazorpaySubscriptionInvoices(
     shortUrl: getString(invoice.short_url),
     status: getString(invoice.status) ?? "unknown",
   }));
+}
+
+export async function getRazorpaySubscriptionSchedule(
+  subscriptionId: string,
+  deps: RazorpayDeps = {},
+): Promise<{ hasScheduledChanges: boolean }> {
+  const entity = await (deps.retrieveSubscription ?? retrieveRazorpaySubscription)(
+    subscriptionId,
+  );
+
+  return { hasScheduledChanges: entity.has_scheduled_changes === true };
 }
 
 export async function handleRazorpayWebhookRequest(
@@ -566,9 +594,9 @@ async function cancelRazorpaySubscriptionApi(subscriptionId: string) {
   );
 
   if (!response.ok) {
-    throw new ApiError(
-      "INTERNAL_ERROR",
-      await readRazorpayError(response, "Unable to cancel Razorpay subscription."),
+    throw await razorpayApiError(
+      response,
+      "Unable to cancel Razorpay subscription.",
     );
   }
 
@@ -600,13 +628,24 @@ async function updateRazorpaySubscriptionApi(
   );
 
   if (!response.ok) {
-    throw new ApiError(
-      "INTERNAL_ERROR",
-      await readRazorpayError(response, "Unable to update Razorpay subscription."),
+    throw await razorpayApiError(
+      response,
+      "Unable to update Razorpay subscription.",
     );
   }
 
   return (await response.json()) as RazorpaySubscriptionEntity;
+}
+
+async function razorpayApiError(response: Response, fallback: string) {
+  const message = await readRazorpayError(response, fallback);
+  // A 4xx from Razorpay means the request itself was rejected (e.g. an invalid
+  // plan transition), so surface it as a client error rather than a 500.
+  const code =
+    response.status >= 400 && response.status < 500
+      ? "INVALID_REQUEST"
+      : "INTERNAL_ERROR";
+  return new ApiError(code, message);
 }
 
 async function fetchRazorpayInvoicesApi(subscriptionId: string) {
@@ -731,9 +770,20 @@ async function syncRazorpaySubscription(
     ? billingPlanTier
     : "free";
 
+  // A subscription cancelled at cycle end keeps status "active" until the
+  // cycle ends, so a later subscription.updated webhook must not clear a
+  // pending cancellation that we already recorded.
+  const cancelAtPeriodEnd =
+    isEndedRazorpayStatus(status) || existing?.cancel_at_period_end === true;
+  // Razorpay omits current_end on some payloads; keep the known renewal date
+  // instead of nulling it out.
+  const currentPeriodEnd =
+    timestampToIso(subscription.current_end ?? null) ??
+    stringField(existing, "current_period_end");
+
   await upsertSubscription(client, {
-    cancel_at_period_end: isEndedRazorpayStatus(status),
-    current_period_end: timestampToIso(subscription.current_end ?? null),
+    cancel_at_period_end: cancelAtPeriodEnd,
+    current_period_end: currentPeriodEnd,
     payment_provider: "razorpay",
     plan_tier: trustedPlanTier,
     razorpay_customer_id: customerId,
@@ -780,7 +830,9 @@ async function findSubscriptionByRazorpayId(
 ) {
   const result = await client
     .from("subscriptions")
-    .select("user_id,plan_tier,razorpay_customer_id,razorpay_subscription_id")
+    .select(
+      "user_id,plan_tier,razorpay_customer_id,razorpay_subscription_id,cancel_at_period_end,current_period_end",
+    )
     .eq("razorpay_subscription_id", subscriptionId)
     .limit(1);
 

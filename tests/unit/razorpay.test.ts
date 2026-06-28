@@ -10,6 +10,7 @@ import {
   createRazorpayCheckoutSubscription,
   handleRazorpayWebhookRequest,
   listRazorpaySubscriptionInvoices,
+  syncRazorpayWebhookEvent,
   verifyRazorpayCheckoutPayment,
 } from "@/lib/server/razorpay";
 
@@ -858,5 +859,143 @@ describe("Razorpay subscription management", () => {
       status: "paid",
     });
     expect(result[0].issuedAt).toBe(new Date(1893456000 * 1000).toISOString());
+  });
+
+  it("rejects cancellation when one is already scheduled", async () => {
+    const rows = activeSubscriptionRows("pro");
+    rows.subscriptions[0].cancel_at_period_end = true;
+    const { client } = createRazorpayClient(rows);
+    const cancelSubscription = vi.fn();
+
+    await expect(
+      cancelRazorpaySubscription(
+        { userId: "user_1" },
+        { cancelSubscription, client },
+      ),
+    ).rejects.toThrow(/already scheduled to cancel/);
+    expect(cancelSubscription).not.toHaveBeenCalled();
+  });
+
+  it("rejects a plan change while the subscription is scheduled to cancel", async () => {
+    const rows = activeSubscriptionRows("pro");
+    rows.subscriptions[0].cancel_at_period_end = true;
+    const { client } = createRazorpayClient(rows);
+    const updateSubscription = vi.fn();
+
+    await expect(
+      changeRazorpaySubscriptionPlan(
+        { targetPlanTier: "studio", userId: "user_1" },
+        { client, updateSubscription },
+      ),
+    ).rejects.toThrow(/scheduled to cancel/);
+    expect(updateSubscription).not.toHaveBeenCalled();
+  });
+
+  it("grants the new tier on upgrade when paid billing is trusted", async () => {
+    enablePaidRazorpayCheckout();
+    const { client } = createRazorpayClient(activeSubscriptionRows("pro"));
+    const updateSubscription = vi.fn(async () => ({
+      current_end: null,
+      id: "sub_123",
+      plan_id: "plan_studio",
+      status: "active",
+    }));
+
+    const result = await changeRazorpaySubscriptionPlan(
+      { targetPlanTier: "studio", userId: "user_1" },
+      { client, updateSubscription },
+    );
+
+    expect(result.planTier).toBe("studio");
+  });
+
+  it("keeps a pending cancellation when a later webhook syncs the subscription", async () => {
+    const rows = activeSubscriptionRows("pro");
+    rows.subscriptions[0].cancel_at_period_end = true;
+    const { client, operations } = createRazorpayClient(rows);
+
+    await syncRazorpayWebhookEvent(
+      {
+        event: "subscription.updated",
+        payload: {
+          subscription: {
+            entity: {
+              current_end: 1893456000,
+              id: "sub_123",
+              plan_id: "plan_pro",
+              status: "active",
+            },
+          },
+        },
+      },
+      {},
+      { client },
+    );
+
+    const upsert = operations.find(
+      (op) => op.table === "subscriptions" && op.type === "upsert",
+    );
+    expect(upsert?.values).toMatchObject({ cancel_at_period_end: true });
+  });
+});
+
+describe("Razorpay management API routes", () => {
+  it("rejects cancellation during beta before reading auth state", async () => {
+    process.env.MOTIONCODE_LAUNCH_PHASE = "beta";
+    process.env.MOTIONCODE_ENABLE_PAID_CHECKOUT = "true";
+    const getCurrentUser = vi.fn(async () => {
+      throw new Error("auth should not run while paid checkout is disabled");
+    });
+    vi.doMock("@/lib/supabase/server", () => ({ getCurrentUser }));
+    const { POST } = await import("@/app/api/razorpay/cancel/route");
+
+    const response = await POST();
+    const json = (await response.json()) as ApiResponse<never>;
+
+    expect(response.status).toBe(403);
+    expect(json).toMatchObject({ code: "FORBIDDEN", ok: false });
+    expect(getCurrentUser).not.toHaveBeenCalled();
+  });
+
+  it("rejects plan change during beta before reading auth state", async () => {
+    process.env.MOTIONCODE_LAUNCH_PHASE = "beta";
+    process.env.MOTIONCODE_ENABLE_PAID_CHECKOUT = "true";
+    const getCurrentUser = vi.fn(async () => {
+      throw new Error("auth should not run while paid checkout is disabled");
+    });
+    vi.doMock("@/lib/supabase/server", () => ({ getCurrentUser }));
+    const { POST } = await import("@/app/api/razorpay/change-plan/route");
+
+    const response = await POST(
+      new Request("https://motioncode.test/api/razorpay/change-plan", {
+        body: JSON.stringify({ planTier: "studio" }),
+        method: "POST",
+      }),
+    );
+    const json = (await response.json()) as ApiResponse<never>;
+
+    expect(response.status).toBe(403);
+    expect(json).toMatchObject({ code: "FORBIDDEN", ok: false });
+    expect(getCurrentUser).not.toHaveBeenCalled();
+  });
+
+  it("rejects a malformed plan-change body", async () => {
+    enablePaidRazorpayCheckout();
+    const getCurrentUser = vi.fn(async () => ({
+      email: "user@example.test",
+      id: "user_1",
+    }));
+    vi.doMock("@/lib/supabase/server", () => ({ getCurrentUser }));
+    const { POST } = await import("@/app/api/razorpay/change-plan/route");
+
+    const response = await POST(
+      new Request("https://motioncode.test/api/razorpay/change-plan", {
+        body: "not-json",
+        method: "POST",
+      }),
+    );
+    const json = (await response.json()) as ApiResponse<never>;
+
+    expect(json).toMatchObject({ code: "INVALID_REQUEST", ok: false });
   });
 });
