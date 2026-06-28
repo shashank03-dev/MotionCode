@@ -78,10 +78,26 @@ describe("MarketingAuthNavActions", () => {
 
     expect(container.textContent).toContain("Dashboard");
     expect(container.textContent).toContain("Open App");
-    expect(container.textContent).toContain("founder@motioncode.ai");
-    expect(container.textContent).toContain("Out");
     expect(container.textContent).not.toContain("Sign in");
     expect(container.textContent).not.toContain("Try Free");
+
+    // The account entry point is a dropdown trigger; the email and sign-out
+    // action live inside the menu, which renders into a portal once opened.
+    const accountTrigger = container.querySelector<HTMLButtonElement>(
+      'button[aria-haspopup="menu"]',
+    );
+    expect(accountTrigger).not.toBeNull();
+    expect(accountTrigger?.getAttribute("aria-label")).toContain(
+      "founder@motioncode.ai",
+    );
+
+    await act(async () => {
+      accountTrigger?.click();
+    });
+
+    expect(document.body.textContent).toContain("Signed in as");
+    expect(document.body.textContent).toContain("founder@motioncode.ai");
+    expect(document.body.textContent).toContain("Sign out");
   });
 
   it("updates the shared site header when auth state changes after mount", async () => {
