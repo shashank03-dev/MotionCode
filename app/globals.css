@@ -747,13 +747,6 @@ body::after {
   .landing-logo-track,
   .landing-logo-marquee,
   .motioncode-nav-shell::after,
-  .feature-code-snippet,
-  .feature-code-snippet::before,
-  .feature-code-cursor,
-  .motioncode-feature-card,
-  .motioncode-feature-card-bar,
-  .motioncode-feature-panel,
-  .motioncode-feature-panel-ghost,
   .motioncode-bridge-signal,
   .motioncode-bridge-pipeline-node,
   .motioncode-bridge-rail span,
@@ -881,14 +874,6 @@ body::after {
   animation: inlineBadgeDotPulse 1.8s ease-in-out infinite;
 }
 
-.motioncode-feature-status-line {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 9px;
-  margin-bottom: 30px;
-}
-
-.motioncode-feature-status-line .motioncode-inline-badge,
 .motioncode-final-cta-meta .motioncode-inline-badge {
   margin: 0;
 }
@@ -1604,195 +1589,6 @@ body::after {
   .motioncode-scroll-bridge-title-main {
     font-size: 3.35rem;
   }
-}
-
-.motioncode-feature-card {
-  position: relative;
-  overflow: hidden;
-  padding: 24px 28px;
-  margin-bottom: 10px;
-  border: 1px solid var(--border);
-  border-left: 1px solid var(--border);
-  border-radius: 10px !important;
-  border-color: rgba(216, 207, 188, 0.26) !important;
-  background:
-    linear-gradient(135deg, rgba(255, 251, 244, 0.065), rgba(18, 20, 15, 0.82)) !important;
-  box-shadow:
-    0 16px 34px rgba(0, 0, 0, 0.22),
-    inset 0 1px 0 rgba(255, 251, 244, 0.035);
-  cursor: default;
-  backdrop-filter: blur(12px);
-  transform-origin: left center;
-  transition:
-    transform 420ms cubic-bezier(0.16, 1, 0.3, 1),
-    border-color 350ms ease,
-    background 350ms ease,
-    box-shadow 350ms ease,
-    opacity 350ms ease !important;
-  will-change: transform, opacity;
-}
-
-/* Vertical accent rail that grows in on the active card — the main source of
-   "alive" without animating layout. transform/opacity only. */
-.motioncode-feature-card-bar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: 3px;
-  background: linear-gradient(180deg, #00ff88, rgba(0, 255, 136, 0.25));
-  transform: scaleY(0);
-  transform-origin: top center;
-  opacity: 0;
-  transition:
-    transform 480ms cubic-bezier(0.16, 1, 0.3, 1),
-    opacity 320ms ease;
-  pointer-events: none;
-}
-
-.motioncode-feature-card[data-active="false"] {
-  opacity: 0.76 !important;
-  border-color: rgba(216, 207, 188, 0.24) !important;
-  background:
-    linear-gradient(135deg, rgba(216, 207, 188, 0.06), rgba(10, 12, 9, 0.88)) !important;
-}
-
-.motioncode-feature-card:hover {
-  transform: translateX(8px);
-  opacity: 0.95 !important;
-  border-color: rgba(216, 207, 188, 0.64) !important;
-  background:
-    linear-gradient(135deg, rgba(216, 207, 188, 0.18), rgba(18, 20, 15, 0.82)) !important;
-  box-shadow:
-    0 22px 48px rgba(0, 0, 0, 0.34),
-    0 0 32px rgba(0, 255, 136, 0.055),
-    inset 0 1px 0 rgba(255, 251, 244, 0.08);
-}
-
-.motioncode-feature-card[data-active="true"] {
-  opacity: 1 !important;
-  transform: translateX(10px);
-  border-color: rgba(0, 255, 136, 0.54) !important;
-  border-left: 1px solid var(--border) !important;
-  background:
-    linear-gradient(135deg, rgba(216, 207, 188, 0.18), rgba(0, 255, 136, 0.055) 64%, rgba(12, 14, 11, 0.9)) !important;
-  box-shadow:
-    0 24px 52px rgba(0, 0, 0, 0.4),
-    0 0 34px rgba(0, 255, 136, 0.08),
-    inset 0 1px 0 rgba(255, 251, 244, 0.1);
-}
-
-.motioncode-feature-card[data-active="true"] .motioncode-feature-card-bar {
-  transform: scaleY(1);
-  opacity: 1;
-}
-
-.motioncode-feature-card[data-active="true"] .card-num {
-  text-shadow: 0 0 12px rgba(0, 255, 136, 0.45);
-}
-
-.card-num {
-  transition: text-shadow 320ms ease;
-}
-
-.motioncode-feature-card-title {
-  color: rgb(255, 251, 244) !important;
-  text-wrap: balance;
-  letter-spacing: 0;
-}
-
-.motioncode-feature-card-desc {
-  color: rgba(216, 207, 188, 0.82) !important;
-  font-family: var(--font-body) !important;
-}
-
-.feature-code-snippet {
-  position: relative;
-  overflow: hidden;
-  border: 1px solid rgba(216, 207, 188, 0.18);
-  border-radius: 10px;
-  background:
-    linear-gradient(180deg, rgba(255, 251, 244, 0.055), rgba(0, 255, 136, 0.026)),
-    #070907;
-  color: rgb(255, 251, 244);
-  box-shadow:
-    0 18px 48px rgba(0, 0, 0, 0.38),
-    inset 0 1px 0 rgba(255, 251, 244, 0.06);
-  line-height: 1.8;
-  overflow-wrap: anywhere;
-  animation: terminalFrame 3.8s ease-in-out infinite;
-}
-
-.feature-code-snippet::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 12px;
-  right: 12px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.72), rgba(255, 251, 244, 0.46), transparent);
-  pointer-events: none;
-  animation: terminalReadabilityPulse 3.4s ease-in-out infinite;
-}
-
-.feature-code-snippet::selection {
-  background: rgba(0, 255, 136, 0.22);
-}
-
-/* Each code line is its own element so it can be stagger-revealed by GSAP when
-   a panel activates. GSAP manages will-change during the tween, so we don't pin
-   a layer on every line permanently. */
-.feature-code-snippet > .feature-code-line {
-  display: block;
-  white-space: pre;
-}
-
-.feature-code-cursor {
-  display: inline-block;
-  width: 7px;
-  height: 12px;
-  margin-top: 6px;
-  background: #00ff88;
-  box-shadow: 0 0 8px rgba(0, 255, 136, 0.55);
-  animation: terminalCursorBlink 1.05s steps(1, end) infinite;
-}
-
-@keyframes terminalCursorBlink {
-  0%,
-  49% {
-    opacity: 1;
-  }
-  50%,
-  100% {
-    opacity: 0;
-  }
-}
-
-/* Right-hand preview panels: crossfade with transform + opacity only. The old
-   version animated filter: blur(8px), which is expensive and ran during the
-   pinned scroll. Driven entirely by data-active now. */
-.motioncode-feature-panel {
-  opacity: 0;
-  transform: translateY(14px) scale(0.985);
-  pointer-events: none;
-  transition:
-    opacity 420ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 520ms cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform, opacity;
-}
-
-.motioncode-feature-panel[data-active="true"] {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  pointer-events: auto;
-}
-
-.motioncode-feature-panel-ghost {
-  transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.motioncode-feature-panel[data-active="true"] .motioncode-feature-panel-ghost {
-  transform: scale(1.05);
 }
 
 .motioncode-process-section {
@@ -3172,31 +2968,7 @@ body::after {
   gap: 24px;
 }
 
-/* Soft, inset column divider for the pinned features section. Replaces a hard
-   full-height border so the line never collides with the logo strip seam above;
-   it fades out top and bottom and reads as an intentional split. */
-.motioncode-feature-list::after {
-  content: "";
-  position: absolute;
-  top: 14%;
-  bottom: 14%;
-  right: 0;
-  width: 1px;
-  background: linear-gradient(
-    180deg,
-    transparent,
-    var(--border) 16%,
-    var(--border) 84%,
-    transparent
-  );
-  pointer-events: none;
-}
-
 @media (max-width: 767px) {
-  .motioncode-feature-list::after {
-    display: none;
-  }
-
   .motioncode-march-shell {
     overflow-x: hidden;
   }
@@ -3205,37 +2977,6 @@ body::after {
     gap: 0;
     justify-content: center !important;
     padding-inline: 10px !important;
-  }
-
-  .motioncode-feature-section {
-    display: block !important;
-    height: auto !important;
-    min-height: 0 !important;
-    margin-bottom: 0 !important;
-    overflow: visible !important;
-    position: relative !important;
-  }
-
-  .motioncode-feature-list {
-    border-right: 0 !important;
-    box-sizing: border-box;
-    padding: 72px 20px !important;
-    width: 100% !important;
-  }
-
-  .motioncode-feature-list-inner {
-    gap: 12px;
-    justify-content: flex-start !important;
-  }
-
-  .motioncode-feature-card {
-    margin-bottom: 0 !important;
-    opacity: 1 !important;
-    padding: 20px !important;
-  }
-
-  .motioncode-feature-visual {
-    display: none !important;
   }
 
   .motioncode-process-rail {
