@@ -5,8 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ApiResponse } from "@/lib/contracts/errors";
 import type { RazorpayWebhookSupabaseClient } from "@/lib/server/razorpay";
 import {
+  cancelRazorpaySubscription,
+  changeRazorpaySubscriptionPlan,
   createRazorpayCheckoutSubscription,
   handleRazorpayWebhookRequest,
+  listRazorpaySubscriptionInvoices,
   verifyRazorpayCheckoutPayment,
 } from "@/lib/server/razorpay";
 
@@ -717,5 +720,143 @@ describe("Razorpay verification API route", () => {
       ok: false,
     });
     expect(getCurrentUser).not.toHaveBeenCalled();
+  });
+});
+
+describe("Razorpay subscription management", () => {
+  function activeSubscriptionRows(planTier: "pro" | "studio") {
+    return {
+      subscriptions: [
+        {
+          cancel_at_period_end: false,
+          current_period_end: null,
+          plan_tier: planTier,
+          razorpay_customer_id: "cust_1",
+          razorpay_subscription_id: "sub_123",
+          status: "active",
+          user_id: "user_1",
+        },
+      ],
+    };
+  }
+
+  it("schedules cancellation at the end of the billing cycle", async () => {
+    const { client, operations } = createRazorpayClient(
+      activeSubscriptionRows("pro"),
+    );
+    const cancelSubscription = vi.fn(async () => ({
+      current_end: 1893456000,
+      id: "sub_123",
+      status: "active",
+    }));
+
+    const result = await cancelRazorpaySubscription(
+      { userId: "user_1" },
+      { cancelSubscription, client },
+    );
+
+    expect(cancelSubscription).toHaveBeenCalledWith("sub_123");
+    expect(result.cancelAtPeriodEnd).toBe(true);
+
+    const updateOp = operations.find(
+      (op) => op.table === "subscriptions" && op.type === "update",
+    );
+    expect(updateOp?.values).toMatchObject({ cancel_at_period_end: true });
+    expect(
+      operations.some(
+        (op) => op.table === "audit_events" && op.type === "insert",
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects cancellation when there is no active subscription", async () => {
+    const { client } = createRazorpayClient({ subscriptions: [] });
+
+    await expect(
+      cancelRazorpaySubscription({ userId: "user_1" }, { client }),
+    ).rejects.toThrow(/No active Razorpay subscription/);
+  });
+
+  it("upgrades immediately with schedule_change_at now", async () => {
+    const { client } = createRazorpayClient(activeSubscriptionRows("pro"));
+    const updateSubscription = vi.fn(async () => ({
+      current_end: null,
+      id: "sub_123",
+      plan_id: "plan_studio",
+      status: "active",
+    }));
+
+    const result = await changeRazorpaySubscriptionPlan(
+      { targetPlanTier: "studio", userId: "user_1" },
+      { client, updateSubscription },
+    );
+
+    expect(updateSubscription).toHaveBeenCalledWith("sub_123", {
+      planId: "plan_studio",
+      scheduleChangeAt: "now",
+    });
+    expect(result.effective).toBe("now");
+    expect(result.requestedPlanTier).toBe("studio");
+  });
+
+  it("downgrades at cycle end with schedule_change_at cycle_end", async () => {
+    const { client } = createRazorpayClient(activeSubscriptionRows("studio"));
+    const updateSubscription = vi.fn(async () => ({
+      current_end: null,
+      id: "sub_123",
+      plan_id: "plan_studio",
+      status: "active",
+    }));
+
+    const result = await changeRazorpaySubscriptionPlan(
+      { targetPlanTier: "pro", userId: "user_1" },
+      { client, updateSubscription },
+    );
+
+    expect(updateSubscription).toHaveBeenCalledWith("sub_123", {
+      planId: "plan_pro",
+      scheduleChangeAt: "cycle_end",
+    });
+    expect(result.effective).toBe("cycle_end");
+  });
+
+  it("rejects switching to the plan the subscription is already on", async () => {
+    const { client } = createRazorpayClient(activeSubscriptionRows("pro"));
+    const updateSubscription = vi.fn();
+
+    await expect(
+      changeRazorpaySubscriptionPlan(
+        { targetPlanTier: "pro", userId: "user_1" },
+        { client, updateSubscription },
+      ),
+    ).rejects.toThrow(/already on the selected plan/);
+    expect(updateSubscription).not.toHaveBeenCalled();
+  });
+
+  it("maps Razorpay invoices into summaries", async () => {
+    const fetchInvoices = vi.fn(async () => [
+      {
+        amount: 10000,
+        currency: "INR",
+        id: "inv_1",
+        issued_at: 1893456000,
+        short_url: "https://rzp.io/i/abc",
+        status: "paid",
+      },
+    ]);
+
+    const result = await listRazorpaySubscriptionInvoices("sub_123", {
+      fetchInvoices,
+    });
+
+    expect(fetchInvoices).toHaveBeenCalledWith("sub_123");
+    expect(result[0]).toMatchObject({
+      amount: 10000,
+      currency: "INR",
+      id: "inv_1",
+      shortUrl: "https://rzp.io/i/abc",
+      status: "paid",
+    });
+    expect(result[0].issuedAt).toBe(new Date(1893456000 * 1000).toISOString());
   });
 });

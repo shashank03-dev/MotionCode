@@ -66,10 +66,18 @@ export type RazorpayCheckoutVerificationInput = {
 };
 
 export type RazorpayDeps = {
+  cancelSubscription?: (
+    subscriptionId: string,
+  ) => Promise<RazorpaySubscriptionEntity>;
   client?: RazorpayWebhookSupabaseClient;
+  fetchInvoices?: (subscriptionId: string) => Promise<RazorpayInvoiceEntity[]>;
   fetchRazorpay?: typeof fetch;
   retrieveSubscription?: (
     subscriptionId: string,
+  ) => Promise<RazorpaySubscriptionEntity>;
+  updateSubscription?: (
+    subscriptionId: string,
+    change: { planId: string; scheduleChangeAt: "cycle_end" | "now" },
   ) => Promise<RazorpaySubscriptionEntity>;
 };
 
@@ -91,6 +99,16 @@ type RazorpaySubscriptionEntity = {
   id?: string;
   notes?: unknown;
   plan_id?: string | null;
+  status?: string | null;
+};
+
+type RazorpayInvoiceEntity = {
+  amount?: number | null;
+  created_at?: number | null;
+  currency?: string | null;
+  id?: string | null;
+  issued_at?: number | null;
+  short_url?: string | null;
   status?: string | null;
 };
 
@@ -197,6 +215,150 @@ export async function verifyRazorpayCheckoutPayment(
     paymentId: input.paymentId,
     userId: trustedUserId,
   });
+}
+
+export type RazorpayCancelInput = {
+  userId: string;
+};
+
+export type RazorpayChangePlanInput = {
+  targetPlanTier: Exclude<PlanTier, "free">;
+  userId: string;
+};
+
+export type RazorpayInvoiceSummary = {
+  amount: number;
+  currency: string;
+  id: string;
+  issuedAt: string | null;
+  shortUrl: string | null;
+  status: string;
+};
+
+const PLAN_RANK: Record<PlanTier, number> = {
+  free: 0,
+  pro: 1,
+  studio: 2,
+};
+
+export async function cancelRazorpaySubscription(
+  input: RazorpayCancelInput,
+  deps: RazorpayDeps = {},
+) {
+  const client = getWebhookClient(deps.client);
+  const subscription = await findActiveSubscriptionForUser(client, input.userId);
+  const subscriptionId = stringField(subscription, "razorpay_subscription_id");
+
+  if (!subscription || !subscriptionId) {
+    throw new ApiError(
+      "INVALID_REQUEST",
+      "No active Razorpay subscription to cancel.",
+    );
+  }
+
+  const entity = await (deps.cancelSubscription ?? cancelRazorpaySubscriptionApi)(
+    subscriptionId,
+  );
+  const razorpayStatus = getString(entity.status) ?? "active";
+  const status = normalizeRazorpayStatus(razorpayStatus);
+
+  await updateSubscriptionByRazorpayId(client, subscriptionId, {
+    cancel_at_period_end: true,
+    current_period_end: timestampToIso(entity.current_end ?? null),
+    status,
+  });
+  await recordBillingAudit(client, {
+    actorId: input.userId,
+    eventType: "billing.razorpay.subscription.cancel_requested",
+    metadata: {
+      cancelAtPeriodEnd: true,
+      paymentProvider: "razorpay",
+      planTier: isPlanTier(subscription.plan_tier) ? subscription.plan_tier : null,
+      razorpayStatus,
+      razorpaySubscriptionId: subscriptionId,
+      status,
+    },
+  });
+
+  return {
+    cancelAtPeriodEnd: true as const,
+    currentPeriodEnd: timestampToIso(entity.current_end ?? null),
+    status,
+  };
+}
+
+export async function changeRazorpaySubscriptionPlan(
+  input: RazorpayChangePlanInput,
+  deps: RazorpayDeps = {},
+) {
+  const billingEnv = getRazorpayBillingEnv();
+  const client = getWebhookClient(deps.client);
+  const subscription = await findActiveSubscriptionForUser(client, input.userId);
+  const subscriptionId = stringField(subscription, "razorpay_subscription_id");
+
+  if (!subscription || !subscriptionId) {
+    throw new ApiError(
+      "INVALID_REQUEST",
+      "No active Razorpay subscription to change.",
+    );
+  }
+
+  const currentPlanTier = isPlanTier(subscription.plan_tier)
+    ? subscription.plan_tier
+    : "free";
+  if (currentPlanTier === input.targetPlanTier) {
+    throw new ApiError(
+      "INVALID_REQUEST",
+      "Subscription is already on the selected plan.",
+    );
+  }
+
+  const scheduleChangeAt =
+    PLAN_RANK[input.targetPlanTier] > PLAN_RANK[currentPlanTier]
+      ? "now"
+      : "cycle_end";
+
+  const entity = await (deps.updateSubscription ?? updateRazorpaySubscriptionApi)(
+    subscriptionId,
+    {
+      planId: getRazorpayPlanId(input.targetPlanTier, billingEnv),
+      scheduleChangeAt,
+    },
+  );
+
+  const synced = await syncRazorpaySubscription(entity, deps, {
+    eventId: null,
+    eventType: "billing.razorpay.subscription.plan_changed",
+    fallbackPlanTier:
+      scheduleChangeAt === "now" ? input.targetPlanTier : undefined,
+    paymentId: null,
+    userId: input.userId,
+  });
+
+  return {
+    effective: scheduleChangeAt,
+    planTier: synced.planTier,
+    requestedPlanTier: input.targetPlanTier,
+    status: synced.status,
+  };
+}
+
+export async function listRazorpaySubscriptionInvoices(
+  subscriptionId: string,
+  deps: RazorpayDeps = {},
+): Promise<RazorpayInvoiceSummary[]> {
+  const entities = await (deps.fetchInvoices ?? fetchRazorpayInvoicesApi)(
+    subscriptionId,
+  );
+
+  return entities.map((invoice) => ({
+    amount: typeof invoice.amount === "number" ? invoice.amount : 0,
+    currency: getString(invoice.currency) ?? "INR",
+    id: getString(invoice.id) ?? "",
+    issuedAt: timestampToIso(invoice.issued_at ?? invoice.created_at ?? null),
+    shortUrl: getString(invoice.short_url),
+    status: getString(invoice.status) ?? "unknown",
+  }));
 }
 
 export async function handleRazorpayWebhookRequest(
@@ -385,6 +547,138 @@ async function retrieveRazorpaySubscription(subscriptionId: string) {
   }
 
   return (await response.json()) as RazorpaySubscriptionEntity;
+}
+
+async function cancelRazorpaySubscriptionApi(subscriptionId: string) {
+  const billingEnv = getRazorpayBillingEnv();
+  const response = await fetch(
+    `https://api.razorpay.com/v1/subscriptions/${encodeURIComponent(
+      subscriptionId,
+    )}/cancel`,
+    {
+      body: JSON.stringify({ cancel_at_cycle_end: true }),
+      headers: {
+        Authorization: getRazorpayAuthorizationHeader(billingEnv),
+        "content-type": "application/json",
+      },
+      method: "POST",
+    },
+  );
+
+  if (!response.ok) {
+    throw new ApiError(
+      "INTERNAL_ERROR",
+      await readRazorpayError(response, "Unable to cancel Razorpay subscription."),
+    );
+  }
+
+  return (await response.json()) as RazorpaySubscriptionEntity;
+}
+
+async function updateRazorpaySubscriptionApi(
+  subscriptionId: string,
+  change: { planId: string; scheduleChangeAt: "cycle_end" | "now" },
+) {
+  const billingEnv = getRazorpayBillingEnv();
+  const response = await fetch(
+    `https://api.razorpay.com/v1/subscriptions/${encodeURIComponent(
+      subscriptionId,
+    )}`,
+    {
+      body: JSON.stringify({
+        customer_notify: true,
+        plan_id: change.planId,
+        quantity: 1,
+        schedule_change_at: change.scheduleChangeAt,
+      }),
+      headers: {
+        Authorization: getRazorpayAuthorizationHeader(billingEnv),
+        "content-type": "application/json",
+      },
+      method: "PATCH",
+    },
+  );
+
+  if (!response.ok) {
+    throw new ApiError(
+      "INTERNAL_ERROR",
+      await readRazorpayError(response, "Unable to update Razorpay subscription."),
+    );
+  }
+
+  return (await response.json()) as RazorpaySubscriptionEntity;
+}
+
+async function fetchRazorpayInvoicesApi(subscriptionId: string) {
+  const billingEnv = getRazorpayBillingEnv();
+  const response = await fetch(
+    `https://api.razorpay.com/v1/invoices?subscription_id=${encodeURIComponent(
+      subscriptionId,
+    )}`,
+    {
+      headers: {
+        Authorization: getRazorpayAuthorizationHeader(billingEnv),
+      },
+      method: "GET",
+    },
+  );
+
+  if (!response.ok) {
+    throw new ApiError("INTERNAL_ERROR", "Unable to fetch Razorpay invoices.");
+  }
+
+  const body = (await response.json()) as { items?: RazorpayInvoiceEntity[] };
+  return body.items ?? [];
+}
+
+async function findActiveSubscriptionForUser(
+  client: RazorpayWebhookSupabaseClient,
+  userId: string,
+) {
+  const result = await client
+    .from("subscriptions")
+    .select(
+      "user_id,plan_tier,status,cancel_at_period_end,current_period_end,razorpay_customer_id,razorpay_subscription_id",
+    )
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(25);
+
+  if (result.error) {
+    throw new ApiError("INTERNAL_ERROR", "Failed to read subscription.");
+  }
+
+  const rows = result.data ?? [];
+  return (
+    rows.find(
+      (row) =>
+        typeof row.razorpay_subscription_id === "string" &&
+        row.razorpay_subscription_id.length > 0 &&
+        isManageableRazorpayStatus(row.status),
+    ) ?? null
+  );
+}
+
+function isManageableRazorpayStatus(status: unknown) {
+  return (
+    typeof status === "string" &&
+    ["active", "authenticated", "past_due", "trialing"].includes(status)
+  );
+}
+
+async function updateSubscriptionByRazorpayId(
+  client: RazorpayWebhookSupabaseClient,
+  subscriptionId: string,
+  values: Record<string, unknown>,
+) {
+  const result = await client
+    .from("subscriptions")
+    .update(values)
+    .eq("razorpay_subscription_id", subscriptionId);
+
+  if (result.error) {
+    throw new ApiError("INTERNAL_ERROR", "Failed to update subscription.");
+  }
 }
 
 async function syncRazorpaySubscription(

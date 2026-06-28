@@ -118,7 +118,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
 
         {resolvedSearchParams?.billing === "razorpay" ? (
           <div className="border border-[var(--accent-border)] bg-[var(--accent-dim)] px-4 py-3 font-mono text-sm text-[var(--text)]">
-            Razorpay billing changes are handled through support.
+            Manage your Razorpay subscription from the Billing page.
           </div>
         ) : null}
 
@@ -193,7 +193,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
             </dl>
             <Link
               className="mt-6 inline-flex h-10 items-center gap-2 border border-[var(--accent-border)] bg-[var(--accent-dim)] px-4 font-mono text-sm text-[var(--text)]"
-              href="/support"
+              href="/billing"
             >
               <CreditCard className="h-4 w-4" aria-hidden="true" />
               Manage billing
