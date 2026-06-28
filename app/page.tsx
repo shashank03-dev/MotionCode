@@ -6,6 +6,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import { Magnet } from "@/components/react-bits";
 import { SplitText } from "@/components/marketing/split-text";
 
@@ -26,7 +27,7 @@ import { CheckoutButton } from "@/app/pricing/CheckoutButton";
 import { MarketingAuthNavActions } from "@/components/marketing/auth-nav-actions";
 import { ScrollSolutionBridge } from "@/components/marketing/scroll-solution-bridge";
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
 const GLITCH_CHARS = "!<>-_\\/[]{}-=+*^?#________";
 const scrambleText = (element: HTMLElement | null, finalString: string, goingOut: boolean = false) => {
@@ -40,7 +41,10 @@ const scrambleText = (element: HTMLElement | null, finalString: string, goingOut
   const charsPerStep = Math.max(1, finalString.length / totalSteps);
 
   const interval = setInterval(() => {
-    element.innerText = finalString
+    // textContent (not innerText): innerText is layout-aware and forces a
+    // reflow on every write — and this runs every 20ms while a panel
+    // transition fires during the pinned scroll. textContent skips that.
+    element.textContent = finalString
       .split("")
       .map((letter, index) => {
         if (!goingOut) {
@@ -57,7 +61,7 @@ const scrambleText = (element: HTMLElement | null, finalString: string, goingOut
       clearInterval(interval);
       element.removeAttribute('data-interval-id');
       if (!goingOut) {
-        element.innerText = finalString;
+        element.textContent = finalString;
       }
     }
 
@@ -287,6 +291,45 @@ export default function LandingPage() {
   const processSectionRef = useRef<HTMLElement>(null);
   const processStepsRef = useRef<(HTMLElement | null)[]>([]);
 
+  const logoStripRef = useRef<HTMLElement>(null);
+
+  // Motion is the user's call: on by default, with an explicit toggle that
+  // persists in localStorage. We start `true` so SSR and first client paint
+  // agree (no hydration mismatch), then apply any saved "off" choice in an
+  // effect. The whole GSAP setup keys off this flag, so flipping it tears the
+  // animations down and rebuilds them (or builds the static version).
+  const [motionEnabled, setMotionEnabled] = React.useState(true);
+
+  useEffect(() => {
+    let saved: string | null = null;
+    try {
+      saved = window.localStorage.getItem("motioncode:motion");
+    } catch {
+      /* localStorage blocked (private mode) — fall through to OS preference. */
+    }
+
+    // An explicit in-page choice always wins. Otherwise seed the default from
+    // the OS reduced-motion setting, so motion-sensitive visitors start with
+    // animations off until they opt in via the footer toggle.
+    if (saved === "off" || saved === "on") {
+      setMotionEnabled(saved === "on");
+    } else if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setMotionEnabled(false);
+    }
+  }, []);
+
+  const toggleMotion = React.useCallback(() => {
+    setMotionEnabled((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem("motioncode:motion", next ? "on" : "off");
+      } catch {
+        /* ignore persistence failures; the in-memory choice still applies. */
+      }
+      return next;
+    });
+  }, []);
+
   useEffect(() => {
     const handleGlobalMouseMove = (e: MouseEvent) => {
       if (heroGlowRef.current) {
@@ -306,9 +349,30 @@ export default function LandingPage() {
 
   useEffect(() => {
     let rafId = 0;
+    // Cache the last values we actually wrote. Writing `--motioncode-nav-width`
+    // re-lays-out the glass nav and forces its backdrop-filter to recomposite,
+    // so doing it every scroll frame — even when the rounded value is identical,
+    // which it is for the whole duration of the pinned Features section — is
+    // pure stutter. Only touch the DOM when something genuinely changed.
+    let lastWidth = "";
+    let lastDensity = "";
+    let lastScrollY = -1;
 
     const clamp = (value: number, min: number, max: number) =>
       Math.min(Math.max(value, min), max);
+
+    const writeNavVars = (width: string, density: string) => {
+      const nav = navRef.current;
+      if (!nav) return;
+      if (width !== lastWidth) {
+        nav.style.setProperty("--motioncode-nav-width", width);
+        lastWidth = width;
+      }
+      if (density !== lastDensity) {
+        nav.style.setProperty("--motioncode-nav-density", density);
+        lastDensity = density;
+      }
+    };
 
     const updateNavShape = () => {
       const nav = navRef.current;
@@ -318,14 +382,20 @@ export default function LandingPage() {
       const viewportHeight = window.innerHeight;
 
       if (viewportWidth < 768) {
-        nav.style.setProperty("--motioncode-nav-width", "calc(100vw - 28px)");
-        nav.style.setProperty("--motioncode-nav-density", "0");
+        writeNavVars("calc(100vw - 28px)", "0");
         return;
       }
 
+      // Bail before any forced layout if the scroll position is unchanged
+      // since the last run (ScrollTrigger can fire onUpdate without scrollY
+      // actually moving). Saves 3 getBoundingClientRect + a scrollHeight read.
+      const scrollY = window.scrollY;
+      if (scrollY === lastScrollY) return;
+      lastScrollY = scrollY;
+
       const expandedWidth = Math.min(1020, viewportWidth - 64);
       const compactWidth = Math.max(790, expandedWidth - 190);
-      const heroProgress = clamp(window.scrollY / (viewportHeight * 0.76), 0, 1);
+      const heroProgress = clamp(scrollY / (viewportHeight * 0.76), 0, 1);
 
       const sectionExpansion = ["features", "how-it-works", "pricing"].reduce(
         (strongest, sectionId) => {
@@ -356,8 +426,7 @@ export default function LandingPage() {
       );
       const density = clamp(heroProgress - sectionExpansion * 0.35, 0, 1);
 
-      nav.style.setProperty("--motioncode-nav-width", `${Math.round(width)}px`);
-      nav.style.setProperty("--motioncode-nav-density", density.toFixed(3));
+      writeNavVars(`${Math.round(width)}px`, density.toFixed(3));
     };
 
     const requestNavShapeUpdate = () => {
@@ -385,6 +454,79 @@ export default function LandingPage() {
     };
   }, []);
 
+  // Smooth in-page anchor navigation. We deliberately dropped CSS
+  // `scroll-behavior: smooth` (it stutters ScrollTrigger's pinned Features
+  // section), so we drive anchor jumps through GSAP's ScrollToPlugin instead —
+  // ScrollTrigger tracks GSAP-driven scrolls, so the pin stays smooth. Honours
+  // prefers-reduced-motion by jumping instantly.
+  useEffect(() => {
+    const onClick = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+      const anchor = (event.target as HTMLElement | null)?.closest(
+        'a[href^="#"]',
+      ) as HTMLAnchorElement | null;
+      if (!anchor) return;
+
+      const hash = anchor.getAttribute("href");
+      if (!hash || hash === "#") return;
+
+      const target = document.querySelector(hash);
+      if (!(target instanceof HTMLElement)) return;
+
+      // Capture phase + stopPropagation so this runs before Next's <Link>
+      // click handler, which would otherwise hash-navigate with an instant
+      // jump and pre-empt the GSAP scroll.
+      event.preventDefault();
+      event.stopPropagation();
+
+      const reduceMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      // Clear the fixed nav so anchored sections aren't tucked under it.
+      const offsetY = (navRef.current?.offsetHeight ?? 0) + 24;
+
+      gsap.to(window, {
+        duration: reduceMotion ? 0 : 0.9,
+        ease: "power2.inOut",
+        scrollTo: { y: target, offsetY, autoKill: true },
+        onComplete: () => {
+          if (history.replaceState) history.replaceState(null, "", hash);
+        },
+      });
+    };
+
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, []);
+
+  // Pause the logo marquee while it's off-screen. The marquee duplicates its
+  // brands into ~156 per-character spans, each running an infinite shimmer with
+  // `will-change` — i.e. 156 promoted compositor layers churning every frame.
+  // Left running, that work happens even while you're scrolling the pinned
+  // Features section below it, which is the main cause of the fast-scroll
+  // stutter there. The `data-inview="false"` state (see globals.css) pauses
+  // those animations and drops their `will-change` so the layers go idle.
+  // Aurora, the hero field drift, and the terminal loop already gate this way;
+  // the marquee was the one that didn't.
+  useEffect(() => {
+    const strip = logoStripRef.current;
+    if (!strip) return;
+
+    // Default to the paused/idle state; the observer flips it on when visible.
+    strip.dataset.inview = "false";
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        strip.dataset.inview = entries[0]?.isIntersecting ? "true" : "false";
+      },
+      { threshold: 0 },
+    );
+    observer.observe(strip);
+    return () => observer.disconnect();
+  }, []);
+
   const setInteractiveHover = (
     event: React.MouseEvent<HTMLElement>,
     hovered: boolean,
@@ -394,9 +536,8 @@ export default function LandingPage() {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      const reduceMotion = window.matchMedia(
-        "(prefers-reduced-motion: reduce)",
-      ).matches;
+      // Driven by the user's in-page toggle (default on), not the OS setting.
+      const reduceMotion = !motionEnabled;
 
       const terminalLines = heroTermLinesRef.current.filter(Boolean);
       gsap.set(terminalLines, { autoAlpha: 1, y: 0 });
@@ -563,6 +704,7 @@ export default function LandingPage() {
       const NUM_FEATURES = FEATURES_DATA.length;
       let lastIndex = -1;
       let featureTrigger: ReturnType<typeof ScrollTrigger.create> | null = null;
+      let featureTimeline: ReturnType<typeof gsap.timeline> | null = null;
       const compactFeaturesQuery = window.matchMedia("(max-width: 767px)");
 
       // Drive the active feature purely through data-active attributes — the
@@ -590,8 +732,8 @@ export default function LandingPage() {
           if (isActive) {
             const codeLines = panel.querySelectorAll(".feature-code-line");
             if (reduceMotion) {
-              if (titleEl) titleEl.innerText = FEATURES_DATA[i].title;
-              if (descEl) descEl.innerText = FEATURES_DATA[i].desc;
+              if (titleEl) titleEl.textContent = FEATURES_DATA[i].title;
+              if (descEl) descEl.textContent = FEATURES_DATA[i].desc;
               gsap.set(codeLines, { autoAlpha: 1, x: 0 });
             } else {
               if (titleEl) scrambleText(titleEl, FEATURES_DATA[i].title, false);
@@ -626,9 +768,24 @@ export default function LandingPage() {
       };
 
       const clearFeatureTrigger = () => {
-        if (!featureTrigger) return;
-        featureTrigger.kill();
-        featureTrigger = null;
+        if (featureTimeline) {
+          // Killing the timeline kills its ScrollTrigger (and unpins) too.
+          featureTimeline.scrollTrigger?.kill();
+          featureTimeline.kill();
+          featureTimeline = null;
+        }
+        if (featureTrigger) {
+          featureTrigger.kill();
+          featureTrigger = null;
+        }
+        // Hand the panels back to CSS: drop the inline transition lock and the
+        // opacity/visibility/transform the scrub timeline was driving, so a
+        // re-layout (e.g. resize into the compact breakpoint) starts clean.
+        rightPanelsRef.current.forEach((panel) => {
+          if (!panel) return;
+          panel.style.transition = "";
+          gsap.set(panel, { clearProps: "opacity,visibility,transform" });
+        });
       };
 
       const applyFeatureLayout = () => {
@@ -643,10 +800,17 @@ export default function LandingPage() {
           return;
         }
 
-        featureTrigger = ScrollTrigger.create({
+        // One viewport of scroll per *transition* between panels. With
+        // NUM_FEATURES panels there are NUM_FEATURES - 1 transitions, so the pin
+        // lasts that many viewports and progress maps linearly: panel i rests at
+        // progress i / lastFeatureIndex. Every panel gets an identical dwell.
+        // The old `* NUM_FEATURES + 0.35` mapping gave panel 1 only ~13% of the
+        // scroll and the last panel ~27% — a rushed first card, a draggy last.
+        const lastFeatureIndex = NUM_FEATURES - 1;
+        const pinConfig = {
           trigger: featuresSectionRef.current,
           start: "top top",
-          end: () => `+=${NUM_FEATURES * window.innerHeight}`,
+          end: () => `+=${lastFeatureIndex * window.innerHeight}`,
           pin: true,
           // Let ScrollTrigger own the pin spacer instead of the old
           // `pinSpacing: false` + manual marginBottom hack — that mismatch is
@@ -654,14 +818,69 @@ export default function LandingPage() {
           pinSpacing: true,
           anticipatePin: 1,
           invalidateOnRefresh: true,
-          onUpdate: (self) => {
-            const index = Math.min(
-              Math.floor(self.progress * NUM_FEATURES + 0.35),
-              NUM_FEATURES - 1
-            );
-            activateFeature(index);
-          }
+        } as const;
+
+        if (reduceMotion) {
+          // Reduced motion: no scroll-scrubbed motion — instant, discrete swaps
+          // driven by the CSS `data-active` states.
+          featureTrigger = ScrollTrigger.create({
+            ...pinConfig,
+            onUpdate: (self) => {
+              const index = Math.round(self.progress * lastFeatureIndex);
+              activateFeature(index);
+            },
+          });
+          activateFeature(0);
+          ScrollTrigger.refresh();
+          return;
+        }
+
+        // Motion on: drive the right-hand panel crossfade from a scroll-scrubbed
+        // timeline so the fade tracks scroll position 1:1 and stays smooth at any
+        // scroll speed — instead of firing a fixed-duration CSS transition on each
+        // discrete index flip (which can't keep up with a normal/fast scroll and
+        // reads as a stutter). GSAP owns opacity/visibility/transform here, so we
+        // disable the CSS transition that would otherwise lag the scrub.
+        // Keep index alignment with FEATURES_DATA (activateFeature indexes the
+        // same ref array), so no filtering — just guard nulls.
+        const panels = rightPanelsRef.current;
+        panels.forEach((panel, i) => {
+          if (!panel) return;
+          panel.style.transition = "none";
+          gsap.set(panel, {
+            autoAlpha: i === 0 ? 1 : 0,
+            y: i === 0 ? 0 : 18,
+            scale: i === 0 ? 1 : 0.985,
+          });
         });
+
+        featureTimeline = gsap.timeline({
+          // ease:"none" keeps the fade linear against scroll; `scrub` adds the
+          // brief catch-up that makes fast flings feel buttery instead of abrupt.
+          defaults: { ease: "none" },
+          scrollTrigger: {
+            ...pinConfig,
+            scrub: 0.5,
+            onUpdate: (self) => {
+              const index = Math.round(self.progress * lastFeatureIndex);
+              activateFeature(index);
+            },
+          },
+        });
+
+        // Each segment [i, i+1] crossfades panel i out and panel i+1 in over one
+        // viewport of scroll. At every integer point exactly one panel rests fully
+        // visible, so the dwell per feature is identical.
+        for (let i = 0; i < lastFeatureIndex; i++) {
+          const outgoing = panels[i];
+          const incoming = panels[i + 1];
+          if (!outgoing || !incoming) continue;
+          featureTimeline
+            .to(outgoing, { autoAlpha: 0, y: -18, scale: 0.985 }, i)
+            .to(incoming, { autoAlpha: 1, y: 0, scale: 1 }, i);
+        }
+
+        featureTrigger = featureTimeline.scrollTrigger ?? null;
 
         activateFeature(0);
         ScrollTrigger.refresh();
@@ -731,7 +950,7 @@ export default function LandingPage() {
     return () => {
       ctx.revert();
     };
-  }, []);
+  }, [motionEnabled]);
 
   return (
     <div className="motioncode-march-shell bg-[var(--bg)] text-[var(--text)] min-h-screen relative">
@@ -1276,6 +1495,7 @@ export default function LandingPage() {
 
       {/* SECTION 4 - LOGO STRIP */}
       <section
+        ref={logoStripRef}
         data-testid="logo-strip"
         className="motioncode-logo-strip"
         aria-labelledby="logo-strip-heading"
@@ -1591,6 +1811,20 @@ export default function LandingPage() {
           <div className="motioncode-footer-copy">
             © 2026 MotionCode. All rights reserved.
           </div>
+          <button
+            type="button"
+            onClick={toggleMotion}
+            className="motioncode-motion-toggle"
+            data-on={motionEnabled ? "true" : "false"}
+            role="switch"
+            aria-checked={motionEnabled}
+            aria-label="Toggle site animations"
+          >
+            <span className="motioncode-motion-toggle-dot" aria-hidden="true" />
+            <span className="motioncode-motion-toggle-label">
+              Motion {motionEnabled ? "on" : "off"}
+            </span>
+          </button>
           <div className="motioncode-footer-socials">
             {["Twitter ↗", "GitHub ↗", "LinkedIn ↗"].map(link => (
               <Link key={link} href="#" className="motioncode-footer-social">

@@ -50,7 +50,11 @@ body {
 
 html {
   position: relative;
-  scroll-behavior: smooth;
+  /* NO `scroll-behavior: smooth` here. It animates every programmatic scroll
+     correction GSAP ScrollTrigger makes while pinning/refreshing the Features
+     section, which fights the pin frame-by-frame and produces the rapid
+     up/down stutter. Smooth anchor navigation is handled in JS via GSAP's
+     ScrollToPlugin (see app/page.tsx), which ScrollTrigger stays in sync with. */
 }
 
 a {
@@ -936,6 +940,20 @@ body::after {
 .motioncode-logo-strip:hover .motioncode-logo-marquee,
 .motioncode-logo-strip:focus-within .motioncode-logo-marquee {
   animation-play-state: paused;
+}
+
+/* Off-screen idle state (toggled by the IntersectionObserver in page.tsx).
+   Pauses the marquee scroll AND the ~156 per-character shimmer layers, and
+   releases their `will-change` so the compositor isn't managing 156 promoted
+   layers while the user scrolls the pinned Features section below. */
+.motioncode-logo-strip[data-inview="false"] .motioncode-logo-marquee {
+  animation-play-state: paused;
+  will-change: auto;
+}
+
+.motioncode-logo-strip[data-inview="false"] .motioncode-logo-mark .motioncode-split-char {
+  animation-play-state: paused;
+  will-change: auto;
 }
 
 .motioncode-logo-track {
@@ -2673,6 +2691,56 @@ body::after {
   color: rgb(216, 207, 188);
   font-family: var(--font-mono);
   font-size: 11px;
+}
+
+/* Motion preference toggle — terminal-pill styling, green status dot when on. */
+.motioncode-motion-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 14px;
+  border: 1px solid rgba(216, 207, 188, 0.28);
+  border-radius: 999px;
+  background: rgba(18, 20, 15, 0.6);
+  color: rgb(216, 207, 188);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition:
+    border-color 220ms ease,
+    color 220ms ease,
+    background 220ms ease;
+}
+
+.motioncode-motion-toggle:hover {
+  border-color: rgba(216, 207, 188, 0.55);
+  color: rgb(255, 251, 244);
+}
+
+.motioncode-motion-toggle:focus-visible {
+  outline: 2px solid rgba(0, 255, 136, 0.7);
+  outline-offset: 2px;
+}
+
+.motioncode-motion-toggle[data-on="true"] {
+  border-color: rgba(0, 255, 136, 0.42);
+  color: rgb(255, 251, 244);
+}
+
+.motioncode-motion-toggle-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(216, 207, 188, 0.5);
+  transition:
+    background 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.motioncode-motion-toggle[data-on="true"] .motioncode-motion-toggle-dot {
+  background: #00ff88;
+  box-shadow: 0 0 9px rgba(0, 255, 136, 0.6);
 }
 
 .landing-logo-strip,
@@ -6184,10 +6252,15 @@ body::after {
 }
 
 .motioncode-handoff-node {
-  fill: #00ff88;
+  fill: #9bffcf;
   opacity: 0;
   transform-box: fill-box;
   transform-origin: center;
+  /* A soft glow + bright core so the node reads as a travelling "packet" of
+     light rather than a flat disc. It fades out as it docks, handing the
+     resting anchor off to the card's own glowing port dot. */
+  filter: drop-shadow(0 0 4px rgba(0, 255, 136, 0.9))
+    drop-shadow(0 0 9px rgba(0, 255, 136, 0.45));
 }
 
 .motioncode-handoff-spine {
@@ -6382,30 +6455,39 @@ body::after {
     rgba(9, 11, 8, 0.82);
 }
 
+/* The connector trace now lands directly on the port, so the old stub-tail
+   line is retired — one accessory removed. */
 .motioncode-handoff-note::before {
-  left: var(--dot-x);
-  top: var(--dot-y);
-  width: 22px;
-  height: 1px;
-  background: rgba(0, 255, 136, 0.5);
-  transform: translate(var(--tail-x), -50%) scaleX(0);
-  transform-origin: var(--tail-origin);
-  transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  display: none;
 }
 
+/* The port: a socket the trace plugs into. At rest it's a faint ring with a
+   dim core; on connect the ring brightens and the core fires. It is centred
+   exactly on the inner-edge point (--dot-x/--dot-y) that the computed trace
+   terminates on, so line and dot are always welded together. */
 .motioncode-handoff-note::after {
+  content: "";
+  position: absolute;
   left: var(--dot-x);
   top: var(--dot-y);
-  width: 10px;
-  height: 10px;
-  border: 1px solid rgba(0, 255, 136, 0.42);
-  background: #00ff88;
-  transform: translate(-50%, -50%) scale(0.58);
-  opacity: 0.42;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0, 255, 136, 0.32);
+  background: radial-gradient(
+    circle,
+    rgba(0, 255, 136, 0.85) 0 1.5px,
+    transparent 2.5px
+  );
+  box-shadow: none;
+  transform: translate(-50%, -50%) scale(0.72);
+  opacity: 0.5;
   transition:
-    opacity 220ms ease,
-    transform 320ms cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 220ms ease;
+    opacity 240ms ease,
+    transform 360ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 240ms ease,
+    background 240ms ease,
+    box-shadow 240ms ease;
 }
 
 .motioncode-handoff-note[data-connected="true"] {
@@ -6420,16 +6502,19 @@ body::after {
     inset 0 1px 0 rgba(255, 251, 244, 0.1);
 }
 
-.motioncode-handoff-note[data-connected="true"]::before {
-  transform: translate(var(--tail-x), -50%) scaleX(1);
-}
-
 .motioncode-handoff-note[data-connected="true"]::after {
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
+  border-color: rgba(0, 255, 136, 0.85);
+  background: radial-gradient(
+    circle,
+    #00ff88 0 3px,
+    rgba(0, 255, 136, 0.18) 4px,
+    transparent 6.5px
+  );
   box-shadow:
-    0 0 0 5px rgba(0, 255, 136, 0.08),
-    0 0 24px rgba(0, 255, 136, 0.52);
+    0 0 0 4px rgba(0, 255, 136, 0.08),
+    0 0 20px rgba(0, 255, 136, 0.52);
 }
 
 .motioncode-handoff-label {

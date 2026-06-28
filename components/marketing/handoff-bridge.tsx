@@ -4,11 +4,14 @@ import React, { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
+import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
 import { SplitText } from "./split-text";
 
-// MotionPathPlugin is only used by this handoff diagram, so registering it here
-// (instead of on the landing page) keeps the plugin out of the initial bundle.
-gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
+// These plugins are only used by this handoff diagram, so registering them here
+// (instead of on the landing page) keeps them out of the initial bundle.
+// DrawSVG strokes the connector traces; MotionPath rides the packet node along
+// the same trace — both read the geometry we compute live from the DOM.
+gsap.registerPlugin(ScrollTrigger, MotionPathPlugin, DrawSVGPlugin);
 
 const HANDOFF_NOTES = [
   {
@@ -77,13 +80,6 @@ const HANDOFF_NOTES = [
   },
 ];
 
-const HANDOFF_BRANCH_PATHS = {
-  design: "M400 253 C370 240 358 190 331 166",
-  developer: "M780 397 C832 338 814 218 835 179",
-  qa: "M780 469 C808 482 826 492 852 497",
-  tools: "M400 325 C356 378 365 464 347 497",
-} as const;
-
 const HANDOFF_HUB_ROWS = [
   "Reference",
   "Motion map",
@@ -102,8 +98,16 @@ export default function HandoffBridge() {
       "(prefers-reduced-motion: reduce)",
     ).matches;
     const compactLayout = window.matchMedia("(max-width: 1023px)").matches;
+    const stage = section.querySelector<HTMLElement>(
+      ".motioncode-handoff-stage",
+    );
+    const svg = section.querySelector<SVGSVGElement>(".motioncode-handoff-map");
+    const hub = section.querySelector<HTMLElement>(".motioncode-handoff-hub");
     const noteCards = gsap.utils.toArray<HTMLElement>(
       section.querySelectorAll(".motioncode-handoff-note"),
+    );
+    const basePaths = gsap.utils.toArray<SVGPathElement>(
+      section.querySelectorAll(".motioncode-handoff-branch-base"),
     );
     const branches = gsap.utils.toArray<SVGPathElement>(
       section.querySelectorAll(".motioncode-handoff-branch-active"),
@@ -111,7 +115,6 @@ export default function HandoffBridge() {
     const nodes = gsap.utils.toArray<SVGCircleElement>(
       section.querySelectorAll(".motioncode-handoff-node"),
     );
-    const hub = section.querySelector<HTMLElement>(".motioncode-handoff-hub");
     const terminalRows = gsap.utils.toArray<HTMLElement>(
       section.querySelectorAll(".motioncode-handoff-terminal-row"),
     );
@@ -122,12 +125,67 @@ export default function HandoffBridge() {
       section.querySelectorAll(".motioncode-split-char"),
     );
 
-    if (reduceMotion || compactLayout) {
-      gsap.set(branches, {
-        strokeDashoffset: 0,
-        strokeDasharray: "1 0",
+    // Connectors are derived from live geometry, not authored as fixed path
+    // strings. We map the SVG's user space 1:1 onto the stage's pixel box, then
+    // route each trace from the hub's near edge to the exact centre of the
+    // card's port — so a trace always lands precisely on its dot at any width.
+    const clamp = gsap.utils.clamp;
+    const buildConnectors = () => {
+      if (!stage || !svg || !hub) return;
+      const stageRect = stage.getBoundingClientRect();
+      const width = stage.clientWidth;
+      const height = stage.clientHeight;
+      if (!width || !height) return;
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+
+      const hubRect = hub.getBoundingClientRect();
+      const hubLeft = hubRect.left - stageRect.left;
+      const hubRight = hubRect.right - stageRect.left;
+      const hubTop = hubRect.top - stageRect.top;
+      const hubBottom = hubRect.bottom - stageRect.top;
+      const hubCentreX = (hubLeft + hubRight) / 2;
+      // Keep hub exits off the rounded corners.
+      const hubInset = Math.min(44, hubRect.height * 0.16);
+
+      noteCards.forEach((card, index) => {
+        const cardRect = card.getBoundingClientRect();
+        const cardCentreX = cardRect.left + cardRect.width / 2 - stageRect.left;
+        const cardCentreY = cardRect.top + cardRect.height / 2 - stageRect.top;
+        const onLeft = cardCentreX < hubCentreX;
+
+        // Port sits on the card's inner edge (the one facing the hub).
+        const portX = onLeft
+          ? cardRect.right - stageRect.left
+          : cardRect.left - stageRect.left;
+        const portY = cardCentreY;
+        const hubX = onLeft ? hubLeft : hubRight;
+        const hubY = clamp(hubTop + hubInset, hubBottom - hubInset, portY);
+        const direction = onLeft ? -1 : 1;
+
+        // Horizontal tangents at both ends → a clean circuit-trace S-curve that
+        // reads as a routed signal, fitting the terminal motif.
+        const span = Math.abs(portX - hubX);
+        const handle = Math.max(54, span * 0.46);
+        const d =
+          `M${hubX.toFixed(1)} ${hubY.toFixed(1)} ` +
+          `C${(hubX + direction * handle).toFixed(1)} ${hubY.toFixed(1)} ` +
+          `${(portX - direction * handle).toFixed(1)} ${portY.toFixed(1)} ` +
+          `${portX.toFixed(1)} ${portY.toFixed(1)}`;
+
+        basePaths[index]?.setAttribute("d", d);
+        branches[index]?.setAttribute("d", d);
       });
-      gsap.set(nodes, { autoAlpha: 1 });
+    };
+
+    buildConnectors();
+    // Re-route before every ScrollTrigger refresh (which fires on resize) so the
+    // traces stay welded to their ports as the layout reflows.
+    ScrollTrigger.addEventListener("refreshInit", buildConnectors);
+
+    if (reduceMotion || compactLayout) {
+      // Static, fully-assembled state: traces drawn, packets hidden, cards lit.
+      gsap.set(branches, { drawSVG: "0% 100%" });
+      gsap.set(nodes, { autoAlpha: 0 });
       gsap.set([hub, ...terminalRows], { autoAlpha: 1, x: 0, scale: 1 });
       gsap.set(noteCards, {
         "--note-motion-y": "0px",
@@ -145,16 +203,19 @@ export default function HandoffBridge() {
       noteCards.forEach((card) => {
         card.dataset.connected = "true";
       });
-      return;
+      // A plain resize listener keeps the static traces aligned (no ScrollTrigger
+      // exists in this branch to fire refreshInit).
+      const onResize = () => buildConnectors();
+      window.addEventListener("resize", onResize);
+      return () => {
+        ScrollTrigger.removeEventListener("refreshInit", buildConnectors);
+        window.removeEventListener("resize", onResize);
+      };
     }
 
-    branches.forEach((path) => {
-      const length = path.getTotalLength();
-      gsap.set(path, {
-        strokeDasharray: length,
-        strokeDashoffset: length,
-      });
-    });
+    // Traces start undrawn (collapsed at the hub end); DrawSVG reveals each one
+    // hub → port as its packet rides across.
+    gsap.set(branches, { drawSVG: "0% 0%" });
 
     gsap.set(splitChars, {
       autoAlpha: 0,
@@ -186,11 +247,14 @@ export default function HandoffBridge() {
       },
     });
 
+    // Intro: the central packet terminal and the heading assemble first, before
+    // any branch reaches out to a card.
     handoffTimeline
+      .addLabel("intro", 0)
       .to(
         [hub, ...terminalRows],
-        { autoAlpha: 1, scale: 1, duration: 0.12, stagger: 0.02 },
-        0,
+        { autoAlpha: 1, scale: 1, duration: 0.1, stagger: 0.015 },
+        "intro",
       )
       .to(
         headerChars,
@@ -200,22 +264,32 @@ export default function HandoffBridge() {
           rotationX: 0,
           rotationZ: 0,
           skewY: 0,
-          duration: 0.2,
-          stagger: 0.004,
+          duration: 0.16,
+          stagger: { amount: 0.06 },
           ease: "power2.out",
         },
-        0.04,
+        "intro+=0.02",
       );
+
+    // Four packets, evenly staggered across the early/middle of the scrub. Each
+    // packet runs the same beat: branch draws out → node rides it to the card →
+    // card fills → text resolves → the card settles to rest scale. Timing is
+    // tuned so the *last* card finishes well before progress 1.0 (the old code
+    // scheduled it at 0.90–1.08, so it never completed inside the scrub range
+    // and the bottom-left card read as empty/broken the whole way down).
+    const CARD_START = 0.14;
+    const CARD_STAGGER = 0.16;
 
     branches.forEach((branch, index) => {
       const node = nodes[index];
       const card = noteCards[index];
       const cardChars = card?.querySelectorAll(".motioncode-split-char");
-      const start = 0.18 + index * 0.18;
+      const at = `card-${index}`;
 
       handoffTimeline
-        .to(branch, { strokeDashoffset: 0, duration: 0.18 }, start)
-        .to(node, { autoAlpha: 1, duration: 0.02 }, start)
+        .addLabel(at, CARD_START + index * CARD_STAGGER)
+        .to(branch, { drawSVG: "0% 100%", duration: 0.12 }, at)
+        .to(node, { autoAlpha: 1, duration: 0.02 }, at)
         .to(
           node,
           {
@@ -226,23 +300,28 @@ export default function HandoffBridge() {
               start: 0,
               end: 1,
             },
-            duration: 0.2,
+            duration: 0.12,
+            ease: "power1.in",
           },
-          start,
+          at,
         )
         .to(
           card,
           {
             "--note-motion-y": "0px",
-            "--note-scale": 1.01,
+            "--note-scale": 1.012,
             "--note-tilt": "0deg",
             autoAlpha: 1,
-            duration: 0.12,
+            duration: 0.1,
             ease: "power3.out",
           },
-          start + 0.14,
+          `${at}+=0.05`,
         )
-        .set(card, { attr: { "data-connected": "true" } }, start + 0.15)
+        .set(card, { attr: { "data-connected": "true" } }, `${at}+=0.08`)
+        // The travelling node dissipates the instant it docks — the card's own
+        // glowing port dot ([data-connected]::after) becomes the resting anchor,
+        // so there's never a flat disc stacked on the glowing dot.
+        .to(node, { autoAlpha: 0, duration: 0.05, ease: "power2.out" }, `${at}+=0.1`)
         .to(
           cardChars,
           {
@@ -251,22 +330,31 @@ export default function HandoffBridge() {
             rotationX: 0,
             rotationZ: 0,
             skewY: 0,
-            duration: 0.18,
-            stagger: 0.003,
+            duration: 0.13,
+            // `amount` spreads every char across a fixed window regardless of
+            // how long the copy is, so a 6-word body and a 3-word title finish
+            // in the same beat instead of the longest card running over.
+            stagger: { amount: 0.08 },
             ease: "power2.out",
           },
-          start + 0.18,
+          `${at}+=0.07`,
         )
         .to(
           card,
-          { "--note-scale": 1, duration: 0.08, ease: "power2.out" },
-          start + 0.28,
+          { "--note-scale": 1, duration: 0.07, ease: "power2.out" },
+          `${at}+=0.18`,
         );
     });
+
+    // Hold: pad the tail of the timeline so the fully-assembled board stays on
+    // screen for the last stretch of the scrub instead of snapping complete on
+    // the final pixel of scroll.
+    handoffTimeline.to({}, { duration: 0.22 });
 
     ScrollTrigger.refresh();
 
     return () => {
+      ScrollTrigger.removeEventListener("refreshInit", buildConnectors);
       handoffTimeline.scrollTrigger?.kill();
       handoffTimeline.kill();
     };
@@ -299,25 +387,15 @@ export default function HandoffBridge() {
           <svg
             className="motioncode-handoff-map"
             viewBox="0 0 1180 690"
-            preserveAspectRatio="xMidYMid meet"
+            preserveAspectRatio="none"
             aria-hidden="true"
           >
             {HANDOFF_NOTES.map((note) => (
               <g key={note.id}>
-                <path
-                  className="motioncode-handoff-path motioncode-handoff-branch-base"
-                  d={HANDOFF_BRANCH_PATHS[note.id as keyof typeof HANDOFF_BRANCH_PATHS]}
-                />
-                <path
-                  className="motioncode-handoff-path motioncode-handoff-branch-active"
-                  d={HANDOFF_BRANCH_PATHS[note.id as keyof typeof HANDOFF_BRANCH_PATHS]}
-                />
-                <circle
-                  className="motioncode-handoff-node"
-                  cx="590"
-                  cy="345"
-                  r="6"
-                />
+                {/* `d` is assigned at runtime from live DOM geometry. */}
+                <path className="motioncode-handoff-path motioncode-handoff-branch-base" />
+                <path className="motioncode-handoff-path motioncode-handoff-branch-active" />
+                <circle className="motioncode-handoff-node" cx="0" cy="0" r="4.5" />
               </g>
             ))}
           </svg>
