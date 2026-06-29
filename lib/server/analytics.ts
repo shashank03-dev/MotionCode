@@ -37,9 +37,30 @@ const SENSITIVE_PROPERTY_PATTERN =
 const MAX_ANALYTICS_STRING_LENGTH = 300;
 const MAX_ANALYTICS_DEPTH = 4;
 
+let warnedAboutDefaultSalt = false;
+
+function resolveAnalyticsSalt() {
+  const configured = process.env.ANALYTICS_SALT;
+  const isPlaceholder =
+    !configured || /placeholder|replace|example/i.test(configured);
+
+  if (isPlaceholder) {
+    if (process.env.NODE_ENV === "production" && !warnedAboutDefaultSalt) {
+      warnedAboutDefaultSalt = true;
+      serverLogger.warn(
+        "ANALYTICS_SALT is unset or a placeholder in production; " +
+          "identifier hashes are predictable. Set a strong ANALYTICS_SALT.",
+      );
+    }
+    return ANALYTICS_SALT;
+  }
+
+  return configured;
+}
+
 export function hashAnalyticsIdentifier(
   value: string,
-  salt = process.env.ANALYTICS_SALT ?? ANALYTICS_SALT,
+  salt = resolveAnalyticsSalt(),
 ) {
   return `sha256:${createHash("sha256")
     .update(salt)

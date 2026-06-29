@@ -3,10 +3,10 @@ import { z } from "zod";
 import { isPaidCheckoutEnabled, isRazorpayTestCheckoutEnabled } from "@/lib/contracts/launch";
 
 const ServerEnvSchema = z.object({
-  GEMINI_API_KEY: z.string().min(1),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
-  NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+  GEMINI_API_KEY: z.string().min(1).refine(isNotPlaceholder),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1).refine(isNotPlaceholder),
+  NEXT_PUBLIC_SUPABASE_URL: z.string().url().refine(isNotPlaceholder),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).refine(isNotPlaceholder),
 });
 
 const RazorpayBillingEnvSchema = z.object({
