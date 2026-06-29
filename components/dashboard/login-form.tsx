@@ -1,6 +1,6 @@
 "use client";
 
-import { Mail, Send } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, Send } from "lucide-react";
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 
@@ -13,7 +13,13 @@ import {
 import { isSupabaseExternalProviderEnabled } from "@/lib/supabase/auth-settings";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
-type LoginFormState = "idle" | "redirecting" | "sending" | "sent" | "error";
+type LoginFormState =
+  | "idle"
+  | "redirecting"
+  | "sending"
+  | "sent"
+  | "authenticating"
+  | "error";
 type GoogleProviderState = "checking" | "enabled" | "disabled" | "unavailable";
 
 type LoginFormProps = {
@@ -29,6 +35,8 @@ export function LoginForm({
   nextPath = DEFAULT_AUTH_NEXT_PATH,
 }: LoginFormProps) {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [state, setState] = useState<LoginFormState>("idle");
   const [googleProviderState, setGoogleProviderState] =
@@ -95,8 +103,31 @@ export function LoginForm({
     }
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handlePasswordSignIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setState("authenticating");
+    setMessage(null);
+
+    const supabase = createSupabaseBrowserClient();
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
+
+    if (error) {
+      setState("error");
+      setMessage(
+        /invalid login credentials/i.test(error.message)
+          ? "Incorrect email or password. You can also use a one-time link below."
+          : error.message,
+      );
+      return;
+    }
+
+    window.location.assign(normalizedNextPath);
+  }
+
+  async function handleMagicLink() {
     setState("sending");
     setMessage(null);
 
@@ -163,7 +194,7 @@ export function LoginForm({
         <div className="h-px flex-1 bg-[#11120d]/12" />
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handlePasswordSignIn} className="space-y-4">
         <label
           className="block font-mono text-[11px] uppercase tracking-[0.14em] text-[#565449]"
           htmlFor="email"
@@ -184,13 +215,64 @@ export function LoginForm({
             placeholder="you@example.com"
           />
         </div>
+        <label
+          className="block font-mono text-[11px] uppercase tracking-[0.14em] text-[#565449]"
+          htmlFor="password"
+        >
+          Password
+        </label>
+        <div className="flex min-h-12 items-center border border-[#11120d]/14 bg-[#fffbf4]/76 px-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.78)] transition-[border-color,box-shadow,background-color] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] focus-within:border-[#126137]/55 focus-within:bg-[#fffbf4] focus-within:shadow-[0_0_0_3px_rgba(18,97,55,0.09),inset_0_1px_0_rgba(255,255,255,0.9)]">
+          <Lock className="mr-2 size-4 text-[#565449]" />
+          <input
+            id="password"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            autoComplete="current-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            className="min-w-0 flex-1 bg-transparent text-sm text-[#11120d] outline-none placeholder:text-[#8f887a]"
+            placeholder="Your password"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((value) => !value)}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            className="ml-2 text-[#565449] transition-colors hover:text-[#11120d]"
+          >
+            {showPassword ? (
+              <EyeOff className="size-4" />
+            ) : (
+              <Eye className="size-4" />
+            )}
+          </button>
+        </div>
         <button
           type="submit"
-          disabled={state === "sending" || state === "redirecting"}
+          disabled={
+            state === "authenticating" ||
+            state === "sending" ||
+            state === "redirecting" ||
+            email.trim().length === 0 ||
+            password.length === 0
+          }
           className="inline-flex h-11 w-full items-center justify-center gap-2 border border-[#126137]/35 bg-[#126137] px-4 font-mono text-xs font-semibold uppercase tracking-[0.08em] text-[#fffbf4] transition-[background-color,border-color,transform,box-shadow] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:bg-[#0f4f2e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#126137] active:translate-y-px disabled:pointer-events-none disabled:opacity-60"
         >
-          <Send className="size-4" />
-          {state === "sending" ? "Sending" : "Send magic link"}
+          <Lock className="size-4" />
+          {state === "authenticating" ? "Signing in" : "Sign in"}
+        </button>
+        <button
+          type="button"
+          onClick={handleMagicLink}
+          disabled={
+            state === "sending" ||
+            state === "redirecting" ||
+            state === "authenticating" ||
+            email.trim().length === 0
+          }
+          className="inline-flex h-10 w-full items-center justify-center gap-2 border border-[#11120d]/14 bg-transparent px-4 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-[#565449] transition-colors duration-200 hover:border-[#126137]/45 hover:text-[#11120d] disabled:pointer-events-none disabled:opacity-50"
+        >
+          <Send className="size-3.5" />
+          {state === "sending" ? "Sending link" : "Email me a one-time link"}
         </button>
         {message ? (
           <p
