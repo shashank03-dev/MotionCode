@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-import { isPaidCheckoutEnabled, isRazorpayTestCheckoutEnabled } from "@/lib/contracts/launch";
+import {
+  getLaunchPhase,
+  isPaidCheckoutEnabled,
+  isRazorpayTestCheckoutEnabled,
+} from "@/lib/contracts/launch";
 
 const ServerEnvSchema = z.object({
   GEMINI_API_KEY: z.string().min(1).refine(isNotPlaceholder),
@@ -100,6 +104,15 @@ export function getRazorpayBillingEnv(
     const issue = parsed.error.issues[0];
     const key = issue?.path.join(".") || "Razorpay billing env";
     throw new Error(`Invalid ${key}: ${issue?.message ?? "unknown error"}`);
+  }
+
+  // Go-live guardrail: in the paid launch phase, test checkout must be off.
+  // Otherwise checkout stays enabled while canTrustPaidBillingEntitlements()
+  // is false, so paying customers would be charged but written back as "free".
+  if (getLaunchPhase(env) === "paid" && isRazorpayTestCheckoutEnabled(env)) {
+    throw new Error(
+      "Invalid billing config: disable MOTIONCODE_ENABLE_RAZORPAY_TEST_CHECKOUT in the paid launch phase — it would grant the free tier to paying customers.",
+    );
   }
 
   if (

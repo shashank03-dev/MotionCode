@@ -1,5 +1,6 @@
 import { isPaidCheckoutEnabled } from "@/lib/contracts/launch";
 import { apiError, apiSuccess, ApiError, isApiError } from "@/lib/server/apiErrors";
+import { checkBillingRateLimit } from "@/lib/server/billingRateLimit";
 import { observeAuthError } from "@/lib/server/observability";
 import { verifyRazorpayCheckoutPayment } from "@/lib/server/razorpay";
 import { getCurrentUser } from "@/lib/supabase/server";
@@ -20,6 +21,13 @@ export async function POST(request: Request) {
     });
 
     return apiError("UNAUTHENTICATED", "Sign in to verify checkout.");
+  }
+
+  const rateLimited = checkBillingRateLimit(user.id);
+  if (rateLimited) {
+    return apiError(rateLimited.code, rateLimited.message, {
+      status: rateLimited.status,
+    });
   }
 
   let body: {

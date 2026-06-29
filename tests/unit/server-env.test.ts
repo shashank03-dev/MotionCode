@@ -11,7 +11,7 @@ describe("server env loader", () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://motioncode.supabase.co";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "public-anon-key";
     process.env.GEMINI_API_KEY = "server-gemini-key";
-    process.env.SUPABASE_SERVICE_ROLE_KEY = "server-only-placeholder";
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-secret-value";
 
     const { getServerEnv } = await import("@/lib/server/env");
 
@@ -19,7 +19,7 @@ describe("server env loader", () => {
 
     expect(env).toEqual({
       geminiApiKey: "server-gemini-key",
-      supabaseServiceRoleKey: "server-only-placeholder",
+      supabaseServiceRoleKey: "service-role-secret-value",
       supabasePublishableKey: "public-anon-key",
       supabaseUrl: "https://motioncode.supabase.co",
     });
@@ -58,7 +58,7 @@ describe("server env loader", () => {
 
   it("does not require Gemini when initializing trusted Supabase writes", async () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://motioncode.supabase.co";
-    process.env.SUPABASE_SERVICE_ROLE_KEY = "server-only-placeholder";
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-secret-value";
     delete process.env.GEMINI_API_KEY;
 
     const { createTrustedSupabaseServerClient } = await import(
@@ -149,6 +149,24 @@ describe("server env loader", () => {
     expect(getRazorpayBillingEnv()).toMatchObject({
       keyId: "rzp_test_motioncode",
     });
+  });
+
+  it("rejects test checkout in the paid launch phase", async () => {
+    process.env.MOTIONCODE_LAUNCH_PHASE = "paid";
+    process.env.MOTIONCODE_ENABLE_PAID_CHECKOUT = "true";
+    process.env.MOTIONCODE_ENABLE_RAZORPAY_TEST_CHECKOUT = "true";
+    process.env.RAZORPAY_KEY_ID = "rzp_live_motioncode";
+    process.env.RAZORPAY_KEY_SECRET = "razorpay_secret";
+    process.env.RAZORPAY_PRO_PLAN_ID = "plan_pro";
+    process.env.RAZORPAY_STUDIO_PLAN_ID = "plan_studio";
+    process.env.RAZORPAY_SUBSCRIPTION_TOTAL_COUNT = "120";
+    process.env.RAZORPAY_WEBHOOK_SECRET = "whsec_razorpay";
+
+    const { getRazorpayBillingEnv } = await import("@/lib/server/env");
+
+    expect(() => getRazorpayBillingEnv()).toThrow(
+      "MOTIONCODE_ENABLE_RAZORPAY_TEST_CHECKOUT",
+    );
   });
 
   it("requires distinct Razorpay plan IDs", async () => {
