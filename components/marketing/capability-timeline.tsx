@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from "react";
 import { Check } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useReducedMotion } from "framer-motion";
 import { DecryptedText } from "@/components/react-bits";
 import styles from "./capability-timeline.module.css";
 
@@ -235,6 +236,9 @@ export default function CapabilityTimeline() {
   const dotsRef = useRef<(HTMLElement | null)[]>([]);
   const frameReadoutRef = useRef<HTMLElement>(null);
   const stepReadoutRef = useRef<HTMLElement>(null);
+  // The decrypt-on-view title effect is the one piece of motion that the static
+  // layout doesn't already neutralize, so honor prefers-reduced-motion here.
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -489,15 +493,19 @@ export default function CapabilityTimeline() {
                   </span>
                 </div>
                 <h3 className={styles.cardTitle}>
-                  <DecryptedText
-                    text={cap.title}
-                    animateOn="view"
-                    sequential
-                    speed={26}
-                    maxIterations={16}
-                    revealDirection="start"
-                    encryptedClassName="mc-enc"
-                  />
+                  {reduceMotion ? (
+                    cap.title
+                  ) : (
+                    <DecryptedText
+                      text={cap.title}
+                      animateOn="view"
+                      sequential
+                      speed={26}
+                      maxIterations={16}
+                      revealDirection="start"
+                      encryptedClassName="mc-enc"
+                    />
+                  )}
                 </h3>
                 <p className={styles.cardBody}>{cap.body}</p>
                 <Signature kind={cap.kind} />
