@@ -2,6 +2,8 @@
 
 import React, { useEffect, useRef, ReactNode, HTMLAttributes } from 'react';
 
+import { detectDeviceTier } from '@/lib/device-tier';
+
 interface MagnetProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
   padding?: number;
@@ -44,7 +46,11 @@ const Magnet: React.FC<MagnetProps> = ({
       });
     };
 
-    if (disabled || reduceMotion.matches) {
+    // Low-end / data-saving devices skip the global mousemove listener and its
+    // per-move rAF transform writes entirely — the magnet just rests centered.
+    const lowTier = detectDeviceTier() === 'low';
+
+    if (disabled || reduceMotion.matches || lowTier) {
       moveTo(0, 0, inactiveTransition);
       return () => {
         if (frameRef.current) {

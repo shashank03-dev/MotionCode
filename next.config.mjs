@@ -90,4 +90,23 @@ function normalizeOrigin(value) {
   }
 }
 
-export default nextConfig;
+// Opt-in bundle analysis: `ANALYZE=true npm run build` opens treemaps of the
+// client/server bundles. Guarded so normal builds never touch it, and so the
+// build still succeeds if @next/bundle-analyzer isn't installed.
+let finalConfig = nextConfig;
+if (process.env.ANALYZE === "true") {
+  try {
+    const { createRequire } = await import("node:module");
+    const require = createRequire(import.meta.url);
+    const withBundleAnalyzer = require("@next/bundle-analyzer")({
+      enabled: true,
+    });
+    finalConfig = withBundleAnalyzer(nextConfig);
+  } catch {
+    console.warn(
+      "[next.config] ANALYZE=true but @next/bundle-analyzer is not installed — run `npm i -D @next/bundle-analyzer`.",
+    );
+  }
+}
+
+export default finalConfig;
