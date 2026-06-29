@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const signInWithOAuth = vi.fn();
 const signInWithOtp = vi.fn();
+const signInWithPassword = vi.fn();
 const isSupabaseExternalProviderEnabled = vi.fn();
 const ORIGINAL_ENV = { ...process.env };
 
@@ -12,6 +13,7 @@ vi.mock("@/lib/supabase/browser", () => ({
     auth: {
       signInWithOAuth,
       signInWithOtp,
+      signInWithPassword,
     },
   }),
 }));
@@ -35,9 +37,11 @@ describe("LoginForm", () => {
     ).IS_REACT_ACT_ENVIRONMENT = true;
     signInWithOAuth.mockReset();
     signInWithOtp.mockReset();
+    signInWithPassword.mockReset();
     isSupabaseExternalProviderEnabled.mockReset();
     signInWithOAuth.mockResolvedValue({ error: null });
     signInWithOtp.mockResolvedValue({ error: null });
+    signInWithPassword.mockResolvedValue({ error: null });
     isSupabaseExternalProviderEnabled.mockResolvedValue(true);
 
     container = document.createElement("div");
@@ -151,15 +155,9 @@ describe("LoginForm", () => {
       input.dispatchEvent(new Event("input", { bubbles: true }));
     });
 
-    const form = container.querySelector("form");
-    if (!form) {
-      throw new Error("Expected login form.");
-    }
-
+    const magicLinkButton = findButton("Email me a one-time link");
     await act(async () => {
-      form.dispatchEvent(
-        new SubmitEvent("submit", { bubbles: true, cancelable: true }),
-      );
+      magicLinkButton.click();
     });
 
     expect(signInWithOtp).toHaveBeenCalledWith({
@@ -195,15 +193,9 @@ describe("LoginForm", () => {
       input.dispatchEvent(new Event("input", { bubbles: true }));
     });
 
-    const form = container.querySelector("form");
-    if (!form) {
-      throw new Error("Expected login form.");
-    }
-
+    const magicLinkButton = findButton("Email me a one-time link");
     await act(async () => {
-      form.dispatchEvent(
-        new SubmitEvent("submit", { bubbles: true, cancelable: true }),
-      );
+      magicLinkButton.click();
     });
 
     expect(signInWithOtp).toHaveBeenCalledWith({
