@@ -9,6 +9,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import { Magnet } from "@/components/react-bits";
 import { SplitText } from "@/components/marketing/split-text";
+import { detectDeviceTier } from "@/lib/device-tier";
 
 // Aurora is a WebGL/OGL background that cannot render on the server. Loading it
 // lazily keeps the ~ogl shader code out of the initial bundle so the hero text
@@ -50,10 +51,16 @@ function readMotionPreference(): boolean {
     if (saved === "off") return false;
     if (saved === "on") return true;
   } catch {
-    /* localStorage blocked (private mode) — fall through to OS preference. */
+    /* localStorage blocked (private mode) — fall through to device tier. */
   }
+  // No explicit choice: default motion OFF on low-end / data-saving devices so
+  // weaker hardware gets the calm, static landing page automatically. The whole
+  // GSAP system keys off this flag, so the entire animation layer (scroll
+  // scrubbing, hero field drift, terminal loop, logo marquee) stays idle there.
+  // detectDeviceTier() also folds in prefers-reduced-motion, and returns "high"
+  // on the server so SSR/first paint stay at "motion on" (no hydration mismatch).
   try {
-    return !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    return detectDeviceTier() !== "low";
   } catch {
     return true;
   }

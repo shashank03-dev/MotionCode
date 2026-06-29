@@ -1,8 +1,10 @@
 "use client";
 
 /* eslint-disable react-hooks/refs, react-hooks/exhaustive-deps, prefer-const -- React Bits keeps shader props in refs inside the render loop. */
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Renderer, Program, Mesh, Color, Triangle } from 'ogl';
+
+import { detectDeviceTier } from '@/lib/device-tier';
 
 const VERT = `#version 300 es
 in vec2 position;
@@ -125,7 +127,15 @@ export default function Aurora(props: AuroraProps) {
 
   const ctnDom = useRef<HTMLDivElement>(null);
 
+  // Aurora only ever renders on the client (imported with `ssr: false`), so we
+  // can resolve the device tier synchronously in the initializer. On low-end /
+  // data-saving devices we skip the WebGL shader entirely and fall back to a
+  // cheap static gradient — no rAF loop, no GPU drain — without a downgrade
+  // flash, since the canvas is never mounted in the first place.
+  const [lowTier] = useState(() => detectDeviceTier() === 'low');
+
   useEffect(() => {
+    if (lowTier) return;
     const ctn = ctnDom.current;
     if (!ctn) return;
 
@@ -281,5 +291,15 @@ export default function Aurora(props: AuroraProps) {
     };
   }, [amplitude]);
 
-  return <div ref={ctnDom} className="w-full h-full" />;
+  // On the low tier, paint a static aurora-like glow built from the same color
+  // stops the shader would have used, so the hero still reads as intentional.
+  const staticStyle = lowTier
+    ? {
+        backgroundImage: `radial-gradient(125% 85% at 50% 100%, ${
+          colorStops[1] ?? '#00FF88'
+        } 0%, ${colorStops[2] ?? '#126137'} 40%, transparent 72%)`,
+      }
+    : undefined;
+
+  return <div ref={ctnDom} className="w-full h-full" style={staticStyle} />;
 }
