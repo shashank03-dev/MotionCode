@@ -1,6 +1,7 @@
 import { type PlanTier } from "@/lib/contracts/plans";
 import { isPaidCheckoutEnabled } from "@/lib/contracts/launch";
 import { apiError, apiSuccess, ApiError, isApiError } from "@/lib/server/apiErrors";
+import { checkBillingRateLimit } from "@/lib/server/billingRateLimit";
 import { getEntitlementSummary } from "@/lib/server/entitlements";
 import { observeAuthError } from "@/lib/server/observability";
 import { createRazorpayCheckoutSubscription } from "@/lib/server/razorpay";
@@ -22,6 +23,13 @@ export async function POST(request: Request) {
     });
 
     return apiError("UNAUTHENTICATED", "Sign in to start checkout.");
+  }
+
+  const rateLimited = checkBillingRateLimit(user.id);
+  if (rateLimited) {
+    return apiError(rateLimited.code, rateLimited.message, {
+      status: rateLimited.status,
+    });
   }
 
   let planTier: PlanTier | null;

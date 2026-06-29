@@ -88,6 +88,18 @@ function withoutApprovedLegacyBillingCleanup(sql: string) {
     .replace(
       /\balter table public\.billing_webhook_events\s+alter column processed_at drop not null,\s*alter column processed_at drop default;\s*/gi,
       "",
+    )
+    // Approved (20260629160000): the redundant NOT VALID duplicate of
+    // subscriptions_payment_provider_check.
+    .replace(
+      /\balter table public\.subscriptions\s+drop constraint if exists subscriptions_payment_provider_razorpay_only_check;\s*/gi,
+      "",
+    )
+    // Approved (20260629160100): removal of orphaned, empty, unreferenced
+    // legacy tables (guarded so it refuses to run against populated tables).
+    .replace(
+      /\bdrop table if exists public\.(analysis_frames|animation_analyses|generated_code_outputs|export_events|feedback_messages|user_usage_daily|billing_entitlements) cascade;\s*/gi,
+      "",
     );
 }
 
