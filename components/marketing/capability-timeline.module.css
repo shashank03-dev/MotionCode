@@ -706,6 +706,12 @@
   color: var(--text);
 }
 
+/* The dot nav and "scroll to scrub" hint are scrubber affordances. In the
+   static stack there is nothing to scrub, so they only add noise. */
+.section:not([data-mode="pinned"]) .dots {
+  display: none;
+}
+
 @media (max-width: 860px) {
   .header {
     align-items: flex-start;
