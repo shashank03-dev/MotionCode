@@ -674,6 +674,38 @@
   box-shadow: none;
 }
 
+/* In static mode every card is "finished", not just card 0. The pinned path
+   sets data-active per scrub position via JS, but mobile-without-reduced-motion
+   matches no matchMedia condition (and the no-JS/SSR render runs nothing), so
+   the active-gated signature states must be expressed in CSS here. Without
+   this, the accessibility card's reduced-motion toggle reads OFF and the
+   frame / check / export accents stay muted. */
+.section:not([data-mode="pinned"]) .card .cardFrame {
+  color: rgb(var(--mc-card-accent));
+}
+
+.section:not([data-mode="pinned"]) .card .frame {
+  border-color: rgba(216, 207, 188, 0.28);
+  color: var(--accent);
+}
+
+.section:not([data-mode="pinned"]) .card .exportRow[data-done="true"] .exportState {
+  color: var(--accent);
+}
+
+.section:not([data-mode="pinned"]) .card .switchTrack {
+  background: rgba(0, 255, 136, 0.32);
+}
+
+.section:not([data-mode="pinned"]) .card .switchTrack::after {
+  transform: translateX(18px);
+  background: #00ff88;
+}
+
+.section:not([data-mode="pinned"]) .card .checkRow {
+  color: var(--text);
+}
+
 @media (max-width: 860px) {
   .header {
     align-items: flex-start;
