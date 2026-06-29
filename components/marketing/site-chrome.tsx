@@ -31,6 +31,9 @@ const footerGroups = [
     links: [
       { href: "/privacy", label: "Privacy" },
       { href: "/terms", label: "Terms" },
+      { href: "/refunds", label: "Cancellation & Refunds" },
+      { href: "/shipping", label: "Shipping & Delivery" },
+      { href: "/contact", label: "Contact" },
     ],
   },
 ];
