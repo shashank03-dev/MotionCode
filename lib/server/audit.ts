@@ -123,6 +123,11 @@ export type DailyAnalysisCountInput = {
   userId: string;
 };
 
+export type DailyAnalysisReleaseInput = {
+  since: Date;
+  userId: string;
+};
+
 export function createNoopAuditRecorder(): AuditRecorder {
   return {
     async record() {
@@ -251,6 +256,24 @@ export async function reserveDailyAnalysisUsageWithSupabase(
 
   if (result.error) {
     throw new ApiError("INTERNAL_ERROR", "Failed to reserve analysis usage.");
+  }
+
+  return result.data === true;
+}
+
+export async function releaseDailyAnalysisUsageWithSupabase(
+  input: DailyAnalysisReleaseInput,
+  options: SupabaseRecorderOptions = {},
+) {
+  const client = (options.client ??
+    createTrustedSupabaseServerClient(options.env)) as SupabaseUsageClient;
+  const result = await client.rpc("release_analysis_usage_event", {
+    p_period_start: input.since.toISOString(),
+    p_user_id: input.userId,
+  });
+
+  if (result.error) {
+    throw new ApiError("INTERNAL_ERROR", "Failed to release analysis usage.");
   }
 
   return result.data === true;
