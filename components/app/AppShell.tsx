@@ -1,7 +1,5 @@
 "use client";
 
-import { Boxes, FolderKanban, Gauge, UserCircle } from "lucide-react";
-import Link from "next/link";
 import {
   useCallback,
   useEffect,
@@ -10,12 +8,12 @@ import {
   type DragEvent,
   type MouseEvent,
 } from "react";
+import { useRouter } from "next/navigation";
 
 import { AppStatusBar } from "@/components/app/AppStatusBar";
-import { CodeOutput } from "@/components/app/CodeOutput";
-import { MotionSpecPanel } from "@/components/app/MotionSpecPanel";
+import { FreeSaveNoticeModal } from "@/components/app/FreeSaveNoticeModal";
 import { ProcessCanvas } from "@/components/app/ProcessCanvas";
-import { Scorecard } from "@/components/app/Scorecard";
+import { AnalyzeStudio } from "@/components/app/studio/AnalyzeStudio";
 import { UploadPanel } from "@/components/app/UploadPanel";
 import type { ApiResponse } from "@/lib/contracts/errors";
 import type { AnalysisResult } from "@/lib/contracts/motion";
@@ -25,21 +23,21 @@ import {
   type PlanTier,
 } from "@/lib/contracts/plans";
 import { extractFrames, isSupportedMediaFile } from "@/lib/extractFrames";
-import {
-  CODE_TABS,
-  type CodeTab,
-  getCodeContent,
-  getDownloadFilename,
-} from "@/lib/generatedCode";
+import { CODE_TABS, type CodeTab } from "@/lib/generatedCode";
 import type { MotionSpecEditableField } from "@/lib/motionSpecEditor";
 import { updateAnalysisResultSpec } from "@/lib/motionSpecEditor";
 import { incrementUsage, usagesLeft } from "@/lib/rateLimit";
 
 import styles from "./AppShell.module.css";
-import type { AnalysisStage, ScoreKey } from "./types";
+import type { AnalysisStage } from "./types";
 
 const DEFAULT_ENTITLEMENTS = PLAN_ENTITLEMENTS.free;
 const DEFAULT_FRAME_COUNT = DEFAULT_ENTITLEMENTS.maxFramesPerAnalysis;
+
+// Free-tier "your work won't be saved" consent. Acknowledged once per session;
+// the permanent key lets a user opt out of the reminder for good on this device.
+const FREE_SAVE_ACK_SESSION_KEY = "motioncode_free_save_ack_session";
+const FREE_SAVE_ACK_DISMISSED_KEY = "motioncode_free_save_ack_dismissed";
 
 const INTENT_COLORS: Record<string, string> = {
   entrance: "#9ef0c0",
@@ -57,12 +55,6 @@ const STATUS_MESSAGES = [
   "Almost there...",
 ];
 
-const PRODUCT_NAV_ITEMS = [
-  { href: "/dashboard", icon: Gauge, label: "Dashboard" },
-  { href: "/projects", icon: FolderKanban, label: "Projects" },
-  { href: "/workspaces", icon: Boxes, label: "Workspaces" },
-] as const;
-
 type AppShellProps = {
   initialDailyAnalysisUsage?: {
     limit: number;
@@ -78,14 +70,41 @@ export function AppShell({
   initialEntitlements = DEFAULT_ENTITLEMENTS,
   initialPlanTier = DEFAULT_ENTITLEMENTS.tier,
 }: AppShellProps = {}) {
+  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fileUrlRef = useRef<string | null>(null);
   const stepTimerRef = useRef<number | null>(null);
   const scannerTimerRef = useRef<number | null>(null);
   const statusTimerRef = useRef<number | null>(null);
 
+  // Plan tier and entitlements are owned by the server: the parent server
+  // component resolves them fresh from the database and passes them as props, so
+  // deriving them directly here means a server re-render (e.g. after an admin
+  // upgrade/downgrade) updates the UI, the default model, and plan gating.
   const userPlan: PlanTier = initialPlanTier;
   const entitlements = initialEntitlements;
+  // Free tier gets a read-only studio: preview + copy only. Paid tiers edit.
+  const editable = userPlan !== "free";
+
+  // Re-read entitlements from the server when the user returns to the tab so an
+  // open session reflects plan changes made elsewhere (admin override, billing).
+  // router.refresh() re-runs the server component, which re-resolves the plan
+  // from the database and feeds the new values back through the props above.
+  useEffect(() => {
+    const refreshOnFocus = () => {
+      if (document.visibilityState === "visible") {
+        router.refresh();
+      }
+    };
+
+    window.addEventListener("focus", refreshOnFocus);
+    document.addEventListener("visibilitychange", refreshOnFocus);
+
+    return () => {
+      window.removeEventListener("focus", refreshOnFocus);
+      document.removeEventListener("visibilitychange", refreshOnFocus);
+    };
+  }, [router]);
 
   const [file, setFile] = useState<File | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
@@ -97,13 +116,11 @@ export function AppShell({
   const [stage, setStage] = useState<AnalysisStage>("idle");
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [activeTab, setActiveTab] = useState<CodeTab>("CSS");
-  const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [flashError, setFlashError] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [showToast, setShowToast] = useState(false);
-  const [hoveredScore, setHoveredScore] = useState<ScoreKey | null>(null);
   const [activeStep, setActiveStep] = useState(0);
   const [scannerIndex, setScannerIndex] = useState(0);
   const [statusBarMsgIndex, setStatusBarMsgIndex] = useState(0);
@@ -111,6 +128,14 @@ export function AppShell({
   const [serverUsageRemaining, setServerUsageRemaining] = useState<
     number | null
   >(initialDailyAnalysisUsage?.remaining ?? null);
+  // True once the free-tier save warning has been acknowledged — permanently
+  // (localStorage) or for the current session (sessionStorage). Resolved lazily
+  // so a returning user is never prompted twice. Nothing renders from this value
+  // before interaction, so reading storage during init causes no hydration drift.
+  const [freeSaveAcknowledged, setFreeSaveAcknowledged] =
+    useState(readFreeSaveAcknowledged);
+  const [freeSaveModalOpen, setFreeSaveModalOpen] = useState(false);
+  const pendingFileRef = useRef<File | null>(null);
 
   const localUsageRemaining = usagesLeft(entitlements.dailyAnalyses);
   const usageRemaining =
@@ -221,6 +246,49 @@ export function AppShell({
     [frameCount, handleFileWithCount],
   );
 
+  // Entry point for every upload (file picker + drag/drop). Free-tier users see
+  // the "won't be saved" notice once before their first analysis can proceed.
+  const requestFile = useCallback(
+    (selectedFile: File) => {
+      if (userPlan === "free" && !freeSaveAcknowledged) {
+        pendingFileRef.current = selectedFile;
+        setFreeSaveModalOpen(true);
+        return;
+      }
+      handleFile(selectedFile);
+    },
+    [freeSaveAcknowledged, handleFile, userPlan],
+  );
+
+  const handleFreeSaveConfirm = useCallback(
+    (dontRemind: boolean) => {
+      try {
+        sessionStorage.setItem(FREE_SAVE_ACK_SESSION_KEY, "1");
+        if (dontRemind) {
+          localStorage.setItem(FREE_SAVE_ACK_DISMISSED_KEY, "1");
+        }
+      } catch {
+        // Best-effort persistence; proceeding regardless of storage failure.
+      }
+      setFreeSaveAcknowledged(true);
+      setFreeSaveModalOpen(false);
+      const queued = pendingFileRef.current;
+      pendingFileRef.current = null;
+      if (queued) {
+        handleFile(queued);
+      }
+    },
+    [handleFile],
+  );
+
+  const handleFreeSaveCancel = useCallback(() => {
+    setFreeSaveModalOpen(false);
+    pendingFileRef.current = null;
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, []);
+
   const handleRemoveFile = useCallback(
     (event?: MouseEvent) => {
       event?.stopPropagation();
@@ -318,31 +386,11 @@ export function AppShell({
       setDragActive(false);
       const selectedFile = event.dataTransfer.files?.[0];
       if (selectedFile) {
-        handleFile(selectedFile);
+        requestFile(selectedFile);
       }
     },
-    [handleFile],
+    [requestFile],
   );
-
-  const handleCopy = useCallback(() => {
-    const code = getCodeContent(result, activeTab);
-    void navigator.clipboard.writeText(code);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 2000);
-  }, [activeTab, result]);
-
-  const handleDownload = useCallback(() => {
-    const code = getCodeContent(result, activeTab);
-    const blob = new Blob([code], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = getDownloadFilename(activeTab);
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-    URL.revokeObjectURL(url);
-  }, [activeTab, result]);
 
   const handleSpecChange = useCallback(
     (field: MotionSpecEditableField, value: unknown) => {
@@ -472,32 +520,6 @@ export function AppShell({
 
   return (
     <div className={styles.root} id="app-root">
-      <nav className={styles.navbar} id="navbar">
-        <Link className={styles.brandLink} href="/app">
-          &lt;/&gt; MotionCode
-        </Link>
-        <div className={styles.productNav} aria-label="Product navigation">
-          <span className={styles.productNavActive}>Analyze</span>
-          {PRODUCT_NAV_ITEMS.map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <Link key={item.href} className={styles.productNavLink} href={item.href}>
-                <Icon aria-hidden="true" size={14} strokeWidth={1.8} />
-                {item.label}
-              </Link>
-            );
-          })}
-        </div>
-        <div className={styles.navActions}>
-          <div className={styles.planBadge}>{userPlan.toUpperCase()}</div>
-          <Link className={styles.homeLink} href="/account">
-            <UserCircle aria-hidden="true" size={14} strokeWidth={1.8} />
-            Account
-          </Link>
-        </div>
-      </nav>
-
       <h1 className="sr-only">MotionCode animation converter</h1>
 
       <main className={styles.mainArea} id="main-area">
@@ -517,7 +539,7 @@ export function AppShell({
           onDragLeave={onDragLeave}
           onDragOver={onDragOver}
           onDrop={onDrop}
-          onFileSelected={handleFile}
+          onFileSelected={requestFile}
           onFrameCountChange={updateFrameCount}
           onRemoveFile={handleRemoveFile}
           stage={stage}
@@ -561,24 +583,15 @@ export function AppShell({
             />
           ) : (
             <div className={styles.resultStack}>
-              <MotionSpecPanel
-                intentColor={intentColor}
-                onReset={handleReset}
-                onSpecChange={handleSpecChange}
-                result={result}
-              />
-              <CodeOutput
+              <AnalyzeStudio
+                key={result.id}
                 activeTab={activeTab}
-                copied={copied}
-                onCopy={handleCopy}
-                onDownload={handleDownload}
+                editable={editable}
+                intentColor={intentColor}
+                onNewAnalysis={handleReset}
+                onSpecChange={handleSpecChange}
                 onTabChange={setActiveTab}
                 result={result}
-              />
-              <Scorecard
-                hoveredScore={hoveredScore}
-                onHoveredScoreChange={setHoveredScore}
-                spec={result.spec}
               />
             </div>
           )}
@@ -598,6 +611,13 @@ export function AppShell({
           Analysis complete - code ready
         </div>
       )}
+
+      <FreeSaveNoticeModal
+        key={freeSaveModalOpen ? "free-save-open" : "free-save-closed"}
+        open={freeSaveModalOpen}
+        onCancel={handleFreeSaveCancel}
+        onConfirm={handleFreeSaveConfirm}
+      />
     </div>
   );
 
@@ -639,6 +659,21 @@ async function analyzeViaApi({
 function getStoredTab(): CodeTab | null {
   const savedTab = localStorage.getItem("motioncode_tab");
   return CODE_TABS.includes(savedTab as CodeTab) ? (savedTab as CodeTab) : null;
+}
+
+function readFreeSaveAcknowledged(): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  try {
+    return (
+      localStorage.getItem(FREE_SAVE_ACK_DISMISSED_KEY) === "1" ||
+      sessionStorage.getItem(FREE_SAVE_ACK_SESSION_KEY) === "1"
+    );
+  } catch {
+    // Storage blocked (private mode); fail open so the notice still shows.
+    return false;
+  }
 }
 
 function formatMegabytes(bytes: number) {

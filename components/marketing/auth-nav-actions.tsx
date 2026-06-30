@@ -4,6 +4,7 @@ import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { LoginModal } from "@/components/auth/login-modal";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
@@ -20,6 +21,7 @@ export function MarketingAuthNavActions({
 }: MarketingAuthNavActionsProps) {
   const [authState, setAuthState] = useState<AuthState>("loading");
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [loginOpen, setLoginOpen] = useState(false);
 
   const applyUserState = (user: User | null) => {
     setAuthState(user ? "signed-in" : "signed-out");
@@ -103,12 +105,17 @@ export function MarketingAuthNavActions({
   if (variant === "landing") {
     return (
       <div className="motioncode-nav-actions" aria-label="Account actions">
-        <Link href="/login" className="motioncode-nav-auth">
+        <button
+          type="button"
+          onClick={() => setLoginOpen(true)}
+          className="motioncode-nav-auth"
+        >
           Sign in
-        </Link>
+        </button>
         <Link href="/app" className="motioncode-nav-cta">
           Try Free
         </Link>
+        <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
       </div>
     );
   }

@@ -8,6 +8,8 @@ import styles from "./MotionSpecPanel.module.css";
 
 type MotionSpecPanelProps = {
   intentColor: string;
+  /** When false (free tier) fields render as static, read-only values. */
+  editable?: boolean;
   onReset: () => void;
   onSpecChange: (field: MotionSpecEditableField, value: unknown) => void;
   result: AnalysisResult;
@@ -26,6 +28,7 @@ const INTENTS: MotionIntent[] = [
 
 export function MotionSpecPanel({
   intentColor,
+  editable = true,
   onReset,
   onSpecChange,
   result,
@@ -59,76 +62,115 @@ export function MotionSpecPanel({
 
       <div className={styles.grid}>
         <Field label="Intent">
-          <select
-            onChange={(event) => onSpecChange("intent", event.target.value)}
-            value={spec.intent}
-          >
-            {INTENTS.map((intent) => (
-              <option key={intent} value={intent}>
-                {intent}
-              </option>
-            ))}
-          </select>
+          {editable ? (
+            <select
+              onChange={(event) => onSpecChange("intent", event.target.value)}
+              value={spec.intent}
+            >
+              {INTENTS.map((intent) => (
+                <option key={intent} value={intent}>
+                  {intent}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <ReadOnlyValue value={spec.intent} />
+          )}
         </Field>
-        <Field label="Element">
-          <input
-            onChange={(event) => onSpecChange("element", event.target.value)}
-            value={spec.element}
-          />
+        <Field className={styles.fieldElement} label="Element">
+          {editable ? (
+            <input
+              onChange={(event) => onSpecChange("element", event.target.value)}
+              value={spec.element}
+            />
+          ) : (
+            <ReadOnlyValue value={spec.element} />
+          )}
         </Field>
         <Field label="Duration">
-          <input
-            min={0}
-            onChange={(event) => onSpecChange("durationMs", event.target.value)}
-            type="number"
-            value={spec.durationMs}
-          />
+          {editable ? (
+            <input
+              min={0}
+              onChange={(event) => onSpecChange("durationMs", event.target.value)}
+              type="number"
+              value={spec.durationMs}
+            />
+          ) : (
+            <ReadOnlyValue value={`${spec.durationMs}`} />
+          )}
         </Field>
         <Field label="Delay">
-          <input
-            min={0}
-            onChange={(event) => onSpecChange("delayMs", event.target.value)}
-            type="number"
-            value={spec.delayMs}
-          />
+          {editable ? (
+            <input
+              min={0}
+              onChange={(event) => onSpecChange("delayMs", event.target.value)}
+              type="number"
+              value={spec.delayMs}
+            />
+          ) : (
+            <ReadOnlyValue value={`${spec.delayMs}`} />
+          )}
         </Field>
-        <Field label="Easing">
-          <input
-            onChange={(event) => onSpecChange("easing", event.target.value)}
-            value={spec.easing}
-          />
+        <Field className={styles.fieldEasing} label="Easing">
+          {editable ? (
+            <input
+              onChange={(event) => onSpecChange("easing", event.target.value)}
+              value={spec.easing}
+            />
+          ) : (
+            <ReadOnlyValue value={spec.easing} />
+          )}
         </Field>
         <Field label="Loops">
-          <label className={styles.loopToggle}>
-            <input
-              checked={spec.loops}
-              onChange={(event) => onSpecChange("loops", event.target.checked)}
-              type="checkbox"
-            />
-            <span>{spec.loops ? "yes" : "no"}</span>
-          </label>
+          {editable ? (
+            <label className={styles.loopToggle}>
+              <input
+                checked={spec.loops}
+                onChange={(event) => onSpecChange("loops", event.target.checked)}
+                type="checkbox"
+              />
+              <span>{spec.loops ? "yes" : "no"}</span>
+            </label>
+          ) : (
+            <ReadOnlyValue value={spec.loops ? "yes" : "no"} />
+          )}
         </Field>
       </div>
 
       <Field label="Description" wide>
-        <input
-          onChange={(event) => onSpecChange("description", event.target.value)}
-          value={spec.description}
-        />
+        {editable ? (
+          <input
+            onChange={(event) => onSpecChange("description", event.target.value)}
+            value={spec.description}
+          />
+        ) : (
+          <ReadOnlyValue value={spec.description} />
+        )}
       </Field>
     </section>
   );
 }
 
+function ReadOnlyValue({ value }: { value: string }) {
+  return (
+    <span className={styles.readOnlyValue} title={value}>
+      {value}
+    </span>
+  );
+}
+
 type FieldProps = {
   children: ReactNode;
+  className?: string;
   label: string;
   wide?: boolean;
 };
 
-function Field({ children, label, wide = false }: FieldProps) {
+function Field({ children, className = "", label, wide = false }: FieldProps) {
   return (
-    <label className={`${styles.field} ${wide ? styles.fieldWide : ""}`}>
+    <label
+      className={`${styles.field} ${wide ? styles.fieldWide : ""} ${className}`.trim()}
+    >
       <span>{label}</span>
       {children}
     </label>

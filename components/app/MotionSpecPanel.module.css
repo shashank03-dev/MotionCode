@@ -1,8 +1,13 @@
 .panel {
+  container-type: inline-size;
+  container-name: spec;
   flex: 0 0 auto;
   border-bottom: 1px solid var(--border);
   background: rgba(17, 18, 13, 0.92);
-  padding: 14px clamp(16px, 2vw, 24px);
+  padding: 16px clamp(16px, 2vw, 24px);
+
+  /* Legible warm label tone — replaces the too-dark #565449 muted. */
+  --spec-label: color-mix(in srgb, var(--accent) 56%, transparent);
 }
 
 .topline {
@@ -15,19 +20,21 @@
 .summary {
   display: flex;
   min-width: 0;
-  align-items: center;
-  gap: 14px;
+  align-items: flex-start;
+  gap: 12px;
 }
 
 .intentBadge {
   flex: 0 0 auto;
+  margin-top: 2px;
   border: 1px solid var(--intent-color);
   border-radius: 6px;
   background: color-mix(in srgb, var(--intent-color) 13%, transparent);
   color: var(--intent-color);
   font-family: var(--font-mono);
-  font-size: 0.7rem;
-  padding: 5px 10px;
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  padding: 5px 9px;
   text-transform: uppercase;
 }
 
@@ -36,26 +43,30 @@
 }
 
 .summaryText h2 {
-  margin: 0 0 3px;
+  margin: 0 0 4px;
   color: var(--text);
-  font-size: 0.86rem;
-  letter-spacing: 0;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .summaryText p {
-  max-width: 72ch;
+  display: -webkit-box;
+  max-width: 64ch;
   margin: 0;
   overflow: hidden;
-  color: var(--muted);
-  font-size: 0.78rem;
-  line-height: 1.45;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: var(--accent);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .resetButton {
   display: inline-flex;
-  min-height: 38px;
+  min-height: 36px;
   flex: 0 0 auto;
   align-items: center;
   gap: 7px;
@@ -65,32 +76,55 @@
   color: var(--accent);
   font-family: var(--font-mono);
   font-size: 0.72rem;
-  padding: 8px 11px;
+  padding: 8px 12px;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.resetButton:hover {
+  border-color: var(--accent-border);
+  background: rgba(216, 207, 188, 0.08);
+  color: var(--text);
+}
+
+.resetButton:focus-visible {
+  outline: 2px solid var(--accent-border);
+  outline-offset: 2px;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 14px;
+  margin-top: 16px;
+}
+
+/* Longer values get the full width so they never get clipped. */
+.fieldElement,
+.fieldEasing {
+  grid-column: 1 / -1;
 }
 
 .field {
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
 }
 
 .fieldWide {
-  margin-top: 10px;
+  grid-column: 1 / -1;
+  margin-top: 2px;
 }
 
 .field > span {
-  color: var(--muted);
+  color: var(--spec-label);
   font-family: var(--font-mono);
-  font-size: 0.64rem;
-  letter-spacing: 0.12em;
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
@@ -99,51 +133,88 @@
 .loopToggle {
   width: 100%;
   min-width: 0;
-  min-height: 34px;
+  min-height: 36px;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: rgba(0, 0, 0, 0.22);
   color: var(--text);
   font-family: var(--font-mono);
-  font-size: 0.72rem;
-  padding: 7px 8px;
+  font-size: 0.8rem;
+  padding: 8px 9px;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.field input:hover,
+.field select:hover {
+  border-color: var(--accent-border);
+}
+
+.field input:focus-visible,
+.field select:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+}
+
+/* Read-only (free tier) values: readable, never truncated — they wrap. */
+.readOnlyValue {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 36px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.16);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  padding: 8px 9px;
+  overflow-wrap: anywhere;
+}
+
+/* Description is prose — set it in the readable sans face, sentence case. */
+.fieldWide input,
+.fieldWide .readOnlyValue {
+  font-family: var(--font-body);
+  font-size: 0.83rem;
+  line-height: 1.5;
 }
 
 .loopToggle {
   display: flex;
   align-items: center;
   gap: 8px;
+  cursor: pointer;
 }
 
 .loopToggle input {
   width: auto;
   min-height: 0;
   padding: 0;
+  accent-color: var(--accent);
 }
 
-@media (max-width: 1100px) {
+@container spec (max-width: 360px) {
   .grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: 1fr;
+  }
+
+  .fieldElement,
+  .fieldEasing {
+    grid-column: auto;
   }
 }
 
+/* Drawer goes full-width on phones; relax the summary into a column. */
 @media (max-width: 640px) {
-  .topline,
-  .summary {
-    align-items: flex-start;
+  .topline {
     flex-direction: column;
   }
 
   .resetButton {
     width: 100%;
     justify-content: center;
-  }
-
-  .grid {
-    grid-template-columns: 1fr;
-  }
-
-  .summaryText p {
-    white-space: normal;
   }
 }
