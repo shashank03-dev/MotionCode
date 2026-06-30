@@ -20,5 +20,7 @@ test("login page exposes magic link auth", async ({ page }) => {
     page.getByRole("button", { name: "Continue with Google" }),
   ).toBeVisible();
   await expect(page.getByLabel("Email")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Send magic link" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Email me a one-time link" }),
+  ).toBeVisible();
 });

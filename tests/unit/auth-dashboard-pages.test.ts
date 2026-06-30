@@ -310,10 +310,12 @@ describe("account page paid plans status", () => {
         },
       })),
     }));
-    const { default: AccountPage } = await import("@/app/account/page");
-    const renderedHtml = renderToStaticMarkup(
-      await AccountPage({ searchParams: Promise.resolve({}) }),
+    // The account body (metrics, upgrade guidance, billing) lives in the shared
+    // AccountContent component, rendered by both the page and the @modal route.
+    const { AccountContent } = await import(
+      "@/components/account/AccountContent"
     );
+    const renderedHtml = renderToStaticMarkup(await AccountContent({}));
 
     expect(renderedHtml).toContain("Upgrade");
     expect(renderedHtml).toContain("Razorpay Checkout");

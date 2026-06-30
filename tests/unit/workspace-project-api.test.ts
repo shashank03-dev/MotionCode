@@ -76,6 +76,7 @@ describe("workspace API handlers", () => {
       updated_at: "2026-06-06T00:00:00.000Z",
     }));
     const markOnboardingComplete = vi.fn(async () => undefined);
+    const ensureProfile = vi.fn(async () => undefined);
 
     const response = await handleCreateWorkspaceRequest(
       jsonRequest("https://motioncode.test/api/workspaces", {
@@ -83,6 +84,7 @@ describe("workspace API handlers", () => {
       }),
       {
         createWorkspace,
+        ensureProfile,
         getCurrentUser: vi.fn(async () => ({ id: USER_ID })),
         markOnboardingComplete,
       },
@@ -91,12 +93,40 @@ describe("workspace API handlers", () => {
 
     expect(response.status).toBe(201);
     expect(json.ok).toBe(true);
+    expect(ensureProfile).toHaveBeenCalledWith(USER_ID);
     expect(createWorkspace).toHaveBeenCalledWith({
       name: "Design Systems",
       ownerId: USER_ID,
       slug: "design-systems",
     });
     expect(markOnboardingComplete).toHaveBeenCalledWith(USER_ID);
+  });
+
+  it("ensures the owner profile exists before inserting and surfaces failures", async () => {
+    const { handleCreateWorkspaceRequest } = await import(
+      "@/app/api/workspaces/handler"
+    );
+    const createWorkspace = vi.fn();
+    const ensureProfile = vi.fn(async () => {
+      throw new Error("profile boom");
+    });
+
+    const response = await handleCreateWorkspaceRequest(
+      jsonRequest("https://motioncode.test/api/workspaces", {
+        name: "Design Systems",
+      }),
+      {
+        createWorkspace,
+        ensureProfile,
+        getCurrentUser: vi.fn(async () => ({ id: USER_ID })),
+      },
+    );
+    const json = (await response.json()) as ApiResponse<unknown>;
+
+    expect(response.status).toBe(500);
+    expect(json.ok).toBe(false);
+    expect(ensureProfile).toHaveBeenCalledWith(USER_ID);
+    expect(createWorkspace).not.toHaveBeenCalled();
   });
 
   it("allows only owners and admins to change workspace member roles", async () => {
