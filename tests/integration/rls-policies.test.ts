@@ -100,6 +100,14 @@ function withoutApprovedLegacyBillingCleanup(sql: string) {
     .replace(
       /\bdrop table if exists public\.(analysis_frames|animation_analyses|generated_code_outputs|export_events|feedback_messages|user_usage_daily|billing_entitlements) cascade;\s*/gi,
       "",
+    )
+    // Approved (20260630154500): single-row rollback inside
+    // release_analysis_usage_event — removes one reserved analysis.started row
+    // so a failed analysis does not consume the user's daily quota. Scoped to
+    // usage_events and guarded by an advisory lock + per-user/day predicate.
+    .replace(
+      /\bdelete from public\.usage_events\b[\s\S]*?returning id into released_id;\s*/gi,
+      "",
     );
 }
 

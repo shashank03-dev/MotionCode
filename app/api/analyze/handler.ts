@@ -12,9 +12,11 @@ import {
   authorizeAnalysisRequestWithSupabase,
   createSupabaseAuditRecorder,
   createSupabaseUsageEventRecorder,
+  releaseDailyAnalysisUsageWithSupabase,
   reserveDailyAnalysisUsageWithSupabase,
   type AnalysisAuthorizationDecision,
   type AuditRecorder,
+  type DailyAnalysisReleaseInput,
   type DailyAnalysisReservationInput,
   type UsageEventRecorder,
 } from "@/lib/server/audit";
@@ -85,6 +87,9 @@ export type AnalyzeRouteDeps = {
   idGenerator?: () => string;
   isOpenAiAnalysisEnabled?: () => boolean;
   now?: () => Date;
+  releaseDailyAnalysisUsage?: (
+    input: DailyAnalysisReleaseInput,
+  ) => Promise<boolean>;
   reserveDailyAnalysisUsage?: (
     input: DailyAnalysisReservationInput,
   ) => Promise<boolean>;
@@ -283,6 +288,11 @@ export async function handleAnalyzeRequest(
   });
 
   if (!generatedResult.ok) {
+    await releaseReservationSafely(resolvedDeps.releaseDailyAnalysisUsage, {
+      since: startOfUtcDay(resolvedDeps.now()),
+      userId: user.id,
+    });
+
     return generatedResult.response;
   }
 
@@ -317,6 +327,10 @@ export async function handleAnalyzeRequest(
       "INTERNAL_ERROR",
       "Failed to persist analysis usage.",
     );
+    await releaseReservationSafely(resolvedDeps.releaseDailyAnalysisUsage, {
+      since: startOfUtcDay(resolvedDeps.now()),
+      userId: user.id,
+    });
     await recordFailureAuditSafely(resolvedDeps.audit, {
       analysisId,
       analysisModel: analysisProvider.model,
@@ -378,6 +392,8 @@ function resolveAnalyzeDeps(
     isOpenAiAnalysisEnabled:
       deps.isOpenAiAnalysisEnabled ?? (() => getOpenAiAnalysisGate()),
     now: deps.now ?? (() => new Date()),
+    releaseDailyAnalysisUsage:
+      deps.releaseDailyAnalysisUsage ?? releaseDailyAnalysisUsageWithSupabase,
     reserveDailyAnalysisUsage:
       deps.reserveDailyAnalysisUsage ?? reserveDailyAnalysisUsageWithSupabase,
     usage: deps.usage ?? createSupabaseUsageEventRecorder(),
@@ -748,6 +764,18 @@ function toApiError(
   }
 
   return new ApiError(fallbackCode, fallbackMessage);
+}
+
+async function releaseReservationSafely(
+  release: (input: DailyAnalysisReleaseInput) => Promise<boolean>,
+  input: DailyAnalysisReleaseInput,
+) {
+  try {
+    await release(input);
+  } catch {
+    // Best-effort rollback: preserve the original failure response to the
+    // caller even if releasing the reserved quota slot fails.
+  }
 }
 
 async function recordFailureAuditSafely(

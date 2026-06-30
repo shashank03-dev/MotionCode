@@ -7,6 +7,7 @@ import { ApiError } from "@/lib/server/apiErrors";
 import {
   authorizeAnalysisRequestWithSupabase,
   getDailyAnalysisCountWithSupabase,
+  releaseDailyAnalysisUsageWithSupabase,
   reserveDailyAnalysisUsageWithSupabase,
   type AnalysisAuthorizationDecision,
   type SupabaseInsertClient,
@@ -196,6 +197,7 @@ function createDeps(
     getPlanTier: vi.fn(async () => planTier),
     idGenerator: vi.fn(() => ids.shift() ?? "analysis_123"),
     now: vi.fn(() => new Date("2026-06-06T12:00:00.000Z")),
+    releaseDailyAnalysisUsage: vi.fn(async () => true),
     reserveDailyAnalysisUsage: vi.fn(async () => true),
     usage: { record: vi.fn(async () => undefined) },
   };
@@ -697,6 +699,77 @@ describe("POST /api/analyze", () => {
     expect(abuseGuard.recordModelFailure).not.toHaveBeenCalled();
   });
 
+  it("releases the reserved quota slot when the model analysis fails", async () => {
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
+    const deps = createDeps();
+    deps.generateAnalysis.mockRejectedValue(
+      new ApiError("MODEL_FAILED", "Gemini analysis failed."),
+    );
+
+    const response = await handleAnalyzeRequest(makeRequest(requestBody()), deps);
+
+    expect(response.status).toBe(502);
+    expect(deps.reserveDailyAnalysisUsage).toHaveBeenCalledOnce();
+    expect(deps.releaseDailyAnalysisUsage).toHaveBeenCalledWith({
+      since: new Date("2026-06-06T00:00:00.000Z"),
+      userId: "user_123",
+    });
+  });
+
+  it("releases the reserved quota slot when persistence fails after the model succeeds", async () => {
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
+    const deps = createDeps();
+    deps.usage.record.mockRejectedValueOnce(
+      new ApiError("INTERNAL_ERROR", "Failed to record usage event."),
+    );
+
+    const response = await handleAnalyzeRequest(makeRequest(requestBody()), deps);
+
+    expect(response.status).toBe(500);
+    expect(deps.releaseDailyAnalysisUsage).toHaveBeenCalledWith({
+      since: new Date("2026-06-06T00:00:00.000Z"),
+      userId: "user_123",
+    });
+  });
+
+  it("does not release the reserved quota slot on a successful analysis", async () => {
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
+    const deps = createDeps();
+
+    await handleAnalyzeRequest(makeRequest(requestBody()), deps);
+
+    expect(deps.generateAnalysis).toHaveBeenCalledOnce();
+    expect(deps.releaseDailyAnalysisUsage).not.toHaveBeenCalled();
+  });
+
+  it("does not release a quota slot that was never reserved", async () => {
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
+    const deps = createDeps();
+    deps.reserveDailyAnalysisUsage.mockResolvedValue(false);
+
+    await handleAnalyzeRequest(makeRequest(requestBody()), deps);
+
+    expect(deps.generateAnalysis).not.toHaveBeenCalled();
+    expect(deps.releaseDailyAnalysisUsage).not.toHaveBeenCalled();
+  });
+
+  it("still returns the model error when releasing the reservation fails", async () => {
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
+    const deps = createDeps();
+    deps.generateAnalysis.mockRejectedValue(
+      new ApiError("MODEL_FAILED", "Gemini analysis failed."),
+    );
+    deps.releaseDailyAnalysisUsage.mockRejectedValue(
+      new ApiError("INTERNAL_ERROR", "Failed to release analysis usage."),
+    );
+
+    const response = await handleAnalyzeRequest(makeRequest(requestBody()), deps);
+    const json = (await response.json()) as ApiResponse<AnalysisResult>;
+
+    expect(response.status).toBe(502);
+    expect(json).toMatchObject({ code: "MODEL_FAILED", ok: false });
+  });
+
   it("does not call Gemini when pre-Gemini quota reservation fails", async () => {
     const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
     const deps = createDeps();
@@ -1135,6 +1208,52 @@ describe("Supabase daily analysis reservation", () => {
           dailyLimit: 1,
           eventType: "analysis.started",
           planTier: "free",
+          since: new Date("2026-06-06T00:00:00.000Z"),
+          userId: "user_123",
+        },
+        { client },
+      ),
+    ).resolves.toBe(false);
+  });
+
+  it("calls the release RPC with the quota window when rolling back a reservation", async () => {
+    const rpc = vi.fn(async () => ({ data: true, error: null }));
+    const client = {
+      from: vi.fn(() => ({
+        insert: vi.fn(async () => ({ error: null })),
+        select: vi.fn(),
+      })),
+      rpc,
+    } satisfies SupabaseUsageClient;
+
+    await expect(
+      releaseDailyAnalysisUsageWithSupabase(
+        {
+          since: new Date("2026-06-06T00:00:00.000Z"),
+          userId: "user_123",
+        },
+        { client },
+      ),
+    ).resolves.toBe(true);
+
+    expect(rpc).toHaveBeenCalledWith("release_analysis_usage_event", {
+      p_period_start: "2026-06-06T00:00:00.000Z",
+      p_user_id: "user_123",
+    });
+  });
+
+  it("returns false when the release RPC finds no reservation to roll back", async () => {
+    const client = {
+      from: vi.fn(() => ({
+        insert: vi.fn(async () => ({ error: null })),
+        select: vi.fn(),
+      })),
+      rpc: vi.fn(async () => ({ data: false, error: null })),
+    } satisfies SupabaseUsageClient;
+
+    await expect(
+      releaseDailyAnalysisUsageWithSupabase(
+        {
           since: new Date("2026-06-06T00:00:00.000Z"),
           userId: "user_123",
         },

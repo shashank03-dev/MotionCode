@@ -1,0 +1,34 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="r"><rect x="0" y="0" width="512" height="512" rx="116" ry="116"/></clipPath>
+    <radialGradient id="mint" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#9ef0c0" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#9ef0c0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="peach" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f58f7c" stop-opacity="0.26"/>
+      <stop offset="100%" stop-color="#f58f7c" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g clip-path="url(#r)">
+    <rect x="0" y="0" width="512" height="512" fill="#10120D"/>
+    <circle cx="470" cy="70" r="240" fill="url(#mint)"/>
+    <circle cx="60" cy="470" r="230" fill="url(#peach)"/>
+    <!-- braces drawn as strokes for crisp rendering at any size -->
+    <g fill="none" stroke="#9ef0c0" stroke-width="26" stroke-linecap="round" stroke-linejoin="round">
+      <!-- left brace { -->
+      <path d="M210 150
+               C 178 150 178 176 178 200
+               C 178 232 178 240 150 256
+               C 178 272 178 280 178 312
+               C 178 336 178 362 210 362"/>
+      <!-- right brace } -->
+      <path d="M302 150
+               C 334 150 334 176 334 200
+               C 334 232 334 240 362 256
+               C 334 272 334 280 334 312
+               C 334 336 334 362 302 362"/>
+    </g>
+  </g>
+  <rect x="1.5" y="1.5" width="509" height="509" rx="115" ry="115" fill="none" stroke="#9ef0c0" stroke-opacity="0.22" stroke-width="3"/>
+</svg>

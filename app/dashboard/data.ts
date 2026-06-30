@@ -2,6 +2,7 @@ import type { User } from "@supabase/supabase-js";
 import * as navigation from "next/navigation";
 
 import { loginPathForNext } from "@/lib/auth/redirects";
+import type { PlanTier } from "@/lib/contracts/plans";
 import { getEntitlementSummary } from "@/lib/server/entitlements";
 import {
   createSupabaseServerClient,
@@ -68,6 +69,24 @@ export async function requireDashboardUser(
   }
 
   return user;
+}
+
+export type PlanGate = {
+  isPaid: boolean;
+  planTier: PlanTier;
+};
+
+/**
+ * Resolves whether a user is on a paid plan, for pages that render an in-place
+ * upgrade gate instead of redirecting. Free users get `isPaid: false`; the page
+ * is responsible for short-circuiting to <UpgradeGate /> when so.
+ */
+export async function resolvePlanGate(userId: string): Promise<PlanGate> {
+  const summary = await getEntitlementSummary(userId);
+  return {
+    isPaid: summary.planTier !== "free",
+    planTier: summary.planTier,
+  };
 }
 
 export async function getDashboardData(user: Pick<User, "id">) {

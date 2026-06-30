@@ -30,6 +30,7 @@ export function Scorecard({
       aria-label="Analysis quality scorecard"
       className={styles.scorecard}
     >
+      <div className={styles.grid}>
       <ScoreItem
         label="Performance"
         meter={spec.performanceScore}
@@ -74,6 +75,7 @@ export function Scorecard({
         tone="neutral"
         value={easingType}
       />
+      </div>
 
       {hoveredScore && (
         <div className={styles.tooltip} role="tooltip">

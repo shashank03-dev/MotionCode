@@ -10,6 +10,7 @@ const eslintConfig = [
       "coverage/**",
       "node_modules/**",
       "playwright-report/**",
+      "public/**",
       "test-results/**",
       "next-env.d.ts",
     ],

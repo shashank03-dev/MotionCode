@@ -1,20 +1,27 @@
 import { ArrowUpRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 
-import { AppShell } from "@/components/dashboard/app-shell";
 import { RecentProjects } from "@/components/dashboard/recent-projects";
+import { UpgradeGate } from "@/components/app/UpgradeGate";
 
-import { getDashboardData, requireDashboardUser } from "../dashboard/data";
+import {
+  getDashboardData,
+  requireDashboardUser,
+  resolvePlanGate,
+} from "@/app/dashboard/data";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProjectsPage() {
   const user = await requireDashboardUser("/projects");
+  const { isPaid } = await resolvePlanGate(user.id);
+  if (!isPaid) {
+    return <UpgradeGate feature="Projects" />;
+  }
   const data = await getDashboardData(user);
 
   return (
-    <AppShell active="projects" userEmail={user.email}>
-      <div className="space-y-7">
+    <div className="mx-auto max-w-6xl space-y-7">
         <header className="grid gap-5 border-b border-[var(--border)] pb-6 lg:grid-cols-[1fr_auto] lg:items-end">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--muted)]">
@@ -39,7 +46,6 @@ export default async function ProjectsPage() {
         </header>
 
         <RecentProjects projects={data.projects} />
-      </div>
-    </AppShell>
+    </div>
   );
 }
