@@ -2,6 +2,8 @@ import type { User } from "@supabase/supabase-js";
 import { z } from "zod";
 
 import { apiError, apiSuccess, ApiError, isApiError } from "@/lib/server/apiErrors";
+import { ensureProfileForUser } from "@/lib/server/profiles";
+import { createSupabaseAdminClient } from "@/lib/server/supabaseAdmin";
 import {
   createSupabaseServerClient,
   getCurrentUser as getSupabaseCurrentUser,
@@ -37,6 +39,7 @@ type UpdateWorkspaceInput = {
 
 export type WorkspaceRouteDeps = {
   createWorkspace?: (input: CreateWorkspaceInput) => Promise<WorkspaceRow>;
+  ensureProfile?: (userId: string) => Promise<void>;
   getCurrentUser?: () => Promise<CurrentUser | null>;
   getWorkspaceAccess?: (
     userId: string,
@@ -112,6 +115,11 @@ export async function handleCreateWorkspaceRequest(
   const slug = parsed.data.slug ?? slugify(name);
 
   try {
+    // The workspaces.owner_id FK requires a public.profiles row. Password
+    // sign-in does not pass through /auth/callback, so the profile may not have
+    // been created yet — make sure it exists before inserting.
+    await resolvedDeps.ensureProfile(user.id);
+
     const workspace = await resolvedDeps.createWorkspace({
       name,
       ownerId: user.id,
@@ -209,6 +217,7 @@ function resolveWorkspaceDeps(
 ): Required<WorkspaceRouteDeps> {
   return {
     createWorkspace: deps.createWorkspace ?? createWorkspaceWithSupabase,
+    ensureProfile: deps.ensureProfile ?? ensureProfileWithSupabase,
     getCurrentUser: deps.getCurrentUser ?? getSupabaseCurrentUser,
     getWorkspaceAccess: deps.getWorkspaceAccess ?? getWorkspaceAccessWithSupabase,
     listWorkspaces: deps.listWorkspaces ?? listWorkspacesWithSupabase,
@@ -216,6 +225,21 @@ function resolveWorkspaceDeps(
       deps.markOnboardingComplete ?? markOnboardingCompleteWithSupabase,
     updateWorkspace: deps.updateWorkspace ?? updateWorkspaceWithSupabase,
   };
+}
+
+async function ensureProfileWithSupabase(userId: string) {
+  const admin = createSupabaseAdminClient();
+  const { data, error } = await admin.auth.admin.getUserById(userId);
+
+  if (error || !data.user) {
+    console.error("[workspaces] failed to load auth user for profile ensure", {
+      code: error?.code,
+      message: error?.message,
+    });
+    throw new ApiError("INTERNAL_ERROR", "Failed to create workspace.");
+  }
+
+  await ensureProfileForUser(data.user, admin);
 }
 
 async function createWorkspaceWithSupabase(input: CreateWorkspaceInput) {
@@ -231,6 +255,12 @@ async function createWorkspaceWithSupabase(input: CreateWorkspaceInput) {
     .single();
 
   if (error || !data) {
+    console.error("[workspaces] insert failed", {
+      code: error?.code,
+      details: error?.details,
+      hint: error?.hint,
+      message: error?.message,
+    });
     throw new ApiError("INTERNAL_ERROR", "Failed to create workspace.");
   }
 

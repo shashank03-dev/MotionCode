@@ -2,21 +2,43 @@ import { ArrowUpRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 import { AppShell } from "@/components/dashboard/app-shell";
+import { UpgradeGate } from "@/components/app/UpgradeGate";
 import { DashboardSummary } from "@/components/dashboard/dashboard-summary";
 import { RecentProjects } from "@/components/dashboard/recent-projects";
 import { WorkspaceList } from "@/components/dashboard/workspace-list";
 import { CreateWorkspaceForm } from "@/components/workspace/create-workspace-form";
+import { getEntitlementSummary } from "@/lib/server/entitlements";
 
 import { getDashboardData, requireDashboardUser } from "./data";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const user = await requireDashboardUser("/dashboard", { paidOnly: true });
+  const user = await requireDashboardUser("/dashboard");
+  const entitlements = await getEntitlementSummary(user.id);
+
+  if (entitlements.planTier === "free") {
+    return (
+      <AppShell
+        active="dashboard"
+        planTier="free"
+        userEmail={user.email}
+        userId={user.id}
+      >
+        <UpgradeGate feature="your Dashboard" />
+      </AppShell>
+    );
+  }
+
   const data = await getDashboardData(user);
 
   return (
-    <AppShell active="dashboard" userEmail={user.email}>
+    <AppShell
+      active="dashboard"
+      planTier={entitlements.planTier}
+      userEmail={user.email}
+      userId={user.id}
+    >
       <div className="space-y-7">
         <header className="grid gap-5 border-b border-[var(--border)] pb-6 lg:grid-cols-[1fr_auto] lg:items-end">
           <div>
@@ -33,7 +55,7 @@ export default async function DashboardPage() {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <div className="border border-[var(--border)] bg-[#15160f]/80 px-4 py-2 font-mono text-xs uppercase tracking-[0.14em] text-[var(--accent)]">
-              {data.profile?.plan_tier ?? "free"} plan
+              {entitlements.planTier} plan
             </div>
             <Link
               href="/app"
