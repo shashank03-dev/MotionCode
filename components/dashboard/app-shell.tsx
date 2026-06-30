@@ -148,7 +148,7 @@ export function AppShell({
               href="/app"
               className="inline-flex items-center gap-1.5 font-mono text-sm font-bold tracking-[0.01em] text-[var(--text)] transition-colors hover:text-[#00ff88] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]"
             >
-              <span className="text-[#00ff88]">&lt;/&gt;</span>
+              <span className="text-[#00ff88]">&lt;/&gt;</span>{" "}
               <span className={cn(collapsed && "lg:hidden")}>MotionCode</span>
             </Link>
             <span
