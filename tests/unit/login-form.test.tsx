@@ -108,7 +108,7 @@ describe("LoginForm", () => {
   });
 
   it("keeps Google OAuth callbacks on localhost during local development", async () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://motioncode.live/";
+    process.env.NEXT_PUBLIC_SITE_URL = "https://motioncode.com/";
 
     const { LoginForm } = await import("@/components/dashboard/login-form");
 
@@ -170,7 +170,7 @@ describe("LoginForm", () => {
   });
 
   it("keeps magic-link callbacks on localhost during local development", async () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://motioncode.live";
+    process.env.NEXT_PUBLIC_SITE_URL = "https://motioncode.com";
 
     const { LoginForm } = await import("@/components/dashboard/login-form");
 
