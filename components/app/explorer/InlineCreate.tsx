@@ -80,7 +80,7 @@ export function InlineCreate({
           }}
           placeholder={placeholder}
           className={cn(
-            "h-8 w-full border border-[var(--accent-border)] bg-[#11120d] px-2 font-mono text-xs text-[var(--text)] outline-none",
+            "h-8 w-full border border-[var(--accent-border)] bg-[#11120d] px-2 font-sans text-[13px] text-[var(--text)] outline-none placeholder:text-[var(--accent)]/50",
             "focus:shadow-[0_0_0_3px_rgba(216,207,188,0.08)]",
           )}
         />
@@ -89,7 +89,7 @@ export function InlineCreate({
         ) : null}
       </div>
       {error ? (
-        <p className="mt-1 font-mono text-[10px] leading-4 text-red-300">
+        <p className="mt-1 font-sans text-[11px] leading-4 text-red-300">
           {error}
         </p>
       ) : null}
