@@ -200,6 +200,20 @@ describe("Supabase data foundation migration", () => {
     expect(readProjectsPolicy).not.toMatch(/private\.is_internal_admin/i);
   });
 
+  it("lets owners read their just-created workspace and project so INSERT...RETURNING succeeds", () => {
+    // supabase-js `.insert().select()` emits INSERT ... RETURNING, which
+    // re-checks the SELECT policy against the new row. A direct owner_id
+    // fast-path (column comparison, not a self-referential re-query) is what
+    // makes that re-check pass — without it, every create fails with an RLS
+    // violation. Keep the fast-path anchored ahead of the helper functions.
+    expect(sql).toMatch(
+      /alter policy "authenticated users can read workspaces"\s+on public\.workspaces\s+using\s*\(\s*owner_id = \(\s*select auth\.uid\(\)\s*\)\s+or\s+private\.is_workspace_member/i,
+    );
+    expect(sql).toMatch(
+      /alter policy "authenticated users can read projects"\s+on public\.projects\s+using\s*\(\s*owner_id = \(\s*select auth\.uid\(\)\s*\)\s+or\s+private\.can_read_project/i,
+    );
+  });
+
   it("does not expose share links through broad anonymous table policies", () => {
     expect(sql).toMatch(
       /alter table public\.share_links\s+enable row level security/i,
