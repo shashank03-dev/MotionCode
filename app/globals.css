@@ -18,6 +18,8 @@
     --accent-border: rgba(216, 207, 188, 0.4);
     --text: #FFFBF4;
     --muted: #565449;
+    --danger: #E8705F;
+    --danger-border: rgba(232, 112, 95, 0.55);
 
     --font-inter: var(--font-geist-sans, ui-sans-serif), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --font-space-mono: var(--font-geist-mono, "SFMono-Regular"), Consolas, "Liberation Mono", monospace;

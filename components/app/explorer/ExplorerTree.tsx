@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { FileCode2, Folder, Plus } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 
@@ -140,6 +140,7 @@ export function ExplorerTree({ tree }: ExplorerTreeProps) {
         {creatingWorkspace ? (
           <InlineCreate
             placeholder="Workspace name"
+            icon={Folder}
             onSubmit={createWorkspace}
             onClose={() => setCreatingWorkspace(false)}
           />
@@ -174,6 +175,7 @@ export function ExplorerTree({ tree }: ExplorerTreeProps) {
                 creatingProjectIn === node.workspace.id ? (
                   <InlineCreate
                     placeholder="Project title"
+                    icon={FileCode2}
                     indent={20}
                     onSubmit={(title) =>
                       createProject(node.workspace.id, title)
