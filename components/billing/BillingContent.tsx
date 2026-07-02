@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CreditCard, Receipt, Shield } from "lucide-react";
+import { CreditCard, Gift, Receipt, Shield } from "lucide-react";
 
 import { CancelSubscriptionButton } from "@/app/billing/CancelSubscriptionButton";
 import { ChangePlanButton } from "@/app/billing/ChangePlanButton";
@@ -44,9 +44,16 @@ export async function BillingContent({
   const summary = await getEntitlementSummary(user.id);
   const subscription = summary.subscription;
   const subscriptionId = subscription?.razorpay_subscription_id ?? null;
-  const planTier = isPaidPlanTier(subscription?.plan_tier)
-    ? subscription.plan_tier
-    : summary.planTier;
+  // An admin override is a "giveaway": the user has full access to the plan
+  // without a paid Razorpay subscription. It always wins over a subscription
+  // in entitlement resolution, so surface it as its own complimentary state.
+  const isComplimentary = summary.source === "admin_override";
+  const override = summary.override;
+  const planTier = isComplimentary
+    ? summary.planTier
+    : isPaidPlanTier(subscription?.plan_tier)
+      ? subscription.plan_tier
+      : summary.planTier;
   const isManageable =
     Boolean(subscriptionId) &&
     typeof subscription?.status === "string" &&
@@ -80,24 +87,75 @@ export async function BillingContent({
           <Detail label="Plan" value={titleCase(planTier)} />
           <Detail
             label="Status"
-            value={subscription?.status ? titleCase(subscription.status) : "Free"}
-          />
-          <Detail
-            label="Renews"
             value={
-              subscription?.current_period_end
-                ? formatDate(subscription.current_period_end)
-                : "Not scheduled"
+              isComplimentary
+                ? "Complimentary"
+                : subscription?.status
+                  ? titleCase(subscription.status)
+                  : "Free"
             }
           />
-          <Detail
-            label="Cancel at period end"
-            value={subscription?.cancel_at_period_end ? "Yes" : "No"}
-          />
+          {isComplimentary ? (
+            <>
+              <Detail
+                label="Access until"
+                value={
+                  override?.expires_at
+                    ? formatDate(override.expires_at)
+                    : "No expiry"
+                }
+              />
+              <Detail
+                label="Granted"
+                value={
+                  override?.created_at ? formatDate(override.created_at) : "—"
+                }
+              />
+            </>
+          ) : (
+            <>
+              <Detail
+                label="Renews"
+                value={
+                  subscription?.current_period_end
+                    ? formatDate(subscription.current_period_end)
+                    : "Not scheduled"
+                }
+              />
+              <Detail
+                label="Cancel at period end"
+                value={subscription?.cancel_at_period_end ? "Yes" : "No"}
+              />
+            </>
+          )}
         </dl>
       </section>
 
-      {isManageable && isPaidPlanTier(planTier) ? (
+      {isComplimentary ? (
+        <section className="border border-[var(--border)] bg-[#171812] p-6">
+          <div className="mb-5 flex items-center gap-2 text-[var(--accent)]">
+            <Gift className="h-5 w-5" aria-hidden="true" />
+            <h2 className="font-sans text-base font-medium tracking-tight text-[var(--text)]">
+              Complimentary access
+            </h2>
+          </div>
+          <p className="text-sm leading-6 text-[var(--muted)]">
+            An admin granted you {titleCase(planTier)} at no charge. You have
+            full access to every {titleCase(planTier)} feature
+            {override?.expires_at
+              ? ` until ${formatDate(override.expires_at)}`
+              : " with no expiry date"}
+            . No payment is required.
+          </p>
+          <Link
+            className="mt-6 inline-flex h-10 items-center gap-2 rounded-md border border-[var(--accent-border)] bg-[var(--accent-dim)] px-4 font-sans text-sm text-[var(--text)] transition hover:border-[var(--accent)] hover:bg-[#00ff88]/10"
+            href="/pricing"
+          >
+            <CreditCard className="h-4 w-4" aria-hidden="true" />
+            View paid plans
+          </Link>
+        </section>
+      ) : isManageable && isPaidPlanTier(planTier) ? (
         <section className="border border-[var(--border)] bg-[#171812] p-6">
           <div className="mb-5 flex items-center gap-2 text-[var(--accent)]">
             <CreditCard className="h-5 w-5" aria-hidden="true" />
