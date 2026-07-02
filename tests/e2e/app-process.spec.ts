@@ -102,17 +102,25 @@ test.describe("application processing states", () => {
     releaseAnalyze.resolve();
     await responsePromise;
 
+    // The studio opens on the generated code + live preview, headed by the spec
+    // element name, with copy available even on the read-only free tier.
+    await expect(
+      page.getByRole("heading", { name: "motion target" }),
+    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Copy" })).toBeVisible();
+    await expect(
+      page.getByText("Analysis complete / 1 frames / entrance detected"),
+    ).toBeVisible();
+
+    // The motion spec (with its description) lives in the "Spec & audit" drawer.
+    await page.getByRole("button", { name: "Spec & audit" }).click();
     await expect(
       page.getByRole("heading", { name: "Motion spec" }),
     ).toBeVisible();
     await expect(
-      page.getByRole("textbox", { name: "Description" }),
-    ).toHaveValue("The element enters with a short upward settle.");
-    await expect(
-      page.getByRole("button", { name: "Copy code" }),
-    ).toBeVisible();
-    await expect(
-      page.getByText("Analysis complete / 1 frames / entrance detected"),
+      page
+        .getByText("The element enters with a short upward settle.")
+        .first(),
     ).toBeVisible();
   });
 
@@ -157,14 +165,23 @@ test.describe("application processing states", () => {
 });
 
 async function uploadTinyGif(page: Page, name: string) {
-  await page
+  const fileInput = page
     .getByTestId("upload-dropzone")
-    .locator('input[type="file"]')
-    .setInputFiles({
-      buffer: tinyGif,
-      mimeType: "image/gif",
-      name,
-    });
+    .locator('input[type="file"]');
+  await expect(fileInput).toBeAttached();
+
+  // A free-tier upload surfaces a "your work won't be saved" consent modal, and
+  // frame extraction only runs once it is acknowledged. In dev the React
+  // onChange handler can attach slightly after the input renders, so a single
+  // setInputFiles is sometimes dropped — retry until the app reacts.
+  const consentContinue = page
+    .getByRole("alertdialog", { name: /won.t be saved/i })
+    .getByRole("button", { name: "Continue" });
+  await expect(async () => {
+    await fileInput.setInputFiles({ buffer: tinyGif, mimeType: "image/gif", name });
+    await expect(consentContinue).toBeVisible({ timeout: 1000 });
+  }).toPass({ timeout: 15000 });
+  await consentContinue.click();
 
   await expect(page.getByTestId("frame-strip")).toContainText("1 frame");
 }
