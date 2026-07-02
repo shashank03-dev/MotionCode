@@ -18,14 +18,14 @@ export function ProjectNode({ project, isActive }: ProjectNodeProps) {
       aria-current={isActive ? "page" : undefined}
       title={project.title}
       className={cn(
-        "group flex h-8 items-center gap-2 pr-2 font-mono text-xs transition",
+        "group flex h-8 items-center gap-2 pr-2 font-sans text-[13px] transition",
         "pl-8", // align under the workspace folder label
         isActive
-          ? "border-l-2 border-[var(--accent)] bg-[var(--accent-dim)] text-[var(--text)]"
-          : "border-l-2 border-transparent text-[var(--accent)] hover:bg-[var(--accent-dim)]/60 hover:text-[var(--text)]",
+          ? "bg-[var(--accent-dim)] text-[var(--text)]"
+          : "text-[var(--accent)] hover:bg-[var(--accent-dim)]/60 hover:text-[var(--text)]",
       )}
     >
-      <FileCode2 className="size-3.5 shrink-0 text-[var(--muted)]" />
+      <FileCode2 className="size-3.5 shrink-0 text-[var(--accent)]/60" />
       <span className="truncate">{project.title}</span>
     </Link>
   );

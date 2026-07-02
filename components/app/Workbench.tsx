@@ -159,7 +159,7 @@ function SidebarLink({
       title={locked ? `${label} — upgrade to unlock` : undefined}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "inline-flex h-9 w-full items-center gap-2.5 border px-3 font-mono text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]",
+        "inline-flex h-9 w-full items-center gap-2.5 border px-3 font-sans text-[13px] font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]",
         active
           ? "border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--text)]"
           : "border-transparent text-[var(--accent)] hover:border-[var(--border)] hover:text-[var(--text)]",
@@ -274,15 +274,7 @@ export function Workbench({
           >
             &lt;/&gt;
           </Link>
-          <button
-            type="button"
-            onClick={openSidebar}
-            title="Open sidebar"
-            aria-label="Open sidebar"
-            className="flex size-10 items-center justify-center border border-transparent text-[var(--accent)] transition hover:border-[var(--border)] hover:text-[var(--text)]"
-          >
-            <PanelLeftOpen className="size-4" />
-          </button>
+          <span className="h-px w-8 bg-[var(--border)]" aria-hidden="true" />
 
           <nav className="flex flex-col items-center gap-1" aria-label="Sections">
             {navItems.map((item) => (
@@ -298,6 +290,16 @@ export function Workbench({
           </nav>
 
           <div className="mt-auto flex flex-col items-center gap-1">
+            <button
+              type="button"
+              onClick={openSidebar}
+              title="Open sidebar"
+              aria-label="Open sidebar"
+              className="flex size-10 items-center justify-center border border-transparent text-[var(--accent)] transition hover:border-[var(--border)] hover:text-[var(--text)]"
+            >
+              <PanelLeftOpen className="size-4" />
+            </button>
+            <span className="h-px w-8 bg-[var(--border)]" aria-hidden="true" />
             {utilityItems.map((item) => (
               <RailLink
                 key={item.href}
@@ -351,9 +353,9 @@ export function Workbench({
               <span
                 title={`${planLabel} plan`}
                 className={cn(
-                  "inline-flex items-center rounded-full border px-1.5 py-0.5 font-mono text-[8.5px] font-semibold uppercase leading-none tracking-[0.2em]",
+                  "inline-flex items-center rounded-full border px-2 py-0.5 font-sans text-[10px] font-semibold uppercase leading-none tracking-[0.08em]",
                   isFree
-                    ? "border-[var(--border)] text-[var(--muted)]"
+                    ? "border-[var(--border)] text-[var(--accent)]/70"
                     : "border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--accent)]",
                 )}
               >
@@ -408,7 +410,7 @@ export function Workbench({
                 <Link
                   href="/pricing"
                   title="Upgrade your plan"
-                  className="inline-flex h-9 flex-1 items-center justify-center gap-2 border border-[var(--accent-border)] bg-[var(--accent-dim)] font-mono text-xs text-[var(--text)] transition hover:border-[var(--accent)] hover:bg-[#00ff88]/10"
+                  className="inline-flex h-9 flex-1 items-center justify-center gap-2 border border-[var(--accent-border)] bg-[var(--accent-dim)] font-sans text-[13px] font-medium text-[var(--text)] transition hover:border-[var(--accent)] hover:bg-[#00ff88]/10"
                 >
                   <Sparkles className="size-4" aria-hidden="true" />
                   Upgrade
@@ -417,7 +419,7 @@ export function Workbench({
               {userEmail ? (
                 <SignOutButton
                   className={cn(
-                    "h-9 border-[var(--border)] px-3 font-mono text-xs text-[var(--accent)] hover:border-[var(--accent-border)] hover:text-[var(--text)]",
+                    "h-9 border-[var(--border)] px-3 font-sans text-[13px] font-medium text-[var(--accent)] hover:border-[var(--accent-border)] hover:text-[var(--text)]",
                     !isFree && "flex-1 justify-center",
                   )}
                   label="Sign out"

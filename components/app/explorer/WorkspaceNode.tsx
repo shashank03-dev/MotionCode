@@ -46,7 +46,7 @@ export function WorkspaceNode({
           onClick={onToggle}
           aria-expanded={expanded}
           aria-label={expanded ? "Collapse workspace" : "Expand workspace"}
-          className="flex size-6 shrink-0 items-center justify-center text-[var(--muted)] hover:text-[var(--text)]"
+          className="flex size-6 shrink-0 items-center justify-center text-[var(--accent)]/60 hover:text-[var(--text)]"
         >
           <ChevronRight
             className={cn(
@@ -59,7 +59,7 @@ export function WorkspaceNode({
           href={`/workspaces/${workspace.id}`}
           aria-current={isActive ? "page" : undefined}
           title={workspace.name}
-          className="flex min-w-0 flex-1 items-center gap-2 font-mono text-xs hover:text-[var(--text)]"
+          className="flex min-w-0 flex-1 items-center gap-2 font-sans text-[13px] hover:text-[var(--text)]"
         >
           <FolderIcon className="size-3.5 shrink-0 text-[var(--accent)]" />
           <span className="truncate">{workspace.name}</span>
@@ -69,7 +69,7 @@ export function WorkspaceNode({
           onClick={onAddProject}
           aria-label={`New project in ${workspace.name}`}
           title="New project"
-          className="flex size-6 shrink-0 items-center justify-center text-[var(--muted)] opacity-0 transition hover:text-[var(--text)] focus-visible:opacity-100 group-hover:opacity-100"
+          className="flex size-6 shrink-0 items-center justify-center text-[var(--accent)]/60 opacity-0 transition hover:text-[var(--text)] focus-visible:opacity-100 group-hover:opacity-100"
         >
           <Plus className="size-3.5" />
         </button>
@@ -87,7 +87,7 @@ export function WorkspaceNode({
           ))}
           {createSlot ? <li>{createSlot}</li> : null}
           {projects.length === 0 && !createSlot ? (
-            <li className="pl-8 pr-2 py-1 font-mono text-[10px] text-[var(--muted)]">
+            <li className="py-1 pl-8 pr-2 font-sans text-xs text-[var(--accent)]/60">
               No projects yet
             </li>
           ) : null}

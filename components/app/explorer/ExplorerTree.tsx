@@ -122,7 +122,7 @@ export function ExplorerTree({ tree }: ExplorerTreeProps) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex h-9 items-center justify-between px-3">
-        <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--muted)]">
+        <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--accent)]/70">
           Explorer
         </span>
         <button
@@ -151,10 +151,10 @@ export function ExplorerTree({ tree }: ExplorerTreeProps) {
             onClick={() => setCreatingWorkspace(true)}
             className="mx-3 mt-2 flex w-[calc(100%-1.5rem)] flex-col items-start gap-1 border border-dashed border-[var(--border)] px-3 py-4 text-left transition hover:border-[var(--accent-border)]"
           >
-            <span className="font-mono text-xs text-[var(--text)]">
+            <span className="font-sans text-[13px] font-medium text-[var(--text)]">
               Create your first workspace
             </span>
-            <span className="font-mono text-[10px] text-[var(--muted)]">
+            <span className="font-sans text-xs leading-5 text-[var(--accent)]/75">
               Group projects, then analyze references inside.
             </span>
           </button>
