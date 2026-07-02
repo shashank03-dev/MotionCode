@@ -1,7 +1,14 @@
 "use client";
 
 import { PanelLeftClose, SlidersHorizontal } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 
 import { MotionSpecPanel } from "@/components/app/MotionSpecPanel";
@@ -35,6 +42,8 @@ type AnalyzeStudioProps = {
   onTabChange: (tab: CodeTab) => void;
   onNewAnalysis: () => void;
   onSpecChange: (field: MotionSpecEditableField, value: unknown) => void;
+  /** Optional status pill rendered in the header (e.g. workspace save state). */
+  saveSlot?: ReactNode;
 };
 
 function seedFromResult(result: AnalysisResult): Record<CodeTab, string> {
@@ -59,6 +68,7 @@ export function AnalyzeStudio({
   onTabChange,
   onNewAnalysis,
   onSpecChange,
+  saveSlot,
 }: AnalyzeStudioProps) {
   // Seeded from the result via the useState initializer. AppShell remounts this
   // component (key={result.id}) on each new analysis, so no seeding effect is needed.
@@ -224,6 +234,7 @@ export function AnalyzeStudio({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {saveSlot}
           <button
             type="button"
             onClick={() => setDrawerOpen((open) => !open)}

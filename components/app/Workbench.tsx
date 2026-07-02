@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Boxes,
   CreditCard,
   Gauge,
   Lock,
@@ -14,6 +15,7 @@ import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { PlanSync } from "@/components/dashboard/PlanSync";
 import type { PlanTier } from "@/lib/contracts/plans";
 import type { WorkspaceTreeNode } from "@/lib/workbench/tree";
 import { cn } from "@/lib/utils";
@@ -23,15 +25,27 @@ import { ExplorerTree } from "./explorer/ExplorerTree";
 type WorkbenchProps = {
   tree: WorkspaceTreeNode[];
   userEmail?: string | null;
+  /** Current user's id; enables live plan sync via Supabase Realtime. */
+  userId?: string | null;
   children: ReactNode;
   /** Plan tier of the current user; drives the lock badge on paid rail links. */
   planTier?: PlanTier;
-  /** Full-bleed main pane (no max-width/padding) for the Analyze studio. */
+  /**
+   * Full-bleed main pane (no max-width/padding). Defaults to true on /app so
+   * the Analyze studio owns the viewport; other routes scroll with padding.
+   */
   bleed?: boolean;
 };
 
 const railItems = [
   { href: "/app", icon: Sparkles, label: "Analyze", match: "/app", paid: false },
+  {
+    href: "/workspaces",
+    icon: Boxes,
+    label: "Workspaces",
+    match: "/workspaces",
+    paid: true,
+  },
   {
     href: "/dashboard",
     icon: Gauge,
@@ -86,19 +100,22 @@ function RailLink({
 export function Workbench({
   tree,
   userEmail,
+  userId,
   children,
   planTier = "free",
-  bleed = false,
+  bleed,
 }: WorkbenchProps) {
   const pathname = usePathname();
   const [explorerOpen, setExplorerOpen] = useState(true);
   const isFree = planTier === "free";
+  const isBleed = bleed ?? pathname === "/app";
 
   const isActive = (match: string) =>
     pathname === match || pathname.startsWith(`${match}/`);
 
   return (
     <div className="relative min-h-screen bg-[var(--bg)] text-[var(--text)]">
+      <PlanSync userId={userId} />
       <div
         className="pointer-events-none fixed inset-0 z-0 opacity-80"
         aria-hidden="true"
@@ -181,7 +198,7 @@ export function Workbench({
         <main
           className={cn(
             "relative z-10 min-w-0",
-            bleed
+            isBleed
               ? "h-screen overflow-hidden"
               : "h-screen overflow-y-auto px-4 py-6 sm:px-6 lg:px-8",
           )}

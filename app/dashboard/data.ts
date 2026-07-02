@@ -35,6 +35,17 @@ export type WorkspacePageData = {
   workspace: WorkspaceRow;
 };
 
+export type WorkspaceFolderSummary = {
+  projectCount: number;
+  recentProjects: Array<Pick<ProjectRow, "id" | "title" | "updated_at">>;
+  workspace: WorkspaceRow;
+};
+
+export type WorkspaceDesktopData = WorkspacePageData & {
+  /** Saved sequences (project versions) per project id. */
+  sequenceCounts: Record<string, number>;
+};
+
 export type ProjectPageData = {
   project: ProjectRow;
   role: WorkspaceRole;
@@ -123,6 +134,86 @@ export async function getDashboardData(user: Pick<User, "id">) {
     usageEvents: usageEvents.data ?? [],
     workspaces: workspaces.data ?? [],
   } satisfies DashboardData;
+}
+
+/**
+ * Loads every workspace the user can see plus lightweight project rollups for
+ * the desktop (folder grid) view. RLS scopes both queries to the session.
+ */
+export async function getWorkspaceFolders(): Promise<WorkspaceFolderSummary[]> {
+  const supabase = await createSupabaseServerClient();
+
+  const [workspaces, projects] = await Promise.all([
+    supabase
+      .from("workspaces")
+      .select("*")
+      .order("updated_at", { ascending: false }),
+    supabase
+      .from("projects")
+      .select("*")
+      .order("updated_at", { ascending: false }),
+  ]);
+
+  if (workspaces.error || projects.error) {
+    throw new Error("Failed to load workspaces.");
+  }
+
+  const byWorkspace = new Map<string, ProjectRow[]>();
+  for (const project of projects.data ?? []) {
+    const bucket = byWorkspace.get(project.workspace_id);
+    if (bucket) {
+      bucket.push(project);
+    } else {
+      byWorkspace.set(project.workspace_id, [project]);
+    }
+  }
+
+  return (workspaces.data ?? []).map((workspace) => {
+    const workspaceProjects = byWorkspace.get(workspace.id) ?? [];
+    return {
+      projectCount: workspaceProjects.length,
+      recentProjects: workspaceProjects.slice(0, 2).map((project) => ({
+        id: project.id,
+        title: project.title,
+        updated_at: project.updated_at,
+      })),
+      workspace,
+    };
+  });
+}
+
+/**
+ * Workspace page data plus how many saved sequences each project holds, for
+ * the opened-folder (files) view.
+ */
+export async function getWorkspaceDesktopData(
+  workspaceId: string,
+  user: Pick<User, "id">,
+): Promise<WorkspaceDesktopData> {
+  const data = await getWorkspacePageData(workspaceId, user);
+  const projectIds = data.projects.map((project) => project.id);
+
+  if (projectIds.length === 0) {
+    return { ...data, sequenceCounts: {} };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data: versions, error } = await supabase
+    .from("project_versions")
+    .select("project_id")
+    .in("project_id", projectIds);
+
+  if (error) {
+    throw new Error("Failed to load workspace sequences.");
+  }
+
+  const sequenceCounts: Record<string, number> = {};
+  for (const version of versions ?? []) {
+    sequenceCounts[version.project_id] =
+      (sequenceCounts[version.project_id] ?? 0) + 1;
+  }
+
+  return { ...data, sequenceCounts };
 }
 
 export async function getWorkspacePageData(
