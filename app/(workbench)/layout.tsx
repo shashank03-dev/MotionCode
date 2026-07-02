@@ -29,7 +29,12 @@ export default async function WorkbenchLayout({
   const tree = buildWorkspaceTree(data.workspaces, data.projects);
 
   return (
-    <Workbench tree={tree} planTier={summary.planTier} userEmail={user.email}>
+    <Workbench
+      tree={tree}
+      planTier={summary.planTier}
+      userEmail={user.email}
+      userId={user.id}
+    >
       {children}
     </Workbench>
   );

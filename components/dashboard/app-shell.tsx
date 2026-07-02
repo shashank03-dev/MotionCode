@@ -3,7 +3,6 @@
 import {
   Boxes,
   CreditCard,
-  FolderKanban,
   Gauge,
   Lock,
   PanelLeftClose,
@@ -20,7 +19,7 @@ import { PlanSync } from "@/components/dashboard/PlanSync";
 import type { PlanTier } from "@/lib/contracts/plans";
 import { cn } from "@/lib/utils";
 
-type ProductNavKey = "analyze" | "dashboard" | "projects" | "workspaces";
+type ProductNavKey = "analyze" | "dashboard" | "workspaces";
 
 type AppShellProps = {
   active?: ProductNavKey;
@@ -41,11 +40,7 @@ type AppShellProps = {
 };
 
 // Nav keys that require a paid plan; locked for free users.
-const PAID_NAV_KEYS = new Set<ProductNavKey>([
-  "dashboard",
-  "projects",
-  "workspaces",
-]);
+const PAID_NAV_KEYS = new Set<ProductNavKey>(["dashboard", "workspaces"]);
 
 // Remembers the collapsed sidebar preference across visits on this device.
 // Backed by an external store so reads stay hydration-safe (the server and the
@@ -82,9 +77,8 @@ const collapseStore = {
 
 const navItems = [
   { href: "/app", icon: Sparkles, key: "analyze", label: "Analyze" },
-  { href: "/dashboard", icon: Gauge, key: "dashboard", label: "Dashboard" },
-  { href: "/projects", icon: FolderKanban, key: "projects", label: "Projects" },
   { href: "/workspaces", icon: Boxes, key: "workspaces", label: "Workspaces" },
+  { href: "/dashboard", icon: Gauge, key: "dashboard", label: "Dashboard" },
 ] as const;
 
 const utilityItems = [

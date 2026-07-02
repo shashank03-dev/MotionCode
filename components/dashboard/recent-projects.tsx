@@ -13,10 +13,10 @@ export function RecentProjects({ projects }: RecentProjectsProps) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-mono text-lg text-[var(--text)]">Projects</h2>
         <Link
-          href="/projects"
+          href="/workspaces"
           className="font-mono text-xs text-[var(--accent)] transition hover:text-[var(--text)]"
         >
-          View index
+          Browse workspaces
         </Link>
       </div>
 

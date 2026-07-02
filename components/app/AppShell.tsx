@@ -8,9 +8,14 @@ import {
   type DragEvent,
   type MouseEvent,
 } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { AppStatusBar } from "@/components/app/AppStatusBar";
+import {
+  DEFAULT_INTENT_COLOR,
+  intentColorFor,
+} from "@/components/app/intent-colors";
 import { FreeSaveNoticeModal } from "@/components/app/FreeSaveNoticeModal";
 import { ProcessCanvas } from "@/components/app/ProcessCanvas";
 import { AnalyzeStudio } from "@/components/app/studio/AnalyzeStudio";
@@ -27,6 +32,10 @@ import { CODE_TABS, type CodeTab } from "@/lib/generatedCode";
 import type { MotionSpecEditableField } from "@/lib/motionSpecEditor";
 import { updateAnalysisResultSpec } from "@/lib/motionSpecEditor";
 import { incrementUsage, usagesLeft } from "@/lib/rateLimit";
+import {
+  saveAnalysisToWorkspace,
+  type SaveAnalysisTarget,
+} from "@/lib/workbench/saveAnalysis";
 
 import styles from "./AppShell.module.css";
 import type { AnalysisStage } from "./types";
@@ -39,21 +48,18 @@ const DEFAULT_FRAME_COUNT = DEFAULT_ENTITLEMENTS.maxFramesPerAnalysis;
 const FREE_SAVE_ACK_SESSION_KEY = "motioncode_free_save_ack_session";
 const FREE_SAVE_ACK_DISMISSED_KEY = "motioncode_free_save_ack_dismissed";
 
-const INTENT_COLORS: Record<string, string> = {
-  entrance: "#9ef0c0",
-  exit: "#f58f7c",
-  hover: "#ffd166",
-  loading: "#d8cfbc",
-  loop: "#82e6a0",
-  morph: "#00ff88",
-};
-
 const STATUS_MESSAGES = [
   "Analyzing motion patterns...",
   "Reading easing curves...",
   "Detecting transform paths...",
   "Almost there...",
 ];
+
+type SaveState =
+  | { status: "idle" }
+  | { status: "saving" }
+  | { status: "saved"; projectId: string }
+  | { status: "error"; message: string };
 
 type AppShellProps = {
   initialDailyAnalysisUsage?: {
@@ -63,12 +69,19 @@ type AppShellProps = {
   };
   initialEntitlements?: PlanEntitlements;
   initialPlanTier?: PlanTier;
+  /**
+   * Where completed analyses are saved (paid tiers). A projectId appends a new
+   * sequence to that project; a workspaceId creates a new project inside it.
+   * Empty target falls back to the user's most recent workspace.
+   */
+  saveTarget?: SaveAnalysisTarget;
 };
 
 export function AppShell({
   initialDailyAnalysisUsage,
   initialEntitlements = DEFAULT_ENTITLEMENTS,
   initialPlanTier = DEFAULT_ENTITLEMENTS.tier,
+  saveTarget,
 }: AppShellProps = {}) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -135,7 +148,9 @@ export function AppShell({
   const [freeSaveAcknowledged, setFreeSaveAcknowledged] =
     useState(readFreeSaveAcknowledged);
   const [freeSaveModalOpen, setFreeSaveModalOpen] = useState(false);
+  const [saveState, setSaveState] = useState<SaveState>({ status: "idle" });
   const pendingFileRef = useRef<File | null>(null);
+  const saveRunRef = useRef(0);
 
   const localUsageRemaining = usagesLeft(entitlements.dailyAnalyses);
   const usageRemaining =
@@ -314,7 +329,38 @@ export function AppShell({
     setValidationError(null);
     setFrames([]);
     setFrameThumbs([]);
+    setSaveState({ status: "idle" });
   }, [handleRemoveFile]);
+
+  // Persist a completed analysis into the workbench (paid tiers only). Runs
+  // fire-and-forget after the result is on screen: a save failure never blocks
+  // the studio, it just surfaces as a "not saved" pill in the header.
+  const persistAnalysis = useCallback(
+    (analyzed: AnalysisResult) => {
+      if (userPlan === "free") {
+        return;
+      }
+
+      const runId = saveRunRef.current + 1;
+      saveRunRef.current = runId;
+      setSaveState({ status: "saving" });
+
+      void saveAnalysisToWorkspace(analyzed, saveTarget).then((outcome) => {
+        if (saveRunRef.current !== runId) {
+          return;
+        }
+        if (outcome.ok) {
+          setSaveState({ status: "saved", projectId: outcome.projectId });
+          // The workbench explorer tree is server-rendered; refresh so the new
+          // project/sequence shows up without a manual reload.
+          router.refresh();
+        } else {
+          setSaveState({ status: "error", message: outcome.message });
+        }
+      });
+    },
+    [router, saveTarget, userPlan],
+  );
 
   const updateFrameCount = useCallback(
     (count: number) => {
@@ -362,13 +408,21 @@ export function AppShell({
       setActiveTab(getStoredTab() ?? "CSS");
       setStage("done");
       setShowToast(true);
+      persistAnalysis(analyzed);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Analysis failed. Try again.");
       setStage("error");
     } finally {
       setLoading(false);
     }
-  }, [canUseFree, entitlements.dailyAnalyses, frames, loading, userPlan]);
+  }, [
+    canUseFree,
+    entitlements.dailyAnalyses,
+    frames,
+    loading,
+    persistAnalysis,
+    userPlan,
+  ]);
 
   const onDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -511,8 +565,8 @@ export function AppShell({
   }, [clearAnimationTimers, frames.length, stage, stepsList.length]);
 
   const intentColor = result
-    ? INTENT_COLORS[result.spec.intent.toLowerCase()] || "#00ff88"
-    : "#00ff88";
+    ? intentColorFor(result.spec.intent)
+    : DEFAULT_INTENT_COLOR;
   const processStage: Exclude<AnalysisStage, "done"> =
     stage === "done" ? "idle" : stage;
   const liveStatusMessage =
@@ -592,6 +646,7 @@ export function AppShell({
                 onSpecChange={handleSpecChange}
                 onTabChange={setActiveTab}
                 result={result}
+                saveSlot={<SaveStatePill saveState={saveState} />}
               />
             </div>
           )}
@@ -621,6 +676,44 @@ export function AppShell({
     </div>
   );
 
+}
+
+function SaveStatePill({ saveState }: { saveState: SaveState }) {
+  if (saveState.status === "idle") {
+    return null;
+  }
+
+  if (saveState.status === "saving") {
+    return (
+      <span className="inline-flex h-8 items-center rounded-md border border-[var(--border)] px-2.5 font-mono text-[11px] text-[var(--muted)]">
+        Saving…
+      </span>
+    );
+  }
+
+  if (saveState.status === "saved") {
+    return (
+      <Link
+        href={`/projects/${saveState.projectId}`}
+        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[var(--accent-border)] bg-[var(--accent-dim)] px-2.5 font-mono text-[11px] text-[var(--text)] transition hover:border-[var(--accent)]"
+      >
+        <span
+          className="inline-flex size-1.5 rounded-full bg-[#00ff88]"
+          aria-hidden="true"
+        />
+        Saved · Open
+      </Link>
+    );
+  }
+
+  return (
+    <span
+      title={saveState.message}
+      className="inline-flex h-8 items-center rounded-md border border-[#f58f7c]/40 px-2.5 font-mono text-[11px] text-[#f58f7c]"
+    >
+      Not saved
+    </span>
+  );
 }
 
 async function analyzeViaApi({
