@@ -2137,17 +2137,20 @@ body::after {
 }
 
 .motioncode-pricing-card {
+  --pc-accent: rgba(216, 207, 188, 0.92);
   position: relative;
   display: flex;
-  min-height: 480px;
+  min-height: 460px;
   flex-direction: column;
+  gap: 22px;
   overflow: hidden;
   border: 1px solid rgba(216, 207, 188, 0.18);
-  border-radius: 10px;
-  padding: 24px;
+  border-radius: 28px;
+  padding: 30px;
   background:
-    linear-gradient(180deg, rgba(255, 251, 244, 0.055), rgba(255, 251, 244, 0.012)),
-    rgba(10, 12, 9, 0.76);
+    linear-gradient(180deg, rgba(216, 207, 188, 0.09) 0%, rgba(216, 207, 188, 0.02) 52%, rgba(216, 207, 188, 0.11) 100%),
+    rgba(10, 12, 9, 0.72);
+  backdrop-filter: blur(8px);
   box-shadow:
     0 28px 70px rgba(0, 0, 0, 0.36),
     inset 0 1px 0 rgba(255, 251, 244, 0.08);
@@ -2162,8 +2165,9 @@ body::after {
   content: "";
   position: absolute;
   inset: 0;
+  border-radius: inherit;
   background:
-    radial-gradient(circle at 78% 12%, rgba(0, 255, 136, 0.12), transparent 26%),
+    radial-gradient(circle at 78% 8%, rgba(0, 255, 136, 0.12), transparent 30%),
     linear-gradient(120deg, transparent 20%, rgba(255, 251, 244, 0.045), transparent 58%);
   opacity: 0;
   pointer-events: none;
@@ -2171,10 +2175,16 @@ body::after {
 }
 
 .motioncode-pricing-card-featured {
-  border-color: rgba(0, 255, 136, 0.34);
+  --pc-accent: #00ff88;
+  border-width: 2px;
+  border-color: rgba(0, 255, 136, 0.45);
   background:
-    linear-gradient(180deg, rgba(0, 255, 136, 0.075), rgba(255, 251, 244, 0.018)),
-    rgba(10, 12, 9, 0.84);
+    linear-gradient(180deg, rgba(0, 255, 136, 0.16) 0%, rgba(0, 255, 136, 0.03) 48%, rgba(1, 20, 12, 0.55) 100%),
+    rgba(8, 12, 9, 0.82);
+  box-shadow:
+    0 34px 80px rgba(0, 0, 0, 0.44),
+    0 0 60px rgba(0, 255, 136, 0.08),
+    inset 0 1px 0 rgba(255, 251, 244, 0.1);
 }
 
 .motioncode-pricing-card[data-hovered="true"] {
@@ -2186,6 +2196,10 @@ body::after {
     inset 0 1px 0 rgba(255, 251, 244, 0.12);
 }
 
+.motioncode-pricing-card-featured[data-hovered="true"] {
+  border-color: rgba(0, 255, 136, 0.6);
+}
+
 .motioncode-pricing-card[data-hovered="true"]::before {
   opacity: 1;
 }
@@ -2194,20 +2208,47 @@ body::after {
   position: relative;
   z-index: 1;
   display: flex;
-  min-height: 152px;
-  justify-content: space-between;
+  min-height: 118px;
+  align-items: flex-start;
   gap: 16px;
+}
+
+.motioncode-pricing-icon {
+  position: relative;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(216, 207, 188, 0.2);
+  background: rgba(255, 251, 244, 0.05);
+}
+
+.motioncode-pricing-icon::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 22px;
+  height: 22px;
+  background: var(--pc-accent);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cpath%20d%3D%27M12%203a9%209%200%201%200%200%2018%209%209%200%200%200%200-18Zm0%202.4a6.6%206.6%200%201%201%200%2013.2%206.6%206.6%200%200%201%200-13.2Z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%273.2%27%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cpath%20d%3D%27M12%203a9%209%200%201%200%200%2018%209%209%200%200%200%200-18Zm0%202.4a6.6%206.6%200%201%201%200%2013.2%206.6%206.6%200%200%201%200-13.2Z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%273.2%27%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+}
+
+.motioncode-pricing-titles {
+  flex: 1;
+  min-width: 0;
 }
 
 .motioncode-pricing-card h3 {
   margin: 0;
   color: var(--text);
   font-family: var(--font-mono);
-  font-size: 24px;
+  font-size: 22px;
 }
 
 .motioncode-pricing-card p {
-  margin: 14px 0 0;
+  margin: 10px 0 0;
   color: rgba(216, 207, 188, 0.7);
   font-size: 13px;
   line-height: 1.7;
@@ -2230,17 +2271,18 @@ body::after {
   z-index: 1;
   display: flex;
   align-items: baseline;
-  gap: 12px;
-  margin-top: 12px;
+  gap: 10px;
+  margin-top: 0;
 }
 
 .motioncode-pricing-price {
   display: inline-block;
   color: #fffbf4;
   font-family: var(--font-mono);
-  font-size: clamp(42px, 5vw, 60px);
+  font-size: clamp(42px, 5vw, 56px);
   font-weight: 700;
   line-height: 1;
+  letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
   animation: priceFlicker 2.7s ease-in-out infinite;
 }
@@ -2251,20 +2293,90 @@ body::after {
   font-size: 11px;
 }
 
+/* Pill CTA + Razorpay checkout button share one slot directly under the price. */
+.motioncode-pricing-cta,
+.motioncode-pricing-checkout button {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(216, 207, 188, 0.32);
+  border-radius: 999px;
+  padding-inline: 20px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  background: transparent;
+  transition: background 220ms ease, border-color 220ms ease, transform 220ms ease;
+}
+
+.motioncode-pricing-cta:hover,
+.motioncode-pricing-checkout button:hover:not(:disabled) {
+  border-color: #00ff88;
+  background: rgba(0, 255, 136, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Featured card gets the inverted, solid-accent primary button. */
+.motioncode-pricing-card-featured .motioncode-pricing-checkout button {
+  border-color: transparent;
+  background: #00ff88;
+  color: #06120b;
+  font-weight: 700;
+}
+
+.motioncode-pricing-card-featured .motioncode-pricing-checkout button:hover:not(:disabled) {
+  border-color: transparent;
+  background: #4dffab;
+}
+
+.motioncode-pricing-checkout {
+  position: relative;
+  z-index: 1;
+}
+
+/* Features build the case first; the CTA is the closing action pinned to the
+   bottom of the card so every tier's button lines up on one baseline. */
+.motioncode-pricing-cta,
+.motioncode-pricing-checkout {
+  margin-top: auto;
+}
+
+.motioncode-pricing-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.motioncode-pricing-features-label {
+  margin: 0;
+  color: rgba(216, 207, 188, 0.58);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
 .motioncode-pricing-features {
   position: relative;
   z-index: 1;
   display: grid;
   gap: 12px;
-  min-height: 126px;
-  margin: 28px 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .motioncode-pricing-features li {
   position: relative;
-  padding-left: 18px;
+  padding-left: 28px;
   color: rgba(255, 251, 244, 0.82);
   font-size: 13px;
   line-height: 1.5;
@@ -2274,42 +2386,12 @@ body::after {
   content: "";
   position: absolute;
   left: 0;
-  top: 0.62em;
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  background: #00ff88;
-  box-shadow: 0 0 14px rgba(0, 255, 136, 0.32);
-}
-
-.motioncode-pricing-cta {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  margin-top: auto;
-  border: 1px solid rgba(216, 207, 188, 0.32);
-  border-radius: 8px;
-  color: var(--text);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 700;
-  transition: background 220ms ease, border-color 220ms ease, transform 220ms ease;
-}
-
-.motioncode-pricing-cta:hover {
-  border-color: #00ff88;
-  background: rgba(0, 255, 136, 0.1);
-  transform: translateY(-1px);
-}
-
-/* Razorpay checkout button sits in the same slot as the ghost CTA. */
-.motioncode-pricing-checkout {
-  position: relative;
-  z-index: 1;
-  margin-top: auto;
+  top: 0.08em;
+  width: 17px;
+  height: 17px;
+  background: var(--pc-accent);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cpath%20d%3D%27M12%202C6.477%202%202%206.477%202%2012s4.477%2010%2010%2010%2010-4.477%2010-10S17.523%202%2012%202Zm-1.2%2014.6L6.2%2012l1.4-1.4%203.2%203.2%206-6%201.4%201.4-7.4%207.4Z%27%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cpath%20d%3D%27M12%202C6.477%202%202%206.477%202%2012s4.477%2010%2010%2010%2010-4.477%2010-10S17.523%202%2012%202Zm-1.2%2014.6L6.2%2012l1.4-1.4%203.2%203.2%206-6%201.4%201.4-7.4%207.4Z%27%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
 }
 
 /* The standalone /pricing page has no JS hover tracking like the landing

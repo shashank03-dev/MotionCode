@@ -1,5 +1,6 @@
 "use client";
 
+import gsap from "gsap";
 import {
   useCallback,
   useEffect,
@@ -30,6 +31,62 @@ export function AccountMenu({ email }: AccountMenuProps) {
 
   const accountInitial = (email?.trim()?.[0] ?? "•").toUpperCase();
   const accountLabel = email ?? "Signed in";
+
+  // Tap feedback: a physical squash-and-stretch bounce rather than a symmetric
+  // scale pulse — the badge compresses under the "press", springs up, then
+  // settles with an elastic wobble. Reads as a real object reacting to touch.
+  const playBounce = useCallback(() => {
+    const el = triggerRef.current;
+    if (!el) {
+      return;
+    }
+    // matchMedia is absent in non-browser/test environments; never let the
+    // reduced-motion check throw out of the click handler and block the toggle.
+    if (
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
+
+    gsap.killTweensOf(el);
+    gsap
+      .timeline({ defaults: { transformOrigin: "50% 50%" } })
+      // anticipation: squash down into the press
+      .to(el, {
+        scaleX: 1.1,
+        scaleY: 0.82,
+        y: 2,
+        duration: 0.11,
+        ease: "power3.out",
+      })
+      // launch: stretch up out of the press
+      .to(el, {
+        scaleX: 0.93,
+        scaleY: 1.12,
+        y: -4,
+        duration: 0.13,
+        ease: "power1.inOut",
+      })
+      // settle: elastic wobble back to rest
+      .to(el, {
+        scaleX: 1,
+        scaleY: 1,
+        y: 0,
+        duration: 0.9,
+        ease: "elastic.out(1, 0.42)",
+      });
+  }, []);
+
+  // Stop any in-flight bounce if the button unmounts mid-animation.
+  useEffect(() => {
+    const el = triggerRef.current;
+    return () => {
+      if (el) {
+        gsap.killTweensOf(el);
+      }
+    };
+  }, []);
 
   const updatePosition = useCallback(() => {
     const trigger = triggerRef.current;
@@ -90,13 +147,16 @@ export function AccountMenu({ email }: AccountMenuProps) {
       <button
         ref={triggerRef}
         type="button"
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          playBounce();
+          setOpen((value) => !value);
+        }}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
         aria-label={email ? `Account menu for ${email}` : "Account menu"}
         title={accountLabel}
-        className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-[rgba(0,255,136,0.4)] bg-[rgba(0,255,136,0.08)] font-mono text-xs font-bold uppercase text-[#00ff88] transition hover:border-[rgba(0,255,136,0.7)] hover:bg-[rgba(0,255,136,0.16)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00ff88]"
+        className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-[rgba(0,255,136,0.4)] bg-[rgba(0,255,136,0.08)] font-mono text-xs font-bold uppercase text-[#00ff88] transition-colors will-change-transform hover:border-[rgba(0,255,136,0.7)] hover:bg-[rgba(0,255,136,0.16)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00ff88]"
       >
         {accountInitial}
       </button>

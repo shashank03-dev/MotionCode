@@ -93,7 +93,8 @@ function PlanColumn({ tier }: { tier: PlanTier }) {
       className={`motioncode-pricing-card ${isFeatured ? "motioncode-pricing-card-featured" : ""}`}
     >
       <div className="motioncode-pricing-card-top">
-        <div>
+        <span className="motioncode-pricing-icon" aria-hidden="true" />
+        <div className="motioncode-pricing-titles">
           <h3 className="capitalize">{tier}</h3>
           <p>{copy.description}</p>
         </div>
@@ -107,21 +108,24 @@ function PlanColumn({ tier }: { tier: PlanTier }) {
         <span>{copy.period}</span>
       </div>
 
-      <ul className="motioncode-pricing-features">
-        {FEATURE_LABELS.map(([key, label]) => (
-          <li key={key}>
-            {formatFeatureValue(entitlements[key])} {label}
-          </li>
-        ))}
-        <li>{entitlements.supportPriority} support</li>
-      </ul>
+      <div className="motioncode-pricing-body">
+        <p className="motioncode-pricing-features-label">What you will get</p>
+        <ul className="motioncode-pricing-features">
+          {FEATURE_LABELS.map(([key, label]) => (
+            <li key={key}>
+              {formatFeatureValue(entitlements[key])} {label}
+            </li>
+          ))}
+          <li>{entitlements.supportPriority} support</li>
+        </ul>
+      </div>
 
       {tier === "free" ? (
         <Link href="/app" className="motioncode-pricing-cta">
           {copy.cta} →
         </Link>
       ) : (
-        <div className="motioncode-pricing-checkout mt-auto [&_button]:!h-11 [&_button]:!w-full [&_button]:!rounded-lg [&_button]:!border [&_button]:!border-[#00ff88]/60 [&_button]:!bg-[#00ff88]/10 [&_button]:!font-mono [&_button]:!text-xs [&_button]:!font-bold [&_button]:!text-[#00ff88] [&_button:hover]:!border-[#00ff88] [&_button:hover]:!bg-[#00ff88]/15 [&_p]:!mt-2 [&_p]:!text-[11px] [&_p]:!text-[#ffd1d1]">
+        <div className="motioncode-pricing-checkout">
           <CheckoutButton planTier={tier} />
         </div>
       )}

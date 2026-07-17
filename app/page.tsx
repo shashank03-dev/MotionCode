@@ -1395,7 +1395,8 @@ export default function LandingPage() {
               onMouseLeave={(event) => setInteractiveHover(event, false)}
             >
               <div className="motioncode-pricing-card-top">
-                <div>
+                <span className="motioncode-pricing-icon" aria-hidden="true" />
+                <div className="motioncode-pricing-titles">
                   <h3>{tier.name}</h3>
                   <p>{tier.description}</p>
                 </div>
@@ -1410,11 +1411,14 @@ export default function LandingPage() {
                 </span>
                 <span>{tier.period}</span>
               </div>
-              <ul className="motioncode-pricing-features">
-                {tier.features.map((feature) => (
-                  <li key={feature}>{feature}</li>
-                ))}
-              </ul>
+              <div className="motioncode-pricing-body">
+                <p className="motioncode-pricing-features-label">What you will get</p>
+                <ul className="motioncode-pricing-features">
+                  {tier.features.map((feature) => (
+                    <li key={feature}>{feature}</li>
+                  ))}
+                </ul>
+              </div>
               {tier.id === "preview" ? (
                 <Link href={tier.href} className="motioncode-pricing-cta">
                   {tier.cta} →

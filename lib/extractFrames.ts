@@ -220,6 +220,9 @@ function getFileExtension(name: string) {
   return dotIndex === -1 ? "" : lower.slice(dotIndex)
 }
 
+const MAX_FRAME_WIDTH = 640
+const MAX_FRAME_HEIGHT = 480
+
 function fitDimensions(width: number, height: number) {
   if (
     !Number.isFinite(width) ||
@@ -230,9 +233,18 @@ function fitDimensions(width: number, height: number) {
     throw new Error("Cannot determine media dimensions.")
   }
 
+  // Scale down uniformly so the frame keeps its aspect ratio. Clamping each
+  // axis independently squished non-4:3 sources (e.g. portrait phone clips),
+  // which distorted the frames the model analyzes.
+  const scale = Math.min(
+    1,
+    MAX_FRAME_WIDTH / width,
+    MAX_FRAME_HEIGHT / height,
+  )
+
   return {
-    height: Math.min(height, 480),
-    width: Math.min(width, 640),
+    height: Math.max(1, Math.round(height * scale)),
+    width: Math.max(1, Math.round(width * scale)),
   }
 }
 
