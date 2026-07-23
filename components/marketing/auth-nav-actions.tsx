@@ -6,7 +6,9 @@ import { useEffect, useState } from "react";
 
 import { LoginModal } from "@/components/auth/login-modal";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { ButtonLink } from "@/components/ui/site-button";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { cn } from "@/lib/utils";
 
 import { AccountMenu } from "./account-menu";
 
@@ -15,6 +17,15 @@ type MarketingAuthNavActionsProps = {
 };
 
 type AuthState = "loading" | "signed-out" | "signed-in";
+
+// The site header is a rounded glass pill with title-case ghost links
+// (Features, Pricing). The auth cluster speaks the same language: neutral
+// ghost pills that match those links, with the accent ButtonLink as the one
+// CTA — instead of the square uppercase chips that clashed with the header.
+const NAV_LINK =
+  "rounded-full px-3.5 py-1.5 text-[14px] text-ink-2 transition-colors duration-200 hover:text-ink";
+const SIGN_OUT_LINK =
+  "rounded-full border-transparent bg-transparent px-3.5 text-[14px] font-normal text-ink-2 transition-colors hover:text-ink";
 
 export function MarketingAuthNavActions({
   variant,
@@ -75,29 +86,20 @@ export function MarketingAuthNavActions({
         <AccountMenu email={userEmail} />
       </div>
     ) : (
-      <div className="flex items-center gap-2">
-        <Link
-          href="/dashboard"
-          className="inline-flex h-9 items-center border border-hairline px-3 font-mono text-[11px] uppercase tracking-[0.12em] text-ink-2 transition-colors hover:border-accent hover:text-ink"
-        >
+      <div className="flex items-center gap-1">
+        <Link href="/dashboard" className={NAV_LINK}>
           Dashboard
         </Link>
         <Link
           href="/account"
-          className="hidden h-9 items-center border border-hairline px-3 font-mono text-[11px] uppercase tracking-[0.12em] text-ink-3 transition-colors hover:border-accent hover:text-ink sm:inline-flex"
+          className={cn(NAV_LINK, "hidden sm:inline-block")}
         >
           Account
         </Link>
-        <Link
-          href="/app"
-          className="inline-flex h-9 items-center border border-accent px-4 font-mono text-xs font-bold text-accent transition-colors hover:bg-accent/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-        >
+        <ButtonLink href="/app" variant="primary" size="sm" className="ml-1">
           Open App
-        </Link>
-        <SignOutButton
-          className="border-hairline px-3 font-mono text-xs text-ink-3 hover:border-accent hover:text-ink"
-          label="Out"
-        />
+        </ButtonLink>
+        <SignOutButton className={SIGN_OUT_LINK} label="Sign out" />
       </div>
     );
   }
@@ -121,11 +123,8 @@ export function MarketingAuthNavActions({
   }
 
   return (
-    <Link
-      href="/app"
-      className="inline-flex h-9 items-center border border-accent px-4 font-mono text-xs font-bold text-accent transition-colors hover:bg-accent/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-    >
-      {authState === "loading" ? "Loading..." : "Try Free →"}
-    </Link>
+    <ButtonLink href="/app" variant="primary" size="sm">
+      {authState === "loading" ? "Loading…" : "Try Free"}
+    </ButtonLink>
   );
 }
