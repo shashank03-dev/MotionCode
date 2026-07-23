@@ -13,7 +13,7 @@
   background:
     linear-gradient(135deg, color-mix(in srgb, var(--accent) 3%, transparent), transparent 28%),
     radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 32%),
-    radial-gradient(circle at 96% 14%, rgba(0, 255, 136, 0.055), transparent 26%),
+    radial-gradient(circle at 96% 14%, rgba(0, 153, 255, 0.055), transparent 26%),
     var(--bg);
   color: var(--text);
   font-family: var(--font-body);
@@ -53,7 +53,7 @@
 }
 
 .brandLink:hover {
-  color: color-mix(in srgb, var(--accent) 84%, #00ff88 16%);
+  color: color-mix(in srgb, var(--accent) 84%, #0099ff 16%);
 }
 
 .navActions {
@@ -190,8 +190,8 @@
 
 .topProgressFill {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, #00ff88 82%, var(--accent)));
-  box-shadow: 0 0 18px rgba(0, 255, 136, 0.18);
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, #0099ff 82%, var(--accent)));
+  box-shadow: 0 0 18px rgba(0, 153, 255, 0.18);
   transition: width 18s cubic-bezier(0.08, 0.82, 0.18, 1);
 }
 
@@ -208,15 +208,15 @@
   z-index: 1000;
   right: 24px;
   bottom: 24px;
-  border: 1px solid rgba(0, 255, 136, 0.52);
+  border: 1px solid rgba(0, 153, 255, 0.52);
   border-radius: 8px;
   background:
-    linear-gradient(180deg, rgba(0, 255, 136, 0.07), transparent),
+    linear-gradient(180deg, rgba(0, 153, 255, 0.07), transparent),
     color-mix(in srgb, var(--bg) 92%, #000 8%);
   box-shadow:
     0 18px 44px rgba(0, 0, 0, 0.38),
     inset 0 1px 0 var(--app-hairline);
-  color: #00ff88;
+  color: #0099ff;
   font-family: var(--font-mono);
   font-size: 0.78rem;
   padding: 12px 16px;
@@ -302,5 +302,46 @@
   .toast {
     animation: none;
     transition: none;
+  }
+}
+
+/* ---- Pipeline reveal --------------------------------------------------- *
+ * The shell assembles in the order the analyzer actually runs — input, then
+ * the transform surface, then the readout — so the entrance traces the real
+ * procedure instead of every panel landing at once. Delays come from the
+ * stage's position in that path, not from arbitrary numbers.
+ * Applied to the existing elements (no wrapper) so the flex layout is
+ * untouched. */
+@keyframes pipelineReveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 01 — input: the upload panel is the first flex child of the main area. */
+.mainArea > :first-child {
+  animation: pipelineReveal 0.45s var(--app-ease) both;
+}
+
+/* 02 — transform surface: the canvas/studio the frames flow into. */
+.rightPanel {
+  animation: pipelineReveal 0.45s var(--app-ease) 0.08s both;
+}
+
+/* 03 — readout: the status bar resolves last, once the shell is settled. */
+.rightPanel > :last-child {
+  animation: pipelineReveal 0.4s var(--app-ease) 0.16s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mainArea > :first-child,
+  .rightPanel,
+  .rightPanel > :last-child {
+    animation: none;
   }
 }

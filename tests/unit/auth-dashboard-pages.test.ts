@@ -289,12 +289,18 @@ describe("account page paid plans status", () => {
     vi.doMock("@/lib/server/entitlements", () => ({
       getEntitlementSummary: vi.fn(async () => ({
         entitlements: {
+          allowedModels: ["gemini-2.5-flash"],
           auditLogRetentionDays: 7,
+          comments: false,
           dailyAnalyses: 1,
           maxFramesPerAnalysis: 6,
           maxUploadBytes: 25 * 1024 * 1024,
+          projectVersioning: false,
           savedProjects: 5,
+          shareLinks: false,
+          supportPriority: "community",
           teamSeats: 1,
+          workspaceCount: 0,
         },
         planTier: "free",
         profile: {
@@ -305,6 +311,7 @@ describe("account page paid plans status", () => {
         usage: {
           dailyAnalyses: {
             limit: 1,
+            remaining: 0,
             used: 1,
           },
         },
@@ -317,8 +324,8 @@ describe("account page paid plans status", () => {
     );
     const renderedHtml = renderToStaticMarkup(await AccountContent({}));
 
+    // Free users are guided to the paid upgrade path, not an old signup queue.
     expect(renderedHtml).toContain("Upgrade");
-    expect(renderedHtml).toContain("Razorpay Checkout");
     expect(renderedHtml).toContain("View paid plans");
     expect(renderedHtml).not.toContain("Early access");
   });

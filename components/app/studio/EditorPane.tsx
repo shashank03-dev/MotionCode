@@ -55,18 +55,18 @@ export function EditorPane({
 }: EditorPaneProps) {
   return (
     <section
-      className="flex h-full min-h-0 min-w-0 flex-col bg-[#0d0f0b]/70"
+      className="flex h-full min-h-0 min-w-0 flex-col bg-[#0a0b0d]/70"
       aria-label="Generated code editor"
     >
       {/* Toolbar */}
-      <div className="flex items-center justify-between gap-2 border-b border-[var(--border)] px-3 py-2">
-        <div className="flex min-w-0 items-center gap-2 font-mono text-[11px] text-[var(--muted)]">
-          <span className="truncate text-[var(--accent)]">{fileLabel(activeTab)}</span>
+      <div className="flex items-center justify-between gap-2 border-b border-hairline px-3 py-2">
+        <div className="flex min-w-0 items-center gap-2 font-mono text-[11px] text-ink-3">
+          <span className="truncate text-ink-2">{fileLabel(activeTab)}</span>
           {editable && dirty ? (
-            <span className="inline-flex size-1.5 shrink-0 rounded-full bg-[#00ff88]" title="Unsaved edits" />
+            <span className="inline-flex size-1.5 shrink-0 rounded-full bg-accent" title="Unsaved edits" />
           ) : null}
           {!editable ? (
-            <span className="inline-flex shrink-0 items-center gap-1 text-[var(--muted)]">
+            <span className="inline-flex shrink-0 items-center gap-1 text-ink-3">
               <Lock className="size-3" aria-hidden="true" />
               Read-only
             </span>
@@ -87,7 +87,7 @@ export function EditorPane({
               <button
                 type="button"
                 onClick={onRun}
-                className="ml-1 inline-flex h-7 items-center gap-1.5 rounded-md border border-[var(--accent-border)] bg-[var(--accent-dim)] px-2.5 font-mono text-[11px] text-[var(--text)] transition hover:border-[#00ff88] hover:bg-[#00ff88]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+                className="ml-1 inline-flex h-7 items-center gap-1.5 rounded-md border border-[var(--accent-border)] bg-[var(--accent-dim)] px-2.5 font-mono text-[11px] text-ink transition hover:border-accent hover:bg-accent/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
                 title="Run (Cmd/Ctrl+Enter)"
               >
                 <Play className="size-3.5" />
@@ -98,7 +98,7 @@ export function EditorPane({
             <>
               <Link
                 href="/pricing"
-                className="inline-flex h-7 items-center gap-1.5 rounded-md border border-transparent px-2 font-mono text-[11px] text-[var(--muted)] transition hover:text-[var(--text)]"
+                className="inline-flex h-7 items-center gap-1.5 rounded-md border border-transparent px-2 font-mono text-[11px] text-ink-3 transition hover:text-ink"
                 title="Upgrade to edit & export"
               >
                 Upgrade to edit
@@ -116,7 +116,7 @@ export function EditorPane({
 
       {/* Framework tabs */}
       <div
-        className="flex items-center gap-0.5 overflow-x-auto border-b border-[var(--border)] px-2"
+        className="flex items-center gap-0.5 overflow-x-auto border-b border-hairline px-2"
         role="tablist"
         aria-label="Output framework"
       >
@@ -132,13 +132,13 @@ export function EditorPane({
               className={cn(
                 "relative shrink-0 px-3 py-2 font-mono text-[11px] transition-colors",
                 isActive
-                  ? "text-[var(--text)]"
-                  : "text-[var(--muted)] hover:text-[var(--accent)]",
+                  ? "text-ink"
+                  : "text-ink-3 hover:text-ink",
               )}
             >
               {tab}
               {isActive ? (
-                <span className="absolute inset-x-2 bottom-0 h-px bg-[#00ff88]" />
+                <span className="absolute inset-x-2 bottom-0 h-px bg-accent" />
               ) : null}
             </button>
           );
@@ -181,9 +181,9 @@ function ToolbarButton({
       className={cn(
         "inline-flex h-7 items-center gap-1.5 rounded-md border border-transparent px-2 font-mono text-[11px] transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]",
         active
-          ? "text-[#00ff88]"
-          : "text-[var(--muted)] hover:border-[var(--border)] hover:text-[var(--text)]",
-        disabled ? "cursor-not-allowed opacity-40 hover:border-transparent hover:text-[var(--muted)]" : "",
+          ? "text-accent"
+          : "text-ink-3 hover:border-hairline hover:text-ink",
+        disabled ? "cursor-not-allowed opacity-40 hover:border-transparent hover:text-ink-3" : "",
       )}
     >
       <Icon className="size-3.5" />

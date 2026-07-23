@@ -149,7 +149,9 @@ export function CheckoutButton({ planTier }: CheckoutButtonProps) {
         loading={loading}
         onClick={startRazorpayCheckout}
       />
-      {error ? <p className="text-xs leading-5 text-red-200">{error}</p> : null}
+      {error ? (
+        <p className="text-xs leading-5 text-[var(--danger)]">{error}</p>
+      ) : null}
     </div>
   );
 }
@@ -169,7 +171,7 @@ function ProviderButton({
 }) {
   return (
     <button
-      className="inline-flex h-10 min-w-0 items-center justify-center gap-2 border border-[var(--accent-border)] bg-[var(--accent-dim)] px-3 font-mono text-sm text-[var(--text)] disabled:opacity-60"
+      className="inline-flex h-11 w-full min-w-0 items-center justify-center gap-2 rounded-full bg-accent px-4 text-sm font-medium text-black shadow-glow transition hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
       disabled={disabled}
       onClick={onClick}
       type="button"

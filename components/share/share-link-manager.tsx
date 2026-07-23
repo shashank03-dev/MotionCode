@@ -126,11 +126,11 @@ export function ShareLinkManager({
   }
 
   return (
-    <section className={cn("rounded-lg border border-zinc-800 p-5", className)}>
+    <section className={cn("rounded-lg border border-hairline p-5", className)}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-zinc-100">Share</h2>
-          <p className="text-sm text-zinc-400">{entitlement.helper}</p>
+          <h2 className="text-lg font-semibold text-ink">Share</h2>
+          <p className="text-sm text-ink-2">{entitlement.helper}</p>
         </div>
         <Button
           disabled={!entitlement.canCreate || busy}
@@ -143,10 +143,10 @@ export function ShareLinkManager({
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <label className="text-sm text-zinc-300">
+        <label className="text-sm text-ink-2">
           Mode
           <select
-            className="mt-1 h-9 w-full rounded-md border border-zinc-800 bg-zinc-950 px-2 text-sm text-zinc-100"
+            className="mt-1 h-9 w-full rounded-md border border-hairline bg-panel px-2 text-sm text-ink"
             disabled={planTier !== "studio"}
             onChange={(event) => setAccessMode(event.target.value as ShareAccessMode)}
             value={planTier === "studio" ? accessMode : "read"}
@@ -155,16 +155,16 @@ export function ShareLinkManager({
             <option value="comment">Comment</option>
           </select>
         </label>
-        <label className="text-sm text-zinc-300">
+        <label className="text-sm text-ink-2">
           Expiration
           <input
-            className="mt-1 h-9 w-full rounded-md border border-zinc-800 bg-zinc-950 px-2 text-sm text-zinc-100"
+            className="mt-1 h-9 w-full rounded-md border border-hairline bg-panel px-2 text-sm text-ink"
             onChange={(event) => setExpiresAt(event.target.value)}
             type="datetime-local"
             value={expiresAt}
           />
         </label>
-        <label className="flex items-end gap-2 text-sm text-zinc-300">
+        <label className="flex items-end gap-2 text-sm text-ink-2">
           <input
             checked={includeComments && planTier === "studio"}
             className="mb-2 size-4"
@@ -177,8 +177,8 @@ export function ShareLinkManager({
       </div>
 
       {createdLink ? (
-        <div className="mt-4 flex flex-col gap-2 rounded-lg border border-emerald-400/30 bg-emerald-400/10 p-3 sm:flex-row sm:items-center">
-          <code className="min-w-0 flex-1 truncate text-sm text-emerald-100">
+        <div className="mt-4 flex flex-col gap-2 rounded-lg border border-accent/30 bg-accent/10 p-3 sm:flex-row sm:items-center">
+          <code className="min-w-0 flex-1 truncate text-sm text-ink">
             {createdLink.url}
           </code>
           <Button
@@ -200,11 +200,11 @@ export function ShareLinkManager({
         <div className="mt-5 space-y-2">
           {links.map((link) => (
             <div
-              className="flex items-center justify-between gap-3 rounded-lg border border-zinc-800 p-3 text-sm"
+              className="flex items-center justify-between gap-3 rounded-lg border border-hairline p-3 text-sm"
               key={link.id}
             >
               <div className="min-w-0">
-                <div className="flex items-center gap-2 text-zinc-200">
+                <div className="flex items-center gap-2 text-ink">
                   {link.accessMode === "comment" ? (
                     <MessageCircle className="size-4" />
                   ) : (
@@ -212,10 +212,10 @@ export function ShareLinkManager({
                   )}
                   <span>{link.accessMode}</span>
                   {link.revokedAt ? (
-                    <span className="text-zinc-500">revoked</span>
+                    <span className="text-ink-3">revoked</span>
                   ) : null}
                 </div>
-                <p className="truncate text-zinc-500">
+                <p className="truncate text-ink-3">
                   Created {new Date(link.createdAt).toLocaleString()}
                 </p>
               </div>

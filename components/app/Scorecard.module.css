@@ -2,10 +2,10 @@
   --score-surface: rgba(21, 25, 19, 0.78);
   --score-surface-hover: rgba(25, 29, 21, 0.96);
   --score-track: rgba(86, 84, 73, 0.3);
-  --score-good: #c8d39f;
+  --score-good: #a9b6c8;
   --score-warn: #f4a340;
   --score-bad: #f08f78;
-  --score-neutral: var(--accent, #d8cfbc);
+  --score-neutral: var(--accent, #a6a6a6);
   --score-label: color-mix(in srgb, var(--accent) 56%, transparent);
 
   container-type: inline-size;
@@ -14,9 +14,9 @@
   flex: 0 0 auto;
   border-top: 1px solid var(--border);
   background:
-    radial-gradient(circle at 8% 0%, rgba(216, 207, 188, 0.09), transparent 36%),
-    linear-gradient(180deg, rgba(255, 251, 244, 0.035), rgba(255, 251, 244, 0.01)),
-    rgba(17, 18, 13, 0.96);
+    radial-gradient(circle at 8% 0%, rgba(255, 255, 255, 0.09), transparent 36%),
+    linear-gradient(180deg, rgba(247, 248, 248, 0.035), rgba(247, 248, 248, 0.01)),
+    rgba(10, 11, 13, 0.96);
   padding: 14px clamp(16px, 2vw, 24px);
 }
 
@@ -33,9 +33,9 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   background:
-    linear-gradient(180deg, rgba(255, 251, 244, 0.035), rgba(255, 251, 244, 0)),
+    linear-gradient(180deg, rgba(247, 248, 248, 0.035), rgba(247, 248, 248, 0)),
     var(--score-surface);
-  box-shadow: inset 0 1px 0 rgba(255, 251, 244, 0.04);
+  box-shadow: inset 0 1px 0 rgba(247, 248, 248, 0.04);
   cursor: help;
   padding: 11px 12px;
   outline: none;
@@ -50,11 +50,11 @@
 .item:hover {
   border-color: color-mix(in srgb, var(--meter-color) 54%, var(--accent-border));
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--meter-color) 9%, transparent), rgba(255, 251, 244, 0)),
+    linear-gradient(180deg, color-mix(in srgb, var(--meter-color) 9%, transparent), rgba(247, 248, 248, 0)),
     var(--score-surface-hover);
   box-shadow:
-    0 12px 28px rgba(7, 8, 5, 0.24),
-    inset 0 1px 0 rgba(255, 251, 244, 0.06);
+    0 12px 28px rgba(7, 8, 11, 0.24),
+    inset 0 1px 0 rgba(247, 248, 248, 0.06);
   transform: translateY(-1px);
 }
 
@@ -105,7 +105,7 @@
   border: 0;
   border-radius: 999px;
   background: var(--score-track);
-  box-shadow: inset 0 0 0 1px rgba(255, 251, 244, 0.025);
+  box-shadow: inset 0 0 0 1px rgba(247, 248, 248, 0.025);
 }
 
 .meter::-webkit-meter-optimum-value,
@@ -146,7 +146,7 @@
   max-width: 260px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: rgba(17, 18, 13, 0.98);
+  background: rgba(10, 11, 13, 0.98);
   box-shadow: 0 18px 44px rgba(0, 0, 0, 0.38);
   color: var(--accent);
   font-family: var(--font-body);

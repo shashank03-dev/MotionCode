@@ -83,10 +83,12 @@ describe("workspace API handlers", () => {
         name: "  Design Systems  ",
       }),
       {
+        countOwnedWorkspaces: vi.fn(async () => 0),
         createWorkspace,
         ensureProfile,
         getCurrentUser: vi.fn(async () => ({ id: USER_ID })),
         markOnboardingComplete,
+        resolvePlanTier: vi.fn(async () => "pro" as const),
       },
     );
     const json = (await response.json()) as ApiResponse<unknown>;
@@ -100,6 +102,59 @@ describe("workspace API handlers", () => {
       slug: "design-systems",
     });
     expect(markOnboardingComplete).toHaveBeenCalledWith(USER_ID);
+  });
+
+  it("blocks free-tier workspace creation with an upgrade prompt", async () => {
+    const { handleCreateWorkspaceRequest } = await import(
+      "@/app/api/workspaces/handler"
+    );
+    const createWorkspace = vi.fn();
+    const ensureProfile = vi.fn(async () => undefined);
+    const countOwnedWorkspaces = vi.fn(async () => 0);
+
+    const response = await handleCreateWorkspaceRequest(
+      jsonRequest("https://motioncode.test/api/workspaces", {
+        name: "Design Systems",
+      }),
+      {
+        countOwnedWorkspaces,
+        createWorkspace,
+        ensureProfile,
+        getCurrentUser: vi.fn(async () => ({ id: USER_ID })),
+        resolvePlanTier: vi.fn(async () => "free" as const),
+      },
+    );
+    const json = (await response.json()) as ApiResponse<unknown>;
+
+    expect(response.status).toBe(402);
+    expect(json.ok).toBe(false);
+    expect((json as { code?: string }).code).toBe("BILLING_REQUIRED");
+    expect(createWorkspace).not.toHaveBeenCalled();
+    expect(ensureProfile).not.toHaveBeenCalled();
+  });
+
+  it("caps paid-tier workspace creation at the plan limit", async () => {
+    const { handleCreateWorkspaceRequest } = await import(
+      "@/app/api/workspaces/handler"
+    );
+    const createWorkspace = vi.fn();
+    const limit = PLAN_ENTITLEMENTS.pro.workspaceCount;
+
+    const response = await handleCreateWorkspaceRequest(
+      jsonRequest("https://motioncode.test/api/workspaces", {
+        name: "Overflow",
+      }),
+      {
+        countOwnedWorkspaces: vi.fn(async () => limit),
+        createWorkspace,
+        ensureProfile: vi.fn(async () => undefined),
+        getCurrentUser: vi.fn(async () => ({ id: USER_ID })),
+        resolvePlanTier: vi.fn(async () => "pro" as const),
+      },
+    );
+
+    expect(response.status).toBe(402);
+    expect(createWorkspace).not.toHaveBeenCalled();
   });
 
   it("ensures the owner profile exists before inserting and surfaces failures", async () => {
@@ -116,9 +171,11 @@ describe("workspace API handlers", () => {
         name: "Design Systems",
       }),
       {
+        countOwnedWorkspaces: vi.fn(async () => 0),
         createWorkspace,
         ensureProfile,
         getCurrentUser: vi.fn(async () => ({ id: USER_ID })),
+        resolvePlanTier: vi.fn(async () => "pro" as const),
       },
     );
     const json = (await response.json()) as ApiResponse<unknown>;

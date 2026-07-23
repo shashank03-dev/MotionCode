@@ -50,25 +50,25 @@ export function RouteModal({ title, children }: RouteModalProps) {
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="relative z-10 my-auto w-full max-w-4xl rounded-2xl border border-[var(--border)] bg-[#0d0f0b] shadow-[0_30px_80px_rgba(0,0,0,0.6)]"
+        className="glass-card relative z-10 my-auto w-full max-w-4xl rounded-3xl"
       >
-        <header className="sticky top-0 z-10 flex items-center gap-3 rounded-t-2xl border-b border-[var(--border)] bg-[#0d0f0b]/95 px-5 py-3.5 backdrop-blur">
+        <header className="sticky top-0 z-10 flex items-center gap-3 rounded-t-3xl border-b border-hairline bg-panel/85 px-5 py-3.5 backdrop-blur-xl">
           <button
             type="button"
             onClick={() => router.back()}
             aria-label="Back"
-            className="flex size-8 items-center justify-center rounded-md border border-transparent text-[var(--accent)] transition hover:border-[var(--border)] hover:text-[var(--text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]"
+            className="flex size-8 items-center justify-center rounded-lg border border-transparent text-ink-3 transition hover:border-hairline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]"
           >
             <ArrowLeft className="size-4" aria-hidden="true" />
           </button>
-          <h2 className="font-mono text-sm uppercase tracking-[0.18em] text-[var(--text)]">
+          <h2 className="font-mono text-[11px] uppercase tracking-[0.22em] text-ink-2">
             {title}
           </h2>
           <button
             type="button"
             onClick={() => router.back()}
             aria-label="Close"
-            className="ml-auto flex size-8 items-center justify-center rounded-md border border-transparent text-[var(--accent)] transition hover:border-[var(--border)] hover:text-[var(--text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]"
+            className="ml-auto flex size-8 items-center justify-center rounded-lg border border-transparent text-ink-3 transition hover:border-hairline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]"
           >
             <X className="size-4" aria-hidden="true" />
           </button>

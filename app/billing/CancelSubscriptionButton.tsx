@@ -77,7 +77,7 @@ export function CancelSubscriptionButton({
           Confirm cancellation
         </button>
         <button
-          className="inline-flex h-10 items-center justify-center gap-2 border border-[var(--border)] px-4 font-mono text-sm text-[var(--accent)] disabled:opacity-60"
+          className="inline-flex h-10 items-center justify-center gap-2 border border-hairline px-4 font-mono text-sm text-ink-2 disabled:opacity-60"
           disabled={loading}
           onClick={() => setConfirming(false)}
           type="button"

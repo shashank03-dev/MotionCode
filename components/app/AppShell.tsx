@@ -181,7 +181,8 @@ export function AppShell({
 
   const clearAnimationTimers = useCallback(() => {
     if (stepTimerRef.current !== null) {
-      clearTimeout(stepTimerRef.current);
+      // stepTimerRef holds the progress interval while analyzing.
+      clearInterval(stepTimerRef.current);
       stepTimerRef.current = null;
     }
     if (scannerTimerRef.current !== null) {
@@ -519,27 +520,45 @@ export function AppShell({
 
   useEffect(() => {
     let resetTimer: number | null = null;
-    let progressTimer: number | null = null;
 
     if (stage === "analyzing") {
-      const runSteps = (currentStep: number) => {
-        setActiveStep(currentStep);
-        if (currentStep < stepsList.length - 1) {
-          stepTimerRef.current = window.setTimeout(
-            () => runSteps(currentStep + 1),
-            600,
-          );
-        }
+      const total = Math.max(stepsList.length, 1);
+      // Duration-aware progress. The real API call runs far longer than a fixed
+      // timeline, so instead of racing to the end and freezing, progress eases
+      // asymptotically toward a ceiling below 100 with an exponential curve:
+      // fast at first, then ever slower, so it stays visibly "working" for any
+      // call length without ever claiming completion. activeStep (and thus the
+      // particle formation + phase text) is derived from that live value. The
+      // jump to 100% is reserved for the actual resolve, handled on "done".
+      const FLOOR = 6;
+      const CEIL = 94;
+      const TAU_MS = 7000;
+      const startedAt =
+        typeof performance !== "undefined" ? performance.now() : Date.now();
+
+      const now = () =>
+        typeof performance !== "undefined" ? performance.now() : Date.now();
+
+      const tick = () => {
+        const elapsed = now() - startedAt;
+        const eased = 1 - Math.exp(-elapsed / TAU_MS);
+        const value = FLOOR + (CEIL - FLOOR) * eased;
+        setProgressWidth(value);
+        const step = Math.min(
+          total - 1,
+          Math.round(((value - FLOOR) / (CEIL - FLOOR)) * (total - 1)),
+        );
+        setActiveStep(step);
       };
 
       resetTimer = window.setTimeout(() => {
-        setActiveStep(0);
         setScannerIndex(0);
         setStatusBarMsgIndex(0);
-        setProgressWidth(0);
+        tick();
       }, 0);
-      progressTimer = window.setTimeout(() => setProgressWidth(85), 100);
-      stepTimerRef.current = window.setTimeout(() => runSteps(1), 600);
+      // A short interval keeps the readout smooth while the exponential curve
+      // does the pacing; it self-limits near the ceiling, so no runaway steps.
+      stepTimerRef.current = window.setInterval(tick, 90);
       scannerTimerRef.current = window.setInterval(() => {
         setScannerIndex((current) => (current + 1) % (frames.length || 1));
       }, 300);
@@ -556,9 +575,6 @@ export function AppShell({
     return () => {
       if (resetTimer !== null) {
         window.clearTimeout(resetTimer);
-      }
-      if (progressTimer !== null) {
-        window.clearTimeout(progressTimer);
       }
       clearAnimationTimers();
     };
@@ -628,7 +644,6 @@ export function AppShell({
               error={error}
               frameThumbs={frameThumbs}
               onRetry={handleAnalyze}
-              onUploadClick={() => fileInputRef.current?.click()}
               progressWidth={progressWidth}
               scannerIndex={scannerIndex}
               stage={processStage}
@@ -685,7 +700,7 @@ function SaveStatePill({ saveState }: { saveState: SaveState }) {
 
   if (saveState.status === "saving") {
     return (
-      <span className="inline-flex h-8 items-center rounded-md border border-[var(--border)] px-2.5 font-mono text-[11px] text-[var(--muted)]">
+      <span className="inline-flex h-8 items-center rounded-md border border-hairline px-2.5 font-mono text-[11px] text-ink-3">
         Saving…
       </span>
     );
@@ -695,10 +710,10 @@ function SaveStatePill({ saveState }: { saveState: SaveState }) {
     return (
       <Link
         href={`/projects/${saveState.projectId}`}
-        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[var(--accent-border)] bg-[var(--accent-dim)] px-2.5 font-mono text-[11px] text-[var(--text)] transition hover:border-[var(--accent)]"
+        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[var(--accent-border)] bg-[var(--accent-dim)] px-2.5 font-mono text-[11px] text-ink transition hover:border-[var(--accent)]"
       >
         <span
-          className="inline-flex size-1.5 rounded-full bg-[#00ff88]"
+          className="inline-flex size-1.5 rounded-full bg-accent"
           aria-hidden="true"
         />
         Saved · Open

@@ -46,11 +46,11 @@ export function PreviewPane({
 
   return (
     <section
-      className="flex h-full min-h-0 min-w-0 flex-col bg-[#0b0c08]"
+      className="flex h-full min-h-0 min-w-0 flex-col bg-[#0a0b0d]"
       aria-label="Live preview"
     >
       {/* Tab bar */}
-      <div className="flex items-center justify-between gap-2 border-b border-[var(--border)] px-2">
+      <div className="flex items-center justify-between gap-2 border-b border-hairline px-2">
         <div className="flex items-center" role="tablist" aria-label="Preview view">
           <PreviewTabButton
             active={tab === "preview"}
@@ -68,7 +68,7 @@ export function PreviewPane({
           type="button"
           onClick={onReplay}
           title="Re-run preview"
-          className="inline-flex h-7 items-center gap-1.5 px-2 font-mono text-[11px] text-[var(--muted)] transition hover:text-[var(--text)]"
+          className="inline-flex h-7 items-center gap-1.5 px-2 font-mono text-[11px] text-ink-3 transition hover:text-ink"
         >
           <RotateCw className="size-3.5" />
           <span className="hidden sm:inline">Replay</span>
@@ -84,7 +84,7 @@ export function PreviewPane({
             title="Animation preview"
             sandbox="allow-scripts"
             srcDoc={srcDoc}
-            className="h-full w-full border-0 bg-[#11120D]"
+            className="h-full w-full border-0 bg-[#0a0b0d]"
           />
         </div>
         <div className={cn("absolute inset-0", tab === "console" ? "block" : "hidden")}>
@@ -93,18 +93,18 @@ export function PreviewPane({
       </div>
 
       {/* Status strip */}
-      <div className="flex items-center justify-between border-t border-[var(--border)] px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em]">
+      <div className="flex items-center justify-between border-t border-hairline px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em]">
         <span
           className={cn(
             "inline-flex items-center gap-1.5",
-            status === "error" ? "text-[#f58f7c]" : "text-[var(--muted)]",
+            status === "error" ? "text-[#f58f7c]" : "text-ink-3",
           )}
         >
           <span
             className={cn(
               "inline-flex size-1.5 rounded-full",
               status === "ready"
-                ? "bg-[#00ff88]"
+                ? "bg-accent"
                 : status === "error"
                   ? "bg-[#f58f7c]"
                   : status === "running"
@@ -115,7 +115,7 @@ export function PreviewPane({
           {STATUS_TEXT[status]}
           {status === "ready" && elapsedMs !== null ? ` · ${elapsedMs}MS` : ""}
         </span>
-        <span className="text-[var(--muted)]">v1.0.0</span>
+        <span className="text-ink-3">v1.0.0</span>
       </div>
     </section>
   );
@@ -140,7 +140,7 @@ function PreviewTabButton({
       onClick={onClick}
       className={cn(
         "relative px-3 py-2 font-mono text-[11px] transition-colors",
-        active ? "text-[var(--text)]" : "text-[var(--muted)] hover:text-[var(--accent)]",
+        active ? "text-ink" : "text-ink-3 hover:text-ink",
       )}
     >
       {label}
@@ -149,7 +149,7 @@ function PreviewTabButton({
           {badge}
         </span>
       ) : null}
-      {active ? <span className="absolute inset-x-2 bottom-0 h-px bg-[#00ff88]" /> : null}
+      {active ? <span className="absolute inset-x-2 bottom-0 h-px bg-accent" /> : null}
     </button>
   );
 }

@@ -53,6 +53,13 @@ export const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
+  // Pin the workspace root to this project. A stray lockfile in a parent
+  // directory (e.g. /home/user/package-lock.json) otherwise makes Turbopack
+  // infer the wrong root, which breaks App Router route resolution in dev
+  // (every route 404s). `next build` is unaffected, so this only fixes dev.
+  turbopack: {
+    root: import.meta.dirname,
+  },
   // Tree-shake large icon/animation packages so only used exports ship.
   experimental: {
     optimizePackageImports: [

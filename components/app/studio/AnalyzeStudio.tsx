@@ -217,7 +217,7 @@ export function AnalyzeStudio({
   return (
     <div className="relative flex h-full min-h-0 flex-col">
       {/* Studio header */}
-      <header className="flex items-center justify-between gap-3 border-b border-[var(--border)] bg-[#0d0f0b]/80 px-4 py-2.5">
+      <header className="flex items-center justify-between gap-3 border-b border-hairline bg-[#0a0b0d]/80 px-4 py-2.5">
         <div className="flex min-w-0 items-center gap-3">
           <span
             className="inline-flex size-2 shrink-0 rounded-full"
@@ -225,10 +225,10 @@ export function AnalyzeStudio({
             aria-hidden="true"
           />
           <div className="min-w-0">
-            <p className="truncate font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--muted)]">
+            <p className="truncate font-mono text-[10px] uppercase tracking-[0.22em] text-ink-3">
               Studio · {result.spec.intent}
             </p>
-            <h2 className="truncate font-mono text-sm text-[var(--text)]">
+            <h2 className="truncate font-display text-[15px] font-medium tracking-tight text-ink">
               {result.spec.element}
             </h2>
           </div>
@@ -241,8 +241,8 @@ export function AnalyzeStudio({
             className={cn(
               "inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 font-mono text-[11px] transition",
               drawerOpen
-                ? "border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--text)]"
-                : "border-[var(--border)] text-[var(--accent)] hover:text-[var(--text)]",
+                ? "border-[var(--accent-border)] bg-[var(--accent-dim)] text-ink"
+                : "border-hairline text-ink-2 hover:text-ink",
             )}
           >
             <SlidersHorizontal className="size-3.5" />
@@ -251,7 +251,7 @@ export function AnalyzeStudio({
           <button
             type="button"
             onClick={onNewAnalysis}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[var(--border)] px-2.5 font-mono text-[11px] text-[var(--accent)] transition hover:border-[var(--accent-border)] hover:text-[var(--text)]"
+            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-hairline px-2.5 font-mono text-[11px] text-ink-2 transition hover:border-[var(--accent-border)] hover:text-ink"
           >
             <PanelLeftClose className="size-3.5" />
             New analysis
@@ -280,7 +280,7 @@ export function AnalyzeStudio({
               onDownload={handleDownload}
             />
           </Panel>
-          <PanelResizeHandle className="group relative w-px bg-[var(--border)] outline-none data-[resize-handle-state=hover]:bg-[#00ff88] data-[resize-handle-state=drag]:bg-[#00ff88]">
+          <PanelResizeHandle className="group relative w-px bg-[var(--border)] outline-none data-[resize-handle-state=hover]:bg-accent data-[resize-handle-state=drag]:bg-accent">
             <span className="absolute inset-y-0 -left-1 -right-1 z-10" />
           </PanelResizeHandle>
           <Panel defaultSize={50} minSize={28} className="min-w-0">
@@ -301,15 +301,15 @@ export function AnalyzeStudio({
 
       {/* Spec & audit drawer */}
       {drawerOpen ? (
-        <div className="absolute inset-y-0 right-0 z-30 flex w-full max-w-md flex-col border-l border-[var(--border)] bg-[#0d0f0b] shadow-[0_0_60px_rgba(0,0,0,0.5)]">
-          <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-2.5">
-            <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--muted)]">
+        <div className="absolute inset-y-0 right-0 z-30 flex w-full max-w-md flex-col border-l border-hairline bg-[#0a0b0d] shadow-[0_0_60px_rgba(0,0,0,0.5)]">
+          <div className="flex items-center justify-between border-b border-hairline px-4 py-2.5">
+            <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-3">
               Spec &amp; audit
             </span>
             <button
               type="button"
               onClick={() => setDrawerOpen(false)}
-              className="font-mono text-[11px] text-[var(--accent)] hover:text-[var(--text)]"
+              className="font-mono text-[11px] text-ink-2 hover:text-ink"
             >
               Close
             </button>

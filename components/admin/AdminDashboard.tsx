@@ -1,7 +1,8 @@
-import { Activity, LifeBuoy, Timer, Users } from "lucide-react";
+import { Activity, Users } from "lucide-react";
 
 import type { AdminDashboardDTO } from "@/lib/contracts/adminSupport";
 import { AdminSupportTickets } from "@/components/admin/AdminSupportTickets";
+import { Panel, Pill, StatTile } from "@/components/ui/kit";
 
 type AdminDashboardProps = {
   currentAdminId: string;
@@ -15,21 +16,13 @@ export function AdminDashboard({
   return (
     <div className="flex flex-col gap-6">
       <section className="grid gap-3 md:grid-cols-3">
-        <MetricCard
-          icon={<LifeBuoy className="size-4" aria-hidden="true" />}
-          label="Open Tickets"
+        <StatTile
+          label="Open tickets"
           value={dashboard.counts.openTickets}
+          accent
         />
-        <MetricCard
-          icon={<Timer className="size-4" aria-hidden="true" />}
-          label="Pending Tickets"
-          value={dashboard.counts.pendingTickets}
-        />
-        <MetricCard
-          icon={<Users className="size-4" aria-hidden="true" />}
-          label="Users"
-          value={dashboard.counts.users}
-        />
+        <StatTile label="Pending tickets" value={dashboard.counts.pendingTickets} />
+        <StatTile label="Users" value={dashboard.counts.users} />
       </section>
 
       <AdminSupportTickets
@@ -38,78 +31,67 @@ export function AdminDashboard({
       />
 
       <section className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-        <div className="rounded-lg border border-[var(--border)] bg-[#151913]">
-          <div className="border-b border-[var(--border)] p-4">
-            <h2 className="text-lg font-semibold">Recent Users</h2>
+        <Panel variant="glass" inset="none" radius="2xl" className="overflow-hidden">
+          <div className="flex items-center gap-2.5 border-b border-hairline p-5">
+            <Users className="size-4 text-ink-3" aria-hidden="true" />
+            <h2 className="font-display text-[15px] font-medium tracking-tight text-ink">
+              Recent users
+            </h2>
           </div>
-          <div className="divide-y divide-[var(--border)]">
+          <div className="divide-y divide-hairline">
             {dashboard.recentUsers.map((user) => (
-              <div className="flex items-center justify-between gap-4 p-4" key={user.id}>
+              <div
+                className="flex items-center justify-between gap-4 px-5 py-3.5"
+                key={user.id}
+              >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-[var(--text)]">
+                  <p className="truncate text-sm font-medium text-ink">
                     {user.displayName ?? user.email}
                   </p>
-                  <p className="truncate text-xs text-[#d8cfbc]">{user.email}</p>
+                  <p className="truncate font-mono text-xs text-ink-3">
+                    {user.email}
+                  </p>
                 </div>
-                <span className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[#fffbf4]">
-                  {user.planTier}
-                </span>
+                <Pill tone="neutral">{user.planTier}</Pill>
               </div>
             ))}
             {dashboard.recentUsers.length === 0 ? (
-              <div className="p-4 text-sm text-[#d8cfbc]">No users found.</div>
+              <div className="px-5 py-4 text-sm text-ink-2">No users found.</div>
             ) : null}
           </div>
-        </div>
+        </Panel>
 
-        <div className="rounded-lg border border-[var(--border)] bg-[#151913]">
-          <div className="flex items-center gap-2 border-b border-[var(--border)] p-4">
-            <Activity className="size-4 text-[#00ff88]" aria-hidden="true" />
-            <h2 className="text-lg font-semibold">Recent Audit Events</h2>
+        <Panel variant="glass" inset="none" radius="2xl" className="overflow-hidden">
+          <div className="flex items-center gap-2.5 border-b border-hairline p-5">
+            <Activity className="size-4 text-ink-3" aria-hidden="true" />
+            <h2 className="font-display text-[15px] font-medium tracking-tight text-ink">
+              Recent audit events
+            </h2>
           </div>
-          <div className="divide-y divide-[var(--border)]">
+          <div className="divide-y divide-hairline">
             {dashboard.recentAuditEvents.map((event) => (
-              <div className="grid gap-1 p-4 text-sm" key={event.id}>
+              <div className="grid gap-1.5 px-5 py-3.5" key={event.id}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-mono text-xs text-[#00ff88]">
+                  <span className="font-mono text-xs text-ink">
                     {event.eventType}
                   </span>
-                  <span className="text-xs text-[#d8cfbc]">
+                  <span className="font-mono text-[11px] text-ink-3">
                     {formatDate(event.createdAt)}
                   </span>
                 </div>
-                <p className="truncate text-xs text-[#d8cfbc]">
+                <p className="truncate font-mono text-[11px] text-ink-3">
                   {event.targetType ?? "system"} {event.targetId ?? ""}
                 </p>
               </div>
             ))}
             {dashboard.recentAuditEvents.length === 0 ? (
-              <div className="p-4 text-sm text-[#d8cfbc]">No audit events yet.</div>
+              <div className="px-5 py-4 text-sm text-ink-2">
+                No audit events yet.
+              </div>
             ) : null}
           </div>
-        </div>
+        </Panel>
       </section>
-
-    </div>
-  );
-}
-
-function MetricCard({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number;
-}) {
-  return (
-    <div className="rounded-lg border border-[var(--border)] bg-[#151913] p-4">
-      <div className="mb-3 flex items-center gap-2 text-sm text-[#d8cfbc]">
-        <span className="text-[#00ff88]">{icon}</span>
-        {label}
-      </div>
-      <div className="text-3xl font-semibold text-[var(--text)]">{value}</div>
     </div>
   );
 }

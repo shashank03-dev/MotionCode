@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { CreditCard, Gift, Receipt, Shield } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { CancelSubscriptionButton } from "@/app/billing/CancelSubscriptionButton";
 import { ChangePlanButton } from "@/app/billing/ChangePlanButton";
+import { Panel, Pill } from "@/components/ui/kit";
+import { ButtonLink } from "@/components/ui/site-button";
 import { type PlanTier } from "@/lib/contracts/plans";
 import { getEntitlementSummary } from "@/lib/server/entitlements";
 import {
@@ -35,7 +38,7 @@ export async function BillingContent({
   const user = await getCurrentUser();
   if (!user) {
     return (
-      <p className="font-sans text-sm leading-6 text-[var(--accent)]">
+      <p className="text-[15px] leading-7 text-ink-2">
         Billing is available after authentication.
       </p>
     );
@@ -69,20 +72,19 @@ export async function BillingContent({
       : false;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-5">
       {notice ? (
-        <div className="rounded-lg border border-[var(--accent-border)] bg-[var(--accent-dim)] px-4 py-3 font-sans text-sm text-[var(--text)]">
+        <Panel
+          variant="hairline"
+          inset="none"
+          radius="xl"
+          className="border-l-2 border-l-accent px-4 py-3 text-[14px] text-ink"
+        >
           {notice}
-        </div>
+        </Panel>
       ) : null}
 
-      <section className="rounded-xl border border-[var(--border)] bg-[#15160f] p-6 shadow-[inset_0_1px_0_rgba(255,251,244,0.04)]">
-        <div className="mb-5 flex items-center gap-2.5 text-[var(--accent)]">
-          <Shield className="h-5 w-5" aria-hidden="true" />
-          <h2 className="font-sans text-base font-medium tracking-tight text-[var(--text)]">
-            Current plan
-          </h2>
-        </div>
+      <Section icon={<Shield className="size-4" aria-hidden="true" />} title="Current plan">
         <dl className="grid gap-4 sm:grid-cols-2">
           <Detail label="Plan" value={titleCase(planTier)} />
           <Detail
@@ -129,62 +131,52 @@ export async function BillingContent({
             </>
           )}
         </dl>
-      </section>
+      </Section>
 
       {isComplimentary ? (
-        <section className="border border-[var(--border)] bg-[#171812] p-6">
-          <div className="mb-5 flex items-center gap-2 text-[var(--accent)]">
-            <Gift className="h-5 w-5" aria-hidden="true" />
-            <h2 className="font-sans text-base font-medium tracking-tight text-[var(--text)]">
-              Complimentary access
-            </h2>
-          </div>
-          <p className="text-sm leading-6 text-[var(--muted)]">
-            An admin granted you {titleCase(planTier)} at no charge. You have
-            full access to every {titleCase(planTier)} feature
+        <Section
+          icon={<Gift className="size-4" aria-hidden="true" />}
+          title="Complimentary access"
+          badge={<Pill tone="accent">Gifted</Pill>}
+        >
+          <p className="text-[14px] leading-6 text-ink-2">
+            An admin granted you {titleCase(planTier)} at no charge. You have full
+            access to every {titleCase(planTier)} feature
             {override?.expires_at
               ? ` until ${formatDate(override.expires_at)}`
               : " with no expiry date"}
             . No payment is required.
           </p>
-          <Link
-            className="mt-6 inline-flex h-10 items-center gap-2 rounded-md border border-[var(--accent-border)] bg-[var(--accent-dim)] px-4 font-sans text-sm text-[var(--text)] transition hover:border-[var(--accent)] hover:bg-[#00ff88]/10"
-            href="/pricing"
-          >
-            <CreditCard className="h-4 w-4" aria-hidden="true" />
+          <ButtonLink href="/pricing" variant="frosted" size="sm" className="mt-6">
+            <CreditCard className="size-4" aria-hidden="true" />
             View paid plans
-          </Link>
-        </section>
+          </ButtonLink>
+        </Section>
       ) : isManageable && isPaidPlanTier(planTier) ? (
-        <section className="border border-[var(--border)] bg-[#171812] p-6">
-          <div className="mb-5 flex items-center gap-2 text-[var(--accent)]">
-            <CreditCard className="h-5 w-5" aria-hidden="true" />
-            <h2 className="font-sans text-base font-medium tracking-tight text-[var(--text)]">
-              Manage subscription
-            </h2>
-          </div>
-
+        <Section
+          icon={<CreditCard className="size-4" aria-hidden="true" />}
+          title="Manage subscription"
+        >
           {subscription?.cancel_at_period_end ? (
-            <p className="text-sm leading-6 text-[var(--muted)]">
+            <p className="text-[14px] leading-6 text-ink-2">
               This subscription is scheduled to end on {renewalLabel}. To keep
               using a paid plan after that, subscribe again from{" "}
-              <Link className="text-[var(--accent)] underline" href="/pricing">
+              <Link className="text-accent underline underline-offset-4" href="/pricing">
                 pricing
               </Link>
               .
             </p>
           ) : (
             <div className="flex flex-col gap-6">
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col items-start gap-3.5">
                 {hasScheduledChange ? (
-                  <p className="text-sm leading-6 text-[var(--muted)]">
-                    A plan change is already scheduled for the end of your
-                    current billing cycle. It will apply automatically on{" "}
-                    {renewalLabel}.
+                  <p className="text-[14px] leading-6 text-ink-2">
+                    A plan change is already scheduled for the end of your current
+                    billing cycle. It will apply automatically on {renewalLabel}.
                   </p>
                 ) : (
                   <>
-                    <p className="text-sm leading-6 text-[var(--muted)]">
+                    <p className="text-[14px] leading-6 text-ink-2">
                       {planTier === "pro"
                         ? "Upgrade to Studio for more seats, workspaces, and analyses. Takes effect immediately."
                         : "Switch to Pro. The change applies at the end of your current billing cycle."}
@@ -195,69 +187,52 @@ export async function BillingContent({
                         targetPlanTier="studio"
                       />
                     ) : (
-                      <ChangePlanButton
-                        label="Switch to Pro"
-                        targetPlanTier="pro"
-                      />
+                      <ChangePlanButton label="Switch to Pro" targetPlanTier="pro" />
                     )}
                   </>
                 )}
               </div>
 
-              <div className="border-t border-[var(--border)] pt-6">
+              <div className="border-t border-hairline pt-6">
                 <CancelSubscriptionButton renewalLabel={renewalLabel} />
               </div>
             </div>
           )}
-        </section>
+        </Section>
       ) : (
-        <section className="border border-[var(--border)] bg-[#171812] p-6">
-          <div className="mb-5 flex items-center gap-2 text-[var(--accent)]">
-            <CreditCard className="h-5 w-5" aria-hidden="true" />
-            <h2 className="font-sans text-base font-medium tracking-tight text-[var(--text)]">
-              No active subscription
-            </h2>
-          </div>
-          <p className="text-sm leading-6 text-[var(--muted)]">
-            You are on the free plan. Choose Pro or Studio to unlock more
-            analyses, seats, and workspaces.
+        <Section
+          icon={<CreditCard className="size-4" aria-hidden="true" />}
+          title="No active subscription"
+        >
+          <p className="text-[14px] leading-6 text-ink-2">
+            You are on the free plan. Choose Pro or Studio to unlock more analyses,
+            seats, and workspaces.
           </p>
-          <Link
-            className="mt-6 inline-flex h-10 items-center gap-2 rounded-md border border-[var(--accent-border)] bg-[var(--accent-dim)] px-4 font-sans text-sm text-[var(--text)] transition hover:border-[var(--accent)] hover:bg-[#00ff88]/10"
-            href="/pricing"
-          >
-            <CreditCard className="h-4 w-4" aria-hidden="true" />
+          <ButtonLink href="/pricing" variant="primary" size="sm" className="mt-6">
+            <CreditCard className="size-4" aria-hidden="true" />
             View paid plans
-          </Link>
-        </section>
+          </ButtonLink>
+        </Section>
       )}
 
-      <section className="rounded-xl border border-[var(--border)] bg-[#15160f] p-6 shadow-[inset_0_1px_0_rgba(255,251,244,0.04)]">
-        <div className="mb-5 flex items-center gap-2.5 text-[var(--accent)]">
-          <Receipt className="h-5 w-5" aria-hidden="true" />
-          <h2 className="font-sans text-base font-medium tracking-tight text-[var(--text)]">
-            Payment history
-          </h2>
-        </div>
+      <Section icon={<Receipt className="size-4" aria-hidden="true" />} title="Payment history">
         {invoices.length > 0 ? (
-          <ul className="flex flex-col divide-y divide-[var(--border)]">
+          <ul className="flex flex-col divide-y divide-hairline">
             {invoices.map((invoice) => (
               <li
                 key={invoice.id}
-                className="flex flex-wrap items-center justify-between gap-3 py-3 font-mono text-sm"
+                className="grid grid-cols-2 items-center gap-3 py-3 font-mono text-[13px] sm:grid-cols-4"
               >
-                <span className="text-[var(--accent)]">
+                <span className="text-ink-3">
                   {invoice.issuedAt ? formatDate(invoice.issuedAt) : "—"}
                 </span>
-                <span className="text-[var(--text)]">
+                <span className="tabular-nums text-ink">
                   {formatAmount(invoice.amount, invoice.currency)}
                 </span>
-                <span className="text-[var(--muted)]">
-                  {titleCase(invoice.status)}
-                </span>
+                <span className="text-ink-3">{titleCase(invoice.status)}</span>
                 {invoice.shortUrl ? (
                   <a
-                    className="inline-flex items-center gap-1 text-[var(--accent)] underline"
+                    className="justify-self-start text-accent underline underline-offset-4 transition hover:brightness-125 sm:justify-self-end"
                     href={invoice.shortUrl}
                     rel="noreferrer"
                     target="_blank"
@@ -265,16 +240,44 @@ export async function BillingContent({
                     Download
                   </a>
                 ) : (
-                  <span className="text-[var(--muted)]">{"—"}</span>
+                  <span className="text-ink-3 sm:justify-self-end">—</span>
                 )}
               </li>
             ))}
           </ul>
         ) : (
-          <p className="text-sm leading-6 text-[var(--muted)]">No invoices yet.</p>
+          <p className="text-[14px] leading-6 text-ink-2">No invoices yet.</p>
         )}
-      </section>
+      </Section>
     </div>
+  );
+}
+
+/** A titled block inside the billing stack. */
+function Section({
+  children,
+  icon,
+  title,
+  badge,
+}: {
+  children: ReactNode;
+  icon: ReactNode;
+  title: string;
+  badge?: ReactNode;
+}) {
+  return (
+    <Panel as="section" variant="glass" inset="none" radius="2xl" className="p-6">
+      <div className="mb-5 flex items-center gap-2.5">
+        <span className="grid size-7 place-items-center rounded-lg border border-hairline bg-white/[0.03] text-ink-3">
+          {icon}
+        </span>
+        <h2 className="font-display text-[15px] font-medium tracking-tight text-ink">
+          {title}
+        </h2>
+        {badge ? <span className="ml-auto">{badge}</span> : null}
+      </div>
+      {children}
+    </Panel>
   );
 }
 
@@ -306,12 +309,10 @@ function isPaidPlanTier(
 function Detail({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <dt className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted)]">
+      <dt className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-ink-3">
         {label}
       </dt>
-      <dd className="mt-1.5 break-words font-sans text-sm text-[var(--accent)]">
-        {value}
-      </dd>
+      <dd className="mt-1.5 break-words text-[14px] text-ink">{value}</dd>
     </div>
   );
 }

@@ -38,23 +38,23 @@ export default async function VersionPage({ params }: VersionPageProps) {
     <div className="mx-auto max-w-6xl space-y-8">
       <nav
         aria-label="Breadcrumb"
-        className="font-mono text-xs text-[var(--muted)]"
+        className="font-mono text-xs text-ink-3"
       >
         <Link
           href={`/workspaces/${data.workspace.id}`}
-          className="text-[var(--accent)] transition hover:text-[var(--text)]"
+          className="text-ink-2 transition hover:text-ink"
         >
           {data.workspace.name}
         </Link>
         {" / "}
         <Link
           href={`/projects/${data.project.id}`}
-          className="text-[var(--accent)] transition hover:text-[var(--text)]"
+          className="text-ink-2 transition hover:text-ink"
         >
           {data.project.title}
         </Link>
         {" / "}
-        <span className="text-[var(--text)]">
+        <span className="text-ink">
           v{data.version.version_number}
         </span>
       </nav>
@@ -63,10 +63,10 @@ export default async function VersionPage({ params }: VersionPageProps) {
 
       {savedResult ? (
         <section className="space-y-3">
-          <h2 className="font-mono text-lg text-[var(--text)]">
+          <h2 className="font-display text-xl font-medium tracking-tight text-ink">
             Sequence v{data.version.version_number}
             {data.version.label ? (
-              <span className="ml-2 font-mono text-xs text-[var(--muted)]">
+              <span className="ml-2 font-mono text-xs text-ink-3">
                 {data.version.label}
               </span>
             ) : null}

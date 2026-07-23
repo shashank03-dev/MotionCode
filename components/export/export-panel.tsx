@@ -62,9 +62,9 @@ export function ExportPanel({
 
   if (!analysis || !selected) {
     return (
-      <section className={cn("rounded-lg border border-zinc-800 p-5", className)}>
-        <h2 className="text-lg font-semibold text-zinc-100">Exports</h2>
-        <p className="mt-2 text-sm text-zinc-400">
+      <section className={cn("rounded-lg border border-hairline p-5", className)}>
+        <h2 className="text-lg font-semibold text-ink">Exports</h2>
+        <p className="mt-2 text-sm text-ink-2">
           No generated outputs are attached to this shared version.
         </p>
       </section>
@@ -72,11 +72,11 @@ export function ExportPanel({
   }
 
   return (
-    <section className={cn("rounded-lg border border-zinc-800 p-5", className)}>
+    <section className={cn("rounded-lg border border-hairline p-5", className)}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-zinc-100">Exports</h2>
-          <p className="text-sm text-zinc-400">
+          <h2 className="text-lg font-semibold text-ink">Exports</h2>
+          <p className="text-sm text-ink-2">
             Markdown brief and implementation helpers.
           </p>
         </div>
@@ -109,8 +109,8 @@ export function ExportPanel({
             className={cn(
               "h-8 rounded-md border px-3 text-sm transition-colors",
               selected.framework === artifact.framework
-                ? "border-emerald-400 bg-emerald-400/10 text-emerald-100"
-                : "border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-100",
+                ? "border-accent bg-accent-dim text-ink"
+                : "border-hairline text-ink-2 hover:border-[var(--border-strong)] hover:text-ink",
             )}
             key={artifact.framework}
             onClick={() => setSelectedFramework(artifact.framework)}
@@ -123,10 +123,10 @@ export function ExportPanel({
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        <pre className="max-h-[32rem] overflow-auto rounded-lg bg-zinc-950 p-4 text-sm leading-6 text-zinc-100">
+        <pre className="max-h-[32rem] overflow-auto rounded-lg bg-panel p-4 text-sm leading-6 text-ink">
           <code>{selected.code}</code>
         </pre>
-        <aside className="space-y-4 rounded-lg border border-zinc-800 p-4">
+        <aside className="space-y-4 rounded-lg border border-hairline p-4">
           <ArtifactNotes title="Dependencies" values={selected.dependencies} />
           <ArtifactNotes title="Setup" values={selected.setupNotes} />
           <ArtifactNotes title="Accessibility" values={selected.accessibilityNotes} />
@@ -140,15 +140,15 @@ export function ExportPanel({
 function ArtifactNotes({ title, values }: { title: string; values: string[] }) {
   return (
     <div>
-      <h3 className="text-sm font-medium text-zinc-200">{title}</h3>
+      <h3 className="text-sm font-medium text-ink">{title}</h3>
       {values.length > 0 ? (
-        <ul className="mt-2 space-y-1 text-sm text-zinc-400">
+        <ul className="mt-2 space-y-1 text-sm text-ink-2">
           {values.map((value) => (
             <li key={value}>{value}</li>
           ))}
         </ul>
       ) : (
-        <p className="mt-2 text-sm text-zinc-500">None</p>
+        <p className="mt-2 text-sm text-ink-3">None</p>
       )}
     </div>
   );

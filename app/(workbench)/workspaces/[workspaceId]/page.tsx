@@ -5,6 +5,7 @@ import { WorkspaceFiles } from "@/components/workspace/workspace-files";
 import { WorkspaceHeader } from "@/components/workspace/workspace-header";
 import { WorkspaceMembers } from "@/components/workspace/workspace-members";
 import { UpgradeGate } from "@/components/app/UpgradeGate";
+import { ButtonLink } from "@/components/ui/site-button";
 
 import {
   getWorkspaceDesktopData,
@@ -33,26 +34,17 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
   return (
     <div className="mx-auto max-w-6xl space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <nav
-          aria-label="Breadcrumb"
-          className="font-mono text-xs text-[var(--muted)]"
-        >
-          <Link
-            href="/workspaces"
-            className="text-[var(--accent)] transition hover:text-[var(--text)]"
-          >
+        <nav aria-label="Breadcrumb" className="font-mono text-xs text-ink-3">
+          <Link href="/workspaces" className="transition-colors hover:text-ink">
             Workspaces
           </Link>
-          {" / "}
-          <span className="text-[var(--text)]">{data.workspace.name}</span>
+          <span className="px-1.5 text-ink-3">/</span>
+          <span className="text-ink">{data.workspace.name}</span>
         </nav>
-        <Link
-          href={newAnalysisHref}
-          className="inline-flex h-9 items-center gap-2 border border-[var(--accent-border)] bg-[var(--accent-dim)] px-3 font-mono text-xs text-[var(--text)] transition hover:border-[var(--accent)] hover:bg-[#00ff88]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]"
-        >
+        <ButtonLink href={newAnalysisHref} variant="primary" size="sm">
           <Sparkles className="size-4" aria-hidden="true" />
           New analysis
-        </Link>
+        </ButtonLink>
       </div>
 
       <WorkspaceHeader data={data} />

@@ -78,24 +78,24 @@ export function MarketingAuthNavActions({
       <div className="flex items-center gap-2">
         <Link
           href="/dashboard"
-          className="inline-flex h-9 items-center border border-[#1a1a1a] px-3 font-mono text-[11px] uppercase tracking-[0.12em] text-[#d8cfbc] transition-colors hover:border-[#00ff88] hover:text-[#fffbf4]"
+          className="inline-flex h-9 items-center border border-hairline px-3 font-mono text-[11px] uppercase tracking-[0.12em] text-ink-2 transition-colors hover:border-accent hover:text-ink"
         >
           Dashboard
         </Link>
         <Link
           href="/account"
-          className="hidden h-9 items-center border border-[#1a1a1a] px-3 font-mono text-[11px] uppercase tracking-[0.12em] text-[#565449] transition-colors hover:border-[#00ff88] hover:text-[#fffbf4] sm:inline-flex"
+          className="hidden h-9 items-center border border-hairline px-3 font-mono text-[11px] uppercase tracking-[0.12em] text-ink-3 transition-colors hover:border-accent hover:text-ink sm:inline-flex"
         >
           Account
         </Link>
         <Link
           href="/app"
-          className="inline-flex h-9 items-center border border-[#00ff88] px-4 font-mono text-xs font-bold text-[#00ff88] transition-colors hover:bg-[#00ff88]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00ff88]"
+          className="inline-flex h-9 items-center border border-accent px-4 font-mono text-xs font-bold text-accent transition-colors hover:bg-accent/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
           Open App
         </Link>
         <SignOutButton
-          className="border-[#1a1a1a] px-3 font-mono text-xs text-[#565449] hover:border-[#00ff88] hover:text-[#fffbf4]"
+          className="border-hairline px-3 font-mono text-xs text-ink-3 hover:border-accent hover:text-ink"
           label="Out"
         />
       </div>
@@ -123,7 +123,7 @@ export function MarketingAuthNavActions({
   return (
     <Link
       href="/app"
-      className="inline-flex h-9 items-center border border-[#00ff88] px-4 font-mono text-xs font-bold text-[#00ff88] transition-colors hover:bg-[#00ff88]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00ff88]"
+      className="inline-flex h-9 items-center border border-accent px-4 font-mono text-xs font-bold text-accent transition-colors hover:bg-accent/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
     >
       {authState === "loading" ? "Loading..." : "Try Free →"}
     </Link>

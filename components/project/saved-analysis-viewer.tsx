@@ -27,7 +27,7 @@ export function SavedAnalysisViewer({
   const [activeTab, setActiveTab] = useState<CodeTab>("CSS");
 
   return (
-    <div className="h-[72vh] min-h-[480px] overflow-hidden border border-[var(--border)] bg-[#0d0f0b]/85 shadow-[0_18px_44px_rgba(0,0,0,0.22)]">
+    <div className="h-[72vh] min-h-[480px] overflow-hidden rounded-2xl bg-panel shadow-ring">
       <AnalyzeStudio
         key={result.id}
         activeTab={activeTab}

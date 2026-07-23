@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LegalPage, SiteFooter, SiteHeader } from "@/components/marketing";
+import { LegalPage } from "@/components/marketing";
 
 export const metadata: Metadata = {
   title: "Shipping & Delivery - MotionCode",
@@ -31,15 +31,11 @@ const sections = [
 
 export default function ShippingPage() {
   return (
-    <div className="min-h-screen bg-[#080808]">
-      <SiteHeader />
-      <LegalPage
-        title="Shipping & Delivery"
-        updated="June 29, 2026"
-        intro="MotionCode is a digital service. This page explains how access is delivered."
-        sections={sections}
-      />
-      <SiteFooter />
-    </div>
+    <LegalPage
+      title="Shipping & Delivery"
+      updated="June 29, 2026"
+      intro="MotionCode is a digital service. This page explains how access is delivered."
+      sections={sections}
+    />
   );
 }

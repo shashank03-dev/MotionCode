@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { Logo } from "@/components/site/logo";
+import { MetalText } from "@/components/motion/metal-text";
+
 import { MarketingAuthNavActions } from "./auth-nav-actions";
 
 const primaryLinks = [
@@ -40,30 +43,32 @@ const footerGroups = [
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-50 border-b border-[#1a1a1a] bg-[#080808]/95 backdrop-blur-md">
+    <header className="sticky top-0 z-50 flex justify-center px-4 pt-4">
       <nav
         aria-label="Primary navigation"
-        className="mx-auto flex h-14 w-full items-center justify-between px-4 sm:px-6 lg:px-10"
+        className="glass-pill relative flex w-full max-w-[1120px] items-center justify-between overflow-hidden rounded-full px-2.5 py-2 pl-4"
       >
-        <Link
-          href="/"
-          className="font-mono text-base text-[#00ff88] transition-colors hover:text-[#fffbf4]"
-        >
-          ⟨/⟩ MotionCode
+        <span aria-hidden className="glass-sheen" />
+
+        <Link href="/" aria-label="MotionCode home" className="relative z-[1]">
+          <Logo />
         </Link>
 
-        <div className="hidden items-center gap-6 md:flex">
+        <div className="relative z-[1] hidden items-center gap-1 md:flex">
           {primaryLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="font-mono text-xs text-[#565449] transition-colors hover:text-[#fffbf4]"
+              className="rounded-full px-3.5 py-1.5 text-[14px] text-ink-2 transition-colors duration-200 hover:text-ink"
             >
               {link.label}
             </Link>
           ))}
         </div>
-        <MarketingAuthNavActions variant="site" />
+
+        <div className="relative z-[1] flex items-center gap-2">
+          <MarketingAuthNavActions variant="site" />
+        </div>
       </nav>
     </header>
   );
@@ -71,65 +76,70 @@ export function SiteHeader() {
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-[#1a1a1a] bg-[#080808]">
-      <div className="mx-auto w-full px-4 pt-16 sm:px-6 lg:px-10">
-        <div className="grid gap-12 border-b border-[#1a1a1a] pb-14 md:grid-cols-[0.9fr_1.1fr]">
+    <footer className="border-t border-hairline bg-panel/40">
+      <div className="container-page py-16">
+        <div className="grid gap-12 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
-            <Link
-              href="/"
-              className="font-mono text-lg text-[#00ff88] transition-colors hover:text-[#fffbf4]"
-            >
-              ⟨/⟩ MotionCode
+            <Link href="/">
+              <Logo />
             </Link>
-            <p className="mt-2 max-w-sm text-sm leading-6 text-[#3a3a4a]">
-              Intelligence for motion.
+            <p className="mt-4 max-w-xs text-[14px] leading-relaxed text-ink-2">
+              From motion reference to production animation code. Precise,
+              cinematic, honest to the source.
             </p>
-            <div className="mt-7 flex flex-wrap gap-3">
+            <div className="mt-6 flex flex-wrap gap-2.5">
               {["4 frameworks", "< 30s analysis", "open beta"].map((badge) => (
                 <span
                   key={badge}
-                  className="border border-[#1a1a1a] px-3 py-1.5 font-mono text-[11px] text-[#565449]"
+                  className="rounded-full border border-hairline px-3 py-1.5 font-mono text-[11px] text-ink-3"
                 >
                   {badge}
                 </span>
               ))}
             </div>
           </div>
-
-          <div className="grid gap-9 sm:grid-cols-3 md:justify-items-end">
-            {footerGroups.map((group) => (
-              <div key={group.title}>
-                <h2 className="mb-5 font-mono text-[10px] uppercase tracking-[0.2em] text-[#3a3a4a]">
-                  {group.title}
-                </h2>
-                <div className="grid gap-3">
-                  {group.links.map((link) => (
+          {footerGroups.map((group) => (
+            <div key={group.title}>
+              <div className="eyebrow mb-4">{group.title}</div>
+              <ul className="space-y-3">
+                {group.links.map((link) => (
+                  <li key={link.href}>
                     <Link
-                      key={link.href}
                       href={link.href}
-                      className="text-sm text-[#3a3a4a] transition-colors hover:text-[#fffbf4]"
+                      className="text-[14px] text-ink-2 transition-colors hover:text-ink"
                     >
                       {link.label}
                     </Link>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
-        <div className="select-none py-10 text-center font-mono text-[clamp(48px,8vw,112px)] font-bold tracking-[0.3em] text-white/[0.04]">
-          MOTIONCODE
+        {/* Oversized interactive brand mark — liquid metal reacts to the cursor */}
+        <div className="mt-16 select-none">
+          <MetalText
+            text="MotionCode"
+            interactive
+            blue={0.5}
+            className="block cursor-default font-display text-[19vw] font-medium leading-[0.85] tracking-tighter lg:text-[15rem]"
+          />
         </div>
 
-        <div className="flex flex-col gap-5 border-t border-[#1a1a1a] py-6 text-sm text-[#1a1a1a] sm:flex-row sm:items-center sm:justify-between">
-          <p>© 2026 MotionCode. All rights reserved.</p>
-          <div className="flex gap-5 font-mono text-[11px] text-[#3a3a4a]">
-            <Link href="/privacy" className="hover:text-[#00ff88]">
+        <div className="mt-12 flex flex-col items-start justify-between gap-4 border-t border-hairline pt-6 sm:flex-row sm:items-center">
+          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink-3">
+            © {new Date().getFullYear()} MotionCode · Made for motion
+          </span>
+          <div className="flex items-center gap-5 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-3">
+            <Link href="/privacy" className="transition-colors hover:text-ink">
               Privacy
             </Link>
-            <Link href="/terms" className="hover:text-[#00ff88]">
+            <Link href="/terms" className="transition-colors hover:text-ink">
               Terms
+            </Link>
+            <Link href="/refunds" className="transition-colors hover:text-ink">
+              Refunds
             </Link>
           </div>
         </div>

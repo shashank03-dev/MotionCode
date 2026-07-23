@@ -1,6 +1,7 @@
 import { Activity, Boxes, FolderKanban } from "lucide-react";
 
 import type { DashboardData } from "@/app/dashboard/data";
+import { Panel } from "@/components/ui/kit";
 
 type DashboardSummaryProps = {
   data: DashboardData;
@@ -12,47 +13,34 @@ export function DashboardSummary({ data }: DashboardSummaryProps) {
   ).length;
 
   const metrics = [
-    {
-      icon: Boxes,
-      label: "Workspaces",
-      value: data.workspaces.length,
-    },
-    {
-      icon: FolderKanban,
-      label: "Projects",
-      value: data.projects.length,
-    },
-    {
-      icon: Activity,
-      label: "Today",
-      value: analysisCount,
-    },
+    { icon: Boxes, label: "Workspaces", value: data.workspaces.length },
+    { icon: FolderKanban, label: "Projects", value: data.projects.length },
+    { icon: Activity, label: "Analyses today", value: analysisCount },
   ];
 
   return (
     <section className="grid gap-3 sm:grid-cols-3" aria-label="Dashboard summary">
       {metrics.map((metric) => {
         const Icon = metric.icon;
-
         return (
-          <div
+          <Panel
             key={metric.label}
-            className="group relative overflow-hidden border border-[var(--border)] bg-[#15160f]/82 px-4 py-4 shadow-[0_18px_44px_rgba(0,0,0,0.22)] transition hover:border-[var(--accent-border)]"
+            variant="glass"
+            inset="none"
+            radius="xl"
+            interactive
+            className="group p-5"
           >
-            <div
-              className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(0,255,136,0.055),transparent_42%)] opacity-0 transition group-hover:opacity-100"
-              aria-hidden="true"
-            />
-            <div className="relative flex items-center justify-between text-[var(--muted)]">
-              <span className="font-mono text-xs uppercase tracking-[0.16em]">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-ink-3">
                 {metric.label}
               </span>
-              <Icon className="size-4 text-[var(--accent)]" />
+              <Icon className="size-4 text-ink-3 transition-colors group-hover:text-accent" />
             </div>
-            <div className="relative mt-5 font-mono text-3xl text-[var(--text)] [font-variant-numeric:tabular-nums]">
+            <div className="mt-5 font-mono text-3xl leading-none tabular-nums text-ink">
               {metric.value}
             </div>
-          </div>
+          </Panel>
         );
       })}
     </section>

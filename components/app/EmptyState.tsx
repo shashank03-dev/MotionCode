@@ -24,7 +24,7 @@ export function EmptyState() {
           >
             <span
               style={{
-                color: "#00ff88",
+                color: "#0099ff",
                 fontFamily: "Space Mono, monospace",
                 fontSize: 12,
               }}

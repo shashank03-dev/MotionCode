@@ -1,5 +1,8 @@
-import Link from "next/link";
 import { LockKeyhole } from "lucide-react";
+
+import { AppBackground } from "@/components/ui/app-background";
+import { EmptyState } from "@/components/ui/kit";
+import { ButtonLink } from "@/components/ui/site-button";
 
 type AdminAccessStateProps = {
   message: string;
@@ -8,20 +11,20 @@ type AdminAccessStateProps = {
 
 export function AdminAccessState({ message, title }: AdminAccessStateProps) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[var(--bg)] px-4 text-[var(--text)]">
-      <section className="w-full max-w-lg rounded-lg border border-[var(--border)] bg-[#151913] p-6">
-        <div className="mb-4 flex size-10 items-center justify-center rounded-lg bg-[#00ff88]/12 text-[#00ff88]">
-          <LockKeyhole className="size-5" aria-hidden="true" />
-        </div>
-        <h1 className="text-2xl font-semibold">{title}</h1>
-        <p className="mt-3 text-sm leading-6 text-[#d8cfbc]">{message}</p>
-        <Link
-          className="mt-6 inline-flex h-9 items-center rounded-lg border border-[var(--border)] px-3 text-sm text-[#fffbf4] hover:border-[#00ff88]/50"
-          href="/"
-        >
-          Return home
-        </Link>
-      </section>
+    <main className="relative flex min-h-screen items-center justify-center bg-canvas px-4 text-ink">
+      <AppBackground />
+      <div className="relative z-10 w-full max-w-lg">
+        <EmptyState
+          icon={<LockKeyhole className="size-5" aria-hidden="true" />}
+          title={title}
+          description={message}
+          action={
+            <ButtonLink href="/" variant="frosted" size="sm">
+              Return home
+            </ButtonLink>
+          }
+        />
+      </div>
     </main>
   );
 }

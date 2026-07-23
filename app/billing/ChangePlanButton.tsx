@@ -52,7 +52,7 @@ export function ChangePlanButton({ label, targetPlanTier }: ChangePlanButtonProp
   return (
     <div className="flex flex-col gap-2">
       <button
-        className="inline-flex h-10 items-center justify-center gap-2 border border-[var(--accent-border)] bg-[var(--accent-dim)] px-4 font-mono text-sm text-[var(--text)] disabled:opacity-60"
+        className="inline-flex h-10 items-center justify-center gap-2 border border-[var(--accent-border)] bg-[var(--accent-dim)] px-4 font-mono text-sm text-ink disabled:opacity-60"
         disabled={loading}
         onClick={changePlan}
         type="button"

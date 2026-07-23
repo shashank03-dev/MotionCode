@@ -69,11 +69,11 @@ export function AdminSupportTickets({
   }
 
   return (
-    <section className="rounded-lg border border-[var(--border)] bg-[#151913]">
-      <div className="flex flex-col gap-2 border-b border-[var(--border)] p-4 sm:flex-row sm:items-center sm:justify-between">
+    <section className="rounded-lg border border-hairline bg-elevated">
+      <div className="flex flex-col gap-2 border-b border-hairline p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold">Support Queue</h2>
-          <p className="mt-1 text-sm text-[#d8cfbc]">
+          <p className="mt-1 text-sm text-ink-2">
             {openCount} active tickets across the visible queue.
           </p>
         </div>
@@ -85,7 +85,7 @@ export function AdminSupportTickets({
       </div>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[920px] border-collapse text-left text-sm">
-          <thead className="bg-[#0f140f] text-xs uppercase text-[#d8cfbc]">
+          <thead className="bg-[#0f1115] text-xs uppercase text-ink-2">
             <tr>
               <th className="px-4 py-3 font-medium">Ticket</th>
               <th className="px-4 py-3 font-medium">Requester</th>
@@ -101,18 +101,18 @@ export function AdminSupportTickets({
               const disabled = updatingId === ticket.id;
               return (
                 <tr
-                  className="border-t border-[var(--border)] align-top"
+                  className="border-t border-hairline align-top"
                   key={ticket.id}
                 >
                   <td className="max-w-[320px] px-4 py-3">
-                    <div className="font-medium text-[var(--text)]">
+                    <div className="font-medium text-ink">
                       {ticket.subject}
                     </div>
-                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#d8cfbc]">
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-ink-2">
                       {ticket.body}
                     </p>
                   </td>
-                  <td className="px-4 py-3 text-[#fffbf4]">
+                  <td className="px-4 py-3 text-ink">
                     <ProfileLabel
                       fallbackId={ticket.userId}
                       profile={ticket.requester}
@@ -120,7 +120,7 @@ export function AdminSupportTickets({
                   </td>
                   <td className="px-4 py-3">
                     <select
-                      className="h-8 rounded-lg border border-[var(--border)] bg-[#0f140f] px-2 text-sm text-[var(--text)]"
+                      className="h-8 rounded-lg border border-hairline bg-[#0f1115] px-2 text-sm text-ink"
                       disabled={disabled}
                       onChange={(event) =>
                         updateTicket(ticket.id, {
@@ -138,7 +138,7 @@ export function AdminSupportTickets({
                   </td>
                   <td className="px-4 py-3">
                     <select
-                      className="h-8 rounded-lg border border-[var(--border)] bg-[#0f140f] px-2 text-sm text-[var(--text)]"
+                      className="h-8 rounded-lg border border-hairline bg-[#0f1115] px-2 text-sm text-ink"
                       disabled={disabled}
                       onChange={(event) =>
                         updateTicket(ticket.id, {
@@ -154,24 +154,24 @@ export function AdminSupportTickets({
                       ))}
                     </select>
                   </td>
-                  <td className="px-4 py-3 text-[#fffbf4]">
+                  <td className="px-4 py-3 text-ink">
                     {ticket.assignee ? (
                       <ProfileLabel
                         fallbackId={ticket.assignedAdminId ?? ""}
                         profile={ticket.assignee}
                       />
                     ) : (
-                      <span className="text-[#d8cfbc]">Unassigned</span>
+                      <span className="text-ink-2">Unassigned</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-[#d8cfbc]">
+                  <td className="px-4 py-3 text-ink-2">
                     {formatDate(ticket.updatedAt)}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
                       <button
                         aria-label="Assign ticket to me"
-                        className="inline-flex size-8 items-center justify-center rounded-lg border border-[var(--border)] text-[#fffbf4] hover:border-[#00ff88]/50 hover:text-[#00ff88] disabled:opacity-50"
+                        className="inline-flex size-8 items-center justify-center rounded-lg border border-hairline text-ink hover:border-accent/50 hover:text-accent disabled:opacity-50"
                         disabled={disabled}
                         onClick={() =>
                           updateTicket(ticket.id, {
@@ -189,7 +189,7 @@ export function AdminSupportTickets({
                       </button>
                       <button
                         aria-label="Unassign ticket"
-                        className="inline-flex size-8 items-center justify-center rounded-lg border border-[var(--border)] text-[#fffbf4] hover:border-[#00ff88]/50 hover:text-[#00ff88] disabled:opacity-50"
+                        className="inline-flex size-8 items-center justify-center rounded-lg border border-hairline text-ink hover:border-accent/50 hover:text-accent disabled:opacity-50"
                         disabled={disabled}
                         onClick={() =>
                           updateTicket(ticket.id, { assignedAdminId: null })
@@ -208,7 +208,7 @@ export function AdminSupportTickets({
         </table>
       </div>
       {tickets.length === 0 ? (
-        <div className="p-6 text-sm text-[#d8cfbc]">No support tickets yet.</div>
+        <div className="p-6 text-sm text-ink-2">No support tickets yet.</div>
       ) : null}
     </section>
   );
@@ -228,7 +228,7 @@ function ProfileLabel({
   return (
     <span>
       {profile.displayName ? `${profile.displayName} ` : ""}
-      <span className="text-[#d8cfbc]">{profile.email}</span>
+      <span className="text-ink-2">{profile.email}</span>
     </span>
   );
 }

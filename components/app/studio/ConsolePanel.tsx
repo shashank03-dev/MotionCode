@@ -7,8 +7,8 @@ import type { ConsoleEntry } from "@/lib/preview/types";
 import { cn } from "@/lib/utils";
 
 const LEVEL_STYLES: Record<ConsoleEntry["level"], string> = {
-  log: "text-[var(--text)]",
-  info: "text-[#9ef0c0]",
+  log: "text-ink",
+  info: "text-accent",
   warn: "text-[#ffd166]",
   error: "text-[#f58f7c]",
 };
@@ -34,16 +34,16 @@ export function ConsolePanel({
   }, [entries.length]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[#0b0c08]">
-      <div className="flex items-center justify-between border-b border-[var(--border)] px-3 py-1.5">
-        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted)]">
+    <div className="flex h-full min-h-0 flex-col bg-[#0a0b0d]">
+      <div className="flex items-center justify-between border-b border-hairline px-3 py-1.5">
+        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-3">
           {entries.length} message{entries.length === 1 ? "" : "s"}
         </span>
         <button
           type="button"
           onClick={onClear}
           disabled={entries.length === 0}
-          className="inline-flex items-center gap-1 font-mono text-[10px] text-[var(--muted)] transition hover:text-[var(--text)] disabled:opacity-40"
+          className="inline-flex items-center gap-1 font-mono text-[10px] text-ink-3 transition hover:text-ink disabled:opacity-40"
         >
           <Trash2 className="size-3" />
           Clear
@@ -51,10 +51,10 @@ export function ConsolePanel({
       </div>
       <div className="min-h-0 flex-1 overflow-auto px-3 py-2 font-mono text-[11px] leading-relaxed">
         {entries.length === 0 ? (
-          <p className="text-[var(--muted)]">No console output. Logs and errors from the preview appear here.</p>
+          <p className="text-ink-3">No console output. Logs and errors from the preview appear here.</p>
         ) : (
           entries.map((entry) => (
-            <div key={entry.id} className="flex gap-2 border-b border-[var(--border)]/40 py-1">
+            <div key={entry.id} className="flex gap-2 border-b border-hairline/40 py-1">
               <span className={cn("select-none", LEVEL_STYLES[entry.level])}>
                 {LEVEL_LABEL[entry.level]}
               </span>

@@ -121,7 +121,7 @@ interface AuroraProps {
 }
 
 export default function Aurora(props: AuroraProps) {
-  const { colorStops = ['#126137', '#00FF88', '#126137'], amplitude = 1.0, blend = 0.5 } = props;
+  const { colorStops = ['#123d61', '#0099ff', '#123d61'], amplitude = 1.0, blend = 0.5 } = props;
   const propsRef = useRef<AuroraProps>(props);
   propsRef.current = props;
 
@@ -239,6 +239,9 @@ export default function Aurora(props: AuroraProps) {
     };
 
     const update = (t: number) => {
+      // Stop if the browser evicted this context (per-tab WebGL cap) — ogl
+      // reads undefined internals and throws once the context is gone.
+      if (gl.isContextLost?.()) return;
       renderFrame(t);
       animateId = requestAnimationFrame(update);
     };
@@ -296,8 +299,8 @@ export default function Aurora(props: AuroraProps) {
   const staticStyle = lowTier
     ? {
         backgroundImage: `radial-gradient(125% 85% at 50% 100%, ${
-          colorStops[1] ?? '#00FF88'
-        } 0%, ${colorStops[2] ?? '#126137'} 40%, transparent 72%)`,
+          colorStops[1] ?? '#0099ff'
+        } 0%, ${colorStops[2] ?? '#123d61'} 40%, transparent 72%)`,
       }
     : undefined;
 

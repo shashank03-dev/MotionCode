@@ -92,9 +92,9 @@ function bezier(cp: CP) {
 
 export function MotionField({
   className,
-  background = "rgba(7, 8, 6, 1)",
-  base = "rgba(216, 207, 188, 1)",
-  accent = "rgba(0, 255, 136, 1)",
+  background = "rgba(8, 9, 11, 1)",
+  base = "rgba(255, 255, 255, 1)",
+  accent = "rgba(0, 153, 255, 1)",
   typingImpulseRef,
 }: MotionFieldProps) {
   const wrapperRef = useRef<HTMLDivElement | null>(null);

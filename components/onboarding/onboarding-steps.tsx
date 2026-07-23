@@ -36,7 +36,7 @@ export function OnboardingSteps() {
         return (
           <article
             key={step.title}
-            className="rounded-[8px] border border-white/10 bg-[#151811] p-5"
+            className="rounded-[8px] border border-white/10 bg-elevated p-5"
           >
             <div className="flex items-center justify-between gap-3">
               <div className="flex size-10 items-center justify-center rounded-[8px] bg-[#f58f7c]/10 text-[#f58f7c]">
@@ -46,10 +46,10 @@ export function OnboardingSteps() {
                 {String(index + 1).padStart(2, "0")}
               </span>
             </div>
-            <h3 className="mt-5 font-mono text-lg text-[#fffbf4]">
+            <h3 className="mt-5 font-display text-xl font-medium tracking-tight text-ink">
               {step.title}
             </h3>
-            <p className="mt-3 text-sm leading-6 text-[#d8cfbc]/75">
+            <p className="mt-3 text-sm leading-6 text-ink-2/75">
               {step.description}
             </p>
           </article>

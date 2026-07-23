@@ -45,7 +45,7 @@ export function AnalysisStatus({
                 <div
                   style={{
                     animation: "blink 0.8s infinite",
-                    backgroundColor: "#00ff88",
+                    backgroundColor: "#0099ff",
                     borderRadius: "50%",
                     flexShrink: 0,
                     height: 6,
@@ -68,7 +68,7 @@ export function AnalysisStatus({
               )}
               <div
                 style={{
-                  color: isActive ? "#fffbf4" : "#565449",
+                  color: isActive ? "#f7f8f8" : "#565a60",
                   fontFamily: "Space Mono, monospace",
                   fontSize: 12,
                 }}

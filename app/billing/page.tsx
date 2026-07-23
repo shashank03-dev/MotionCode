@@ -1,8 +1,10 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowUpRight } from "lucide-react";
 
 import { BillingContent } from "@/components/billing/BillingContent";
+import { AppBackground } from "@/components/ui/app-background";
+import { PageHeader } from "@/components/ui/kit";
+import { ButtonLink } from "@/components/ui/site-button";
 import { getCurrentUser } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -24,26 +26,20 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
   const notice = resolveNotice(resolvedSearchParams);
 
   return (
-    <main className="min-h-screen bg-[var(--bg)] px-4 py-8 text-[var(--text)] sm:px-6 lg:px-8">
-      <div className="mx-auto flex max-w-4xl flex-col gap-8">
-        <header className="flex flex-col gap-4 border-b border-[var(--border)] pb-6 md:flex-row md:items-end md:justify-between">
-          <div>
-            <Link
-              href="/account"
-              className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--muted)]"
-            >
-              Account
-            </Link>
-            <h1 className="mt-3 font-mono text-4xl">Billing</h1>
-          </div>
-          <Link
-            className="inline-flex h-10 items-center gap-2 rounded-md border border-[var(--border)] px-4 font-sans text-sm text-[var(--accent)] transition hover:border-[var(--accent-border)] hover:text-[var(--text)]"
-            href="/pricing"
-          >
-            View plans
-            <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
-          </Link>
-        </header>
+    <main className="relative min-h-screen bg-canvas px-4 py-10 text-ink sm:px-6 lg:px-8">
+      <AppBackground />
+      <div className="relative z-10 mx-auto flex max-w-4xl flex-col gap-9">
+        <PageHeader
+          eyebrow="Account · Billing"
+          title="Billing"
+          description="Your current plan, subscription controls, and payment history."
+          actions={
+            <ButtonLink href="/pricing" variant="frosted" size="sm">
+              View plans
+              <ArrowUpRight className="size-4" aria-hidden="true" />
+            </ButtonLink>
+          }
+        />
 
         <BillingContent notice={notice} />
       </div>

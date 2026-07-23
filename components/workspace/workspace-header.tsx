@@ -1,6 +1,7 @@
 import { Building2 } from "lucide-react";
 
 import { formatDate, type WorkspacePageData } from "@/app/dashboard/data";
+import { Eyebrow, Pill, StatTile } from "@/components/ui/kit";
 
 type WorkspaceHeaderProps = {
   data: WorkspacePageData;
@@ -8,34 +9,30 @@ type WorkspaceHeaderProps = {
 
 export function WorkspaceHeader({ data }: WorkspaceHeaderProps) {
   return (
-    <header className="border-b border-[var(--border)] pb-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div className="mb-3 inline-flex items-center gap-2 border border-[var(--border)] bg-[var(--accent-dim)] px-2 py-1 font-mono text-xs uppercase tracking-[0.16em] text-[var(--accent)]">
-            <Building2 className="size-3.5" />
+    <header className="grid gap-6 border-b border-hairline pb-7 lg:grid-cols-[1fr_auto] lg:items-end">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2.5">
+          <Eyebrow>Workspace</Eyebrow>
+          <Pill tone="accent">
+            <Building2 className="size-3" aria-hidden="true" />
             {data.role}
-          </div>
-          <h1 className="font-mono text-3xl text-[var(--text)] sm:text-4xl">
-            {data.workspace.name}
-          </h1>
-          <p className="mt-2 font-mono text-sm text-[var(--muted)]">
-            {data.workspace.slug}
-          </p>
+          </Pill>
         </div>
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="border border-[var(--border)] bg-[#15160f]/82 px-4 py-3 shadow-[0_18px_44px_rgba(0,0,0,0.18)]">
-            <div className="text-[var(--muted)]">Plan</div>
-            <div className="mt-1 font-mono text-[var(--text)]">
-              {data.workspace.plan_tier}
-            </div>
-          </div>
-          <div className="border border-[var(--border)] bg-[#15160f]/82 px-4 py-3 shadow-[0_18px_44px_rgba(0,0,0,0.18)]">
-            <div className="text-[var(--muted)]">Updated</div>
-            <div className="mt-1 font-mono text-[var(--text)]">
-              {formatDate(data.workspace.updated_at)}
-            </div>
-          </div>
-        </div>
+        <h1 className="mt-3 truncate font-display text-3xl font-medium leading-[1.05] tracking-tightest text-ink sm:text-[2.6rem]">
+          {data.workspace.name}
+        </h1>
+        <p className="mt-2.5 font-mono text-[13px] text-ink-3">
+          {data.workspace.slug}
+        </p>
+      </div>
+      <div className="grid grid-cols-2 gap-3 lg:w-80">
+        <StatTile label="Plan" value={data.workspace.plan_tier} />
+        <StatTile
+          label="Updated"
+          value={
+            <span className="text-xl">{formatDate(data.workspace.updated_at)}</span>
+          }
+        />
       </div>
     </header>
   );

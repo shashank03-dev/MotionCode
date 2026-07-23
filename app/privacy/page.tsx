@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LegalPage, SiteFooter, SiteHeader } from "@/components/marketing";
+import { LegalPage } from "@/components/marketing";
 
 export const metadata: Metadata = {
   title: "Privacy - MotionCode",
@@ -46,15 +46,11 @@ const sections = [
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-[#080808]">
-      <SiteHeader />
-      <LegalPage
-        title="Privacy"
-        updated="June 6, 2026"
-        intro="These notes describe the public MotionCode product surface in this repository. A production deployment should publish deployment-specific privacy details."
-        sections={sections}
-      />
-      <SiteFooter />
-    </div>
+    <LegalPage
+      title="Privacy"
+      updated="June 6, 2026"
+      intro="These notes describe the public MotionCode product surface in this repository. A production deployment should publish deployment-specific privacy details."
+      sections={sections}
+    />
   );
 }

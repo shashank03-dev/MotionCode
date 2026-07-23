@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LegalPage, SiteFooter, SiteHeader } from "@/components/marketing";
+import { LegalPage } from "@/components/marketing";
 
 export const metadata: Metadata = {
   title: "Cancellation & Refunds - MotionCode",
@@ -40,15 +40,11 @@ const sections = [
 
 export default function RefundsPage() {
   return (
-    <div className="min-h-screen bg-[#080808]">
-      <SiteHeader />
-      <LegalPage
-        title="Cancellation & Refunds"
-        updated="June 29, 2026"
-        intro="This policy explains how subscription cancellations and refunds work for MotionCode."
-        sections={sections}
-      />
-      <SiteFooter />
-    </div>
+    <LegalPage
+      title="Cancellation & Refunds"
+      updated="June 29, 2026"
+      intro="This policy explains how subscription cancellations and refunds work for MotionCode."
+      sections={sections}
+    />
   );
 }

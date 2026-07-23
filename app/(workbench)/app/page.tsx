@@ -1,3 +1,4 @@
+import { AppAuthGate } from "@/components/app/AppAuthGate";
 import { AppShell as AnalyzeWorkspace } from "@/components/app/AppShell";
 import { AppShell as WorkspaceShell } from "@/components/dashboard/app-shell";
 import { getEntitlementSummary } from "@/lib/server/entitlements";
@@ -24,10 +25,18 @@ export default async function AnimationConverter({
   const user = await getCurrentUser();
 
   if (!user) {
+    // The analyzer is a signed-in surface: render it blurred + inert behind a
+    // non-dismissible sign-in gate. Server-side data routes already require
+    // auth, so this is the UX layer over real enforcement.
     return (
-      <WorkspaceShell active="analyze" bleed userEmail={null}>
-        <AnalyzeWorkspace />
-      </WorkspaceShell>
+      <>
+        <div inert className="pointer-events-none select-none blur-sm">
+          <WorkspaceShell active="analyze" bleed userEmail={null}>
+            <AnalyzeWorkspace />
+          </WorkspaceShell>
+        </div>
+        <AppAuthGate />
+      </>
     );
   }
 

@@ -16,13 +16,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps = {}) {
   const nextPath = normalizeAuthNextPath(resolvedSearchParams?.next);
 
   return (
-    <main className="relative flex min-h-[100dvh] items-center justify-center overflow-hidden bg-[#07080a] px-4 py-6 text-[#fffbf4] sm:px-6">
-      <div
-        className="pointer-events-none absolute inset-0"
-        aria-hidden="true"
-      >
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,251,244,0.022)_1px,transparent_1px),linear-gradient(90deg,rgba(255,251,244,0.018)_1px,transparent_1px)] bg-[size:54px_54px]" />
-        <div className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(0,255,136,0.4),transparent)]" />
+    <main className="relative flex min-h-[100dvh] items-center justify-center overflow-hidden bg-canvas px-4 py-6 text-ink sm:px-6">
+      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+        <div className="absolute inset-0 grid-fade opacity-70" />
+        {/* single accent hairline at the top edge — the only color in the room */}
+        <div className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,var(--accent-glow),transparent)]" />
+        <div className="absolute left-1/2 top-[-18rem] size-[38rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,var(--accent-dim),transparent_70%)] blur-2xl" />
       </div>
 
       <div className="relative z-10 w-full max-w-[940px]">

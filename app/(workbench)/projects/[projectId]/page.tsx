@@ -6,6 +6,8 @@ import { SavedAnalysisViewer } from "@/components/project/saved-analysis-viewer"
 import { VersionDetail } from "@/components/project/version-detail";
 import { VersionTimeline } from "@/components/project/version-timeline";
 import { UpgradeGate } from "@/components/app/UpgradeGate";
+import { EmptyState, Pill, SectionLabel } from "@/components/ui/kit";
+import { ButtonLink } from "@/components/ui/site-button";
 import { parseSavedAnalysisResult } from "@/lib/contracts/savedAnalysis";
 
 import {
@@ -44,51 +46,41 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   return (
     <div className="mx-auto max-w-6xl space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <nav
-          aria-label="Breadcrumb"
-          className="font-mono text-xs text-[var(--muted)]"
-        >
-          <Link
-            href="/workspaces"
-            className="text-[var(--accent)] transition hover:text-[var(--text)]"
-          >
+        <nav aria-label="Breadcrumb" className="font-mono text-xs text-ink-3">
+          <Link href="/workspaces" className="transition-colors hover:text-ink">
             Workspaces
           </Link>
-          {" / "}
+          <span className="px-1.5">/</span>
           <Link
             href={`/workspaces/${data.workspace.id}`}
-            className="text-[var(--accent)] transition hover:text-[var(--text)]"
+            className="transition-colors hover:text-ink"
           >
             {data.workspace.name}
           </Link>
-          {" / "}
-          <span className="text-[var(--text)]">{data.project.title}</span>
+          <span className="px-1.5">/</span>
+          <span className="text-ink">{data.project.title}</span>
         </nav>
         {canWrite ? (
-          <Link
-            href={newSequenceHref}
-            className="inline-flex h-9 items-center gap-2 border border-[var(--accent-border)] bg-[var(--accent-dim)] px-3 font-mono text-xs text-[var(--text)] transition hover:border-[var(--accent)] hover:bg-[#00ff88]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]"
-          >
+          <ButtonLink href={newSequenceHref} variant="primary" size="sm">
             <Sparkles className="size-4" aria-hidden="true" />
             New sequence
-          </Link>
+          </ButtonLink>
         ) : null}
       </div>
 
       <ProjectHeader data={data} />
 
       {savedResult ? (
-        <section className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="font-mono text-lg text-[var(--text)]">
-              Latest sequence
-              {latestVersion ? (
-                <span className="ml-2 font-mono text-xs text-[var(--muted)]">
-                  v{latestVersion.version_number}
-                </span>
-              ) : null}
-            </h2>
-          </div>
+        <section className="space-y-4">
+          <SectionLabel
+            actions={
+              latestVersion ? (
+                <Pill tone="muted">v{latestVersion.version_number}</Pill>
+              ) : null
+            }
+          >
+            Latest sequence
+          </SectionLabel>
           <SavedAnalysisViewer
             result={savedResult}
             newAnalysisHref={newSequenceHref}
@@ -97,24 +89,19 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
       ) : latestVersion ? (
         <VersionDetail version={latestVersion} />
       ) : (
-        <section className="flex flex-col items-start gap-3 border border-dashed border-[var(--border)] bg-[#15160f]/60 px-5 py-8">
-          <h2 className="font-mono text-lg text-[var(--text)]">
-            No sequences yet
-          </h2>
-          <p className="max-w-xl text-sm leading-6 text-[var(--accent)]">
-            Run an analysis and it will be saved here as this project&apos;s
-            first sequence — spec, preview, and generated code included.
-          </p>
-          {canWrite ? (
-            <Link
-              href={newSequenceHref}
-              className="mt-2 inline-flex h-9 items-center gap-2 border border-[var(--accent-border)] bg-[var(--accent-dim)] px-3 font-mono text-xs text-[var(--text)] transition hover:border-[var(--accent)]"
-            >
-              <Sparkles className="size-4" aria-hidden="true" />
-              Analyze motion
-            </Link>
-          ) : null}
-        </section>
+        <EmptyState
+          icon={<Sparkles className="size-5" />}
+          title="No sequences yet"
+          description="Run an analysis and it will be saved here as this project's first sequence — spec, preview, and generated code included."
+          action={
+            canWrite ? (
+              <ButtonLink href={newSequenceHref} variant="primary" size="sm">
+                <Sparkles className="size-4" aria-hidden="true" />
+                Analyze motion
+              </ButtonLink>
+            ) : null
+          }
+        />
       )}
 
       <VersionTimeline projectId={data.project.id} versions={data.versions} />

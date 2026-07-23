@@ -21,11 +21,11 @@ export function ProjectNode({ project, isActive }: ProjectNodeProps) {
         "group flex h-8 items-center gap-2 pr-2 font-sans text-[13px] transition",
         "pl-8", // align under the workspace folder label
         isActive
-          ? "bg-[var(--accent-dim)] text-[var(--text)]"
-          : "text-[var(--accent)] hover:bg-[var(--accent-dim)]/60 hover:text-[var(--text)]",
+          ? "bg-[var(--accent-dim)] text-ink"
+          : "text-ink-2 hover:bg-[var(--accent-dim)]/60 hover:text-ink",
       )}
     >
-      <FileCode2 className="size-3.5 shrink-0 text-[var(--accent)]/60" />
+      <FileCode2 className="size-3.5 shrink-0 text-ink-3" />
       <span className="truncate">{project.title}</span>
     </Link>
   );

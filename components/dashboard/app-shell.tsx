@@ -16,6 +16,8 @@ import { useSyncExternalStore, type ReactNode } from "react";
 
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { PlanSync } from "@/components/dashboard/PlanSync";
+import { Logo } from "@/components/site/logo";
+import { AppBackground } from "@/components/ui/app-background";
 import type { PlanTier } from "@/lib/contracts/plans";
 import { cn } from "@/lib/utils";
 
@@ -86,6 +88,15 @@ const utilityItems = [
   { href: "/billing", icon: CreditCard, label: "Billing" },
 ] as const;
 
+// Shared nav-item styling. Accent is reserved for the *active* item and focus
+// rings only — idle items rest at ink-2 so the sidebar stays quiet.
+const navItemBase =
+  "group inline-flex h-9 shrink-0 items-center gap-2.5 rounded-lg border px-3 text-[13.5px] transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]";
+const navItemIdle =
+  "border-transparent text-ink-2 hover:border-hairline hover:bg-white/[0.03] hover:text-ink";
+const navItemActive =
+  "border-accent-border bg-accent-dim font-medium text-ink shadow-[inset_0_0_0_1px_var(--accent-border)]";
+
 export function AppShell({
   active = "dashboard",
   children,
@@ -107,51 +118,43 @@ export function AppShell({
   return (
     <div
       className={cn(
-        "relative min-h-screen bg-[var(--bg)] text-[var(--text)] transition-[grid-template-columns] duration-200 ease-out motion-reduce:transition-none lg:grid",
+        "relative min-h-screen bg-canvas text-ink transition-[grid-template-columns] duration-200 ease-out motion-reduce:transition-none lg:grid",
         collapsed
-          ? "lg:grid-cols-[3.5rem_minmax(0,1fr)]"
-          : "lg:grid-cols-[15rem_minmax(0,1fr)]",
+          ? "lg:grid-cols-[3.75rem_minmax(0,1fr)]"
+          : "lg:grid-cols-[15.5rem_minmax(0,1fr)]",
       )}
     >
       <PlanSync userId={userId} />
+      <AppBackground />
 
-      <div
-        className="pointer-events-none fixed inset-0 z-0 opacity-80"
-        aria-hidden="true"
-      >
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,251,244,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,251,244,0.026)_1px,transparent_1px)] bg-[size:48px_48px]" />
-        <div className="absolute right-[-18rem] top-[-20rem] h-[42rem] w-[42rem] rounded-full bg-[#00ff88]/[0.055] blur-3xl" />
-      </div>
-
-      {/* Solid (un-blurred) surface: animating a backdrop-blur'd sidebar's width
-          re-rasterizes the blur every frame, which is what made collapse lag. */}
-      <aside className="relative z-20 border-b border-[var(--border)] bg-[#0d0f0b] lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r">
+      <aside className="relative z-20 border-b border-hairline bg-panel/80 backdrop-blur-xl lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r">
         <div
           className={cn(
-            "flex h-full flex-col gap-6 px-3 py-4 lg:py-6",
-            collapsed ? "lg:px-2" : "lg:px-4",
+            "flex h-full flex-col gap-7 px-3 py-4 lg:py-6",
+            collapsed ? "lg:px-2.5" : "lg:px-4",
           )}
         >
+          {/* Brand + plan + collapse toggle */}
           <div
             className={cn(
-              "flex items-center gap-2 px-1",
+              "flex items-center gap-2.5 px-1",
               collapsed && "lg:flex-col lg:gap-3 lg:px-0",
             )}
           >
             <Link
               href="/app"
-              className="inline-flex items-center gap-1.5 font-mono text-sm font-bold tracking-[0.01em] text-[var(--text)] transition-colors hover:text-[#00ff88] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]"
+              aria-label="MotionCode home"
+              className="rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent-border)]"
             >
-              <span className="text-[#00ff88]">&lt;/&gt;</span>{" "}
-              <span className={cn(collapsed && "lg:hidden")}>MotionCode</span>
+              <Logo wordmark={!collapsed} />
             </Link>
             <span
               title={`${planLabel} plan`}
               className={cn(
                 "inline-flex items-center rounded-full border px-1.5 py-0.5 font-mono text-[8.5px] font-semibold uppercase leading-none tracking-[0.2em]",
                 isFree
-                  ? "border-[var(--border)] text-[var(--muted)]"
-                  : "border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--accent)]",
+                  ? "border-hairline text-ink-3"
+                  : "border-accent-border bg-accent-dim text-accent",
                 collapsed && "lg:hidden",
               )}
             >
@@ -163,7 +166,7 @@ export function AppShell({
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
               title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
               className={cn(
-                "hidden size-8 items-center justify-center rounded-md border border-transparent text-[var(--accent)] transition hover:border-[var(--border)] hover:text-[var(--text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)] lg:flex",
+                "hidden size-8 items-center justify-center rounded-md border border-transparent text-ink-3 transition hover:border-hairline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)] lg:flex",
                 collapsed ? "lg:mx-auto" : "lg:ml-auto",
               )}
             >
@@ -175,13 +178,14 @@ export function AppShell({
             </button>
           </div>
 
+          {/* Primary product nav */}
           <nav
             className="flex gap-2 overflow-x-auto max-lg:pb-1 lg:flex-col lg:gap-1 lg:overflow-visible"
             aria-label="Product"
           >
             <p
               className={cn(
-                "hidden px-2 pb-1 font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--muted)] lg:block",
+                "hidden px-2 pb-1.5 font-mono text-[10px] uppercase tracking-[0.22em] text-ink-3 lg:block",
                 collapsed && "lg:hidden",
               )}
             >
@@ -205,21 +209,22 @@ export function AppShell({
                         : undefined
                   }
                   className={cn(
-                    "inline-flex h-9 shrink-0 items-center gap-2 border px-3 font-sans text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)] lg:rounded-md",
-                    collapsed ? "lg:w-10 lg:justify-center lg:px-0" : "lg:w-full",
-                    isActive
-                      ? "border-[var(--accent-border)] bg-[var(--accent-dim)] font-medium text-[var(--text)]"
-                      : "border-transparent text-[var(--accent)] hover:border-[var(--border)] hover:text-[var(--text)]",
+                    navItemBase,
+                    isActive ? navItemActive : navItemIdle,
+                    collapsed ? "lg:w-11 lg:justify-center lg:px-0" : "lg:w-full",
                   )}
                 >
-                  <Icon className="size-4 shrink-0" />
-                  <span className={cn(collapsed && "lg:hidden")}>
-                    {item.label}
-                  </span>
+                  <Icon
+                    className={cn(
+                      "size-[17px] shrink-0 transition-colors",
+                      isActive ? "text-accent" : "text-ink-3 group-hover:text-ink-2",
+                    )}
+                  />
+                  <span className={cn(collapsed && "lg:hidden")}>{item.label}</span>
                   {locked ? (
                     <Lock
                       className={cn(
-                        "ml-auto size-3 text-[var(--muted)]",
+                        "ml-auto size-3 text-ink-3",
                         collapsed && "lg:hidden",
                       )}
                       aria-label="Paid feature"
@@ -230,10 +235,11 @@ export function AppShell({
             })}
           </nav>
 
+          {/* Utility + account cluster (desktop) */}
           <div className="hidden lg:mt-auto lg:flex lg:flex-col lg:gap-1">
             <p
               className={cn(
-                "px-2 pb-1 font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--muted)]",
+                "px-2 pb-1.5 font-mono text-[10px] uppercase tracking-[0.22em] text-ink-3",
                 collapsed && "lg:hidden",
               )}
             >
@@ -241,28 +247,26 @@ export function AppShell({
             </p>
             {utilityItems.map((item) => {
               const Icon = item.icon;
-
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   title={collapsed ? item.label : undefined}
                   className={cn(
-                    "inline-flex h-9 items-center gap-2 rounded-md border border-transparent px-3 font-sans text-sm text-[var(--accent)] transition hover:border-[var(--border)] hover:text-[var(--text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]",
-                    collapsed && "lg:w-10 lg:justify-center lg:px-0",
+                    navItemBase,
+                    navItemIdle,
+                    collapsed && "lg:w-11 lg:justify-center lg:px-0",
                   )}
                 >
-                  <Icon className="size-4 shrink-0" />
-                  <span className={cn(collapsed && "lg:hidden")}>
-                    {item.label}
-                  </span>
+                  <Icon className="size-[17px] shrink-0 text-ink-3 transition-colors group-hover:text-ink-2" />
+                  <span className={cn(collapsed && "lg:hidden")}>{item.label}</span>
                 </Link>
               );
             })}
             <div
               className={cn(
-                "mt-2 flex items-center gap-2 px-1",
-                collapsed && "lg:flex-col lg:gap-1 lg:px-0",
+                "mt-3 flex items-center gap-2 px-1",
+                collapsed && "lg:flex-col lg:gap-1.5 lg:px-0",
               )}
             >
               {isFree ? (
@@ -270,8 +274,8 @@ export function AppShell({
                   href="/pricing"
                   title="Upgrade your plan"
                   className={cn(
-                    "inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-md border border-[var(--accent-border)] bg-[var(--accent-dim)] font-sans text-sm text-[var(--text)] transition hover:border-[var(--accent)] hover:bg-[#00ff88]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]",
-                    collapsed && "lg:size-10 lg:flex-none",
+                    "inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-lg bg-accent text-[13px] font-medium text-black shadow-glow transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]",
+                    collapsed && "lg:size-11 lg:flex-none",
                   )}
                 >
                   <Sparkles className="size-4 shrink-0" />
@@ -282,8 +286,8 @@ export function AppShell({
                   href="/onboarding"
                   title="New workspace"
                   className={cn(
-                    "inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-md border border-[var(--accent-border)] bg-[var(--accent-dim)] font-sans text-sm text-[var(--text)] transition hover:border-[var(--accent)] hover:bg-[#00ff88]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]",
-                    collapsed && "lg:size-10 lg:flex-none",
+                    "inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-lg border border-hairline bg-white/[0.03] text-[13px] font-medium text-ink transition hover:border-accent-border hover:bg-accent-dim focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]",
+                    collapsed && "lg:size-11 lg:flex-none",
                   )}
                 >
                   <Plus className="size-4 shrink-0" />
@@ -293,8 +297,8 @@ export function AppShell({
               {userEmail ? (
                 <SignOutButton
                   className={cn(
-                    "rounded-md border-[var(--border)] px-3 font-sans text-sm text-[var(--accent)] hover:border-[var(--accent-border)] hover:text-[var(--text)]",
-                    collapsed && "lg:size-10 lg:px-0",
+                    "h-9 rounded-lg border-hairline px-3 text-[13px] text-ink-2 hover:border-accent-border hover:text-ink",
+                    collapsed && "lg:size-11 lg:px-0",
                   )}
                   label={collapsed ? "" : "Out"}
                 />
@@ -312,7 +316,7 @@ export function AppShell({
                   href={item.href}
                   aria-label={item.label}
                   title={item.label}
-                  className="inline-flex size-9 items-center justify-center border border-transparent text-[var(--accent)] transition hover:border-[var(--border)] hover:text-[var(--text)]"
+                  className="inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-ink-2 transition hover:border-hairline hover:text-ink"
                 >
                   <Icon className="size-4" />
                 </Link>
@@ -323,7 +327,7 @@ export function AppShell({
                 href="/pricing"
                 title="Upgrade your plan"
                 aria-label="Upgrade your plan"
-                className="inline-flex size-9 items-center justify-center border border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--text)]"
+                className="inline-flex size-9 items-center justify-center rounded-lg bg-accent text-black shadow-glow"
               >
                 <Sparkles className="size-4" />
               </Link>
@@ -332,14 +336,14 @@ export function AppShell({
                 href="/onboarding"
                 title="New workspace"
                 aria-label="New workspace"
-                className="inline-flex size-9 items-center justify-center border border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--text)]"
+                className="inline-flex size-9 items-center justify-center rounded-lg border border-accent-border bg-accent-dim text-ink"
               >
                 <Plus className="size-4" />
               </Link>
             )}
             {userEmail ? (
               <SignOutButton
-                className="h-9 border-[var(--border)] px-3 font-sans text-sm text-[var(--accent)]"
+                className="h-9 rounded-lg border-hairline px-3 text-[13px] text-ink-2"
                 label="Out"
               />
             ) : null}
@@ -352,7 +356,7 @@ export function AppShell({
           "relative z-10 w-full",
           bleed
             ? "min-w-0 lg:h-screen lg:overflow-hidden"
-            : "mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8",
+            : "mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-10 lg:py-10",
         )}
       >
         {children}

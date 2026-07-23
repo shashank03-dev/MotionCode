@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 import { useState } from "react";
 
+import { UpgradeDialog } from "@/components/app/UpgradeDialog";
+
 type WorkspaceRow = Database["public"]["Tables"]["workspaces"]["Row"];
 
 export function OnboardingForm() {
@@ -14,6 +16,7 @@ export function OnboardingForm() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [name, setName] = useState("My workspace");
+  const [upgradeMessage, setUpgradeMessage] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -29,6 +32,10 @@ export function OnboardingForm() {
 
     setIsSubmitting(false);
     if (!json.ok) {
+      if (json.code === "BILLING_REQUIRED") {
+        setUpgradeMessage(json.message);
+        return;
+      }
       setError(json.message);
       return;
     }
@@ -39,7 +46,7 @@ export function OnboardingForm() {
 
   return (
     <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-      <label className="block text-sm text-[#d8cfbc]" htmlFor="workspace-name">
+      <label className="block text-sm text-ink-2" htmlFor="workspace-name">
         Workspace name
       </label>
       <input
@@ -49,17 +56,22 @@ export function OnboardingForm() {
         onChange={(event) => setName(event.target.value)}
         minLength={1}
         maxLength={80}
-        className="h-11 w-full border border-[var(--border)] bg-[#11120d] px-3 text-sm text-[var(--text)] outline-none transition focus:border-[var(--accent-border)] focus:shadow-[0_0_0_3px_rgba(216,207,188,0.08)]"
+        className="h-11 w-full border border-hairline bg-[#0a0b0d] px-3 text-sm text-ink outline-none transition focus:border-[var(--accent-border)] focus:shadow-[0_0_0_3px_rgba(255,255,255,0.08)]"
       />
       <button
         type="submit"
         disabled={isSubmitting}
-        className="inline-flex h-10 w-full items-center justify-center gap-2 border border-[var(--accent-border)] bg-[var(--accent)] px-4 text-sm font-semibold text-[#11120d] transition hover:bg-[#fffbf4] active:translate-y-px disabled:opacity-60"
+        className="inline-flex h-10 w-full items-center justify-center gap-2 border border-[var(--accent-border)] bg-[var(--accent)] px-4 text-sm font-semibold text-[#0a0b0d] transition hover:bg-ink active:translate-y-px disabled:opacity-60"
       >
         {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}
         Continue
       </button>
       {error ? <p className="text-sm text-red-300">{error}</p> : null}
+      <UpgradeDialog
+        open={upgradeMessage !== null}
+        onClose={() => setUpgradeMessage(null)}
+        message={upgradeMessage}
+      />
     </form>
   );
 }

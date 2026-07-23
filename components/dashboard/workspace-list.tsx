@@ -1,7 +1,8 @@
-import { ArrowUpRight, Plus } from "lucide-react";
+import { ArrowUpRight, Boxes, Plus } from "lucide-react";
 import Link from "next/link";
 
 import { formatDate, type WorkspaceRow } from "@/app/dashboard/data";
+import { EmptyState, Panel, SectionLabel } from "@/components/ui/kit";
 
 type WorkspaceListProps = {
   workspaces: WorkspaceRow[];
@@ -9,53 +10,56 @@ type WorkspaceListProps = {
 
 export function WorkspaceList({ workspaces }: WorkspaceListProps) {
   return (
-    <section id="workspaces" className="space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="font-mono text-lg text-[var(--text)]">Workspaces</h2>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/workspaces"
-            className="font-mono text-xs text-[var(--accent)] transition hover:text-[var(--text)]"
-          >
-            View index
-          </Link>
-          <Link
-            href="/onboarding"
-            className="inline-flex size-8 items-center justify-center border border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--text)] transition hover:border-[var(--accent)]"
-            title="New workspace"
-          >
-            <Plus className="size-4" />
-          </Link>
-        </div>
-      </div>
+    <section id="workspaces" className="space-y-4">
+      <SectionLabel
+        actions={
+          <div className="flex items-center gap-3">
+            <Link
+              href="/workspaces"
+              className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-3 transition-colors hover:text-ink"
+            >
+              View index →
+            </Link>
+            <Link
+              href="/onboarding"
+              className="inline-flex size-7 items-center justify-center rounded-lg border border-hairline text-ink-2 transition hover:border-accent-border hover:bg-accent-dim hover:text-ink"
+              title="New workspace"
+            >
+              <Plus className="size-4" />
+            </Link>
+          </div>
+        }
+      >
+        Workspaces
+      </SectionLabel>
 
       {workspaces.length ? (
-        <div className="divide-y divide-[var(--border)] border border-[var(--border)] bg-[#15160f]/82 shadow-[0_18px_44px_rgba(0,0,0,0.22)]">
+        <Panel variant="glass" inset="none" radius="2xl" className="divide-y divide-hairline overflow-hidden">
           {workspaces.map((workspace) => (
             <Link
               key={workspace.id}
               href={`/workspaces/${workspace.id}`}
-              className="grid gap-2 px-4 py-4 transition hover:bg-[var(--accent-dim)] sm:grid-cols-[1fr_auto] sm:items-center"
+              className="group grid gap-2 px-5 py-4 transition-colors hover:bg-white/[0.02] sm:grid-cols-[1fr_auto] sm:items-center"
             >
               <div>
-                <div className="flex items-center gap-2 text-sm font-semibold text-[var(--text)]">
+                <div className="flex items-center gap-2 text-sm font-medium text-ink">
                   {workspace.name}
-                  <ArrowUpRight className="size-4 text-[var(--muted)]" />
+                  <ArrowUpRight className="size-3.5 text-ink-3 transition-colors group-hover:text-accent" />
                 </div>
-                <div className="mt-1 font-mono text-xs text-[var(--muted)]">
-                  {workspace.slug}
-                </div>
+                <div className="mt-1 font-mono text-xs text-ink-3">{workspace.slug}</div>
               </div>
-              <div className="font-mono text-xs text-[var(--muted)]">
+              <div className="font-mono text-xs text-ink-3">
                 {formatDate(workspace.updated_at)}
               </div>
             </Link>
           ))}
-        </div>
+        </Panel>
       ) : (
-        <div className="border border-[var(--border)] bg-[#15160f]/82 px-4 py-5 text-sm text-[var(--accent)] shadow-[0_18px_44px_rgba(0,0,0,0.22)]">
-          No workspaces yet.
-        </div>
+        <EmptyState
+          icon={<Boxes className="size-5" />}
+          title="No workspaces yet"
+          description="Workspaces group your projects and let you collaborate with a team."
+        />
       )}
     </section>
   );

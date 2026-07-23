@@ -2,6 +2,8 @@ import { ArrowUpRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 import { formatDate, type ProjectRow } from "@/app/dashboard/data";
+import { EmptyState, Panel, Pill, SectionLabel } from "@/components/ui/kit";
+import { ButtonLink } from "@/components/ui/site-button";
 
 type RecentProjectsProps = {
   projects: ProjectRow[];
@@ -9,74 +11,72 @@ type RecentProjectsProps = {
 
 export function RecentProjects({ projects }: RecentProjectsProps) {
   return (
-    <section id="projects" className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-mono text-lg text-[var(--text)]">Projects</h2>
-        <Link
-          href="/workspaces"
-          className="font-mono text-xs text-[var(--accent)] transition hover:text-[var(--text)]"
-        >
-          Browse workspaces
-        </Link>
-      </div>
+    <section id="projects" className="space-y-4">
+      <SectionLabel
+        actions={
+          <Link
+            href="/workspaces"
+            className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-3 transition-colors hover:text-ink"
+          >
+            Browse workspaces →
+          </Link>
+        }
+      >
+        Recent projects
+      </SectionLabel>
 
       {projects.length ? (
-        <div className="overflow-hidden border border-[var(--border)] bg-[#15160f]/82 shadow-[0_18px_44px_rgba(0,0,0,0.22)]">
+        <Panel variant="glass" inset="none" radius="2xl" className="overflow-hidden">
           <table className="w-full border-collapse text-left text-sm">
-            <thead className="bg-[#0f100c] font-mono text-xs uppercase tracking-[0.16em] text-[var(--muted)]">
+            <thead className="border-b border-hairline font-mono text-[10.5px] uppercase tracking-[0.16em] text-ink-3">
               <tr>
-                <th className="px-4 py-3 font-normal">Name</th>
-                <th className="hidden px-4 py-3 font-normal sm:table-cell">
-                  Source
-                </th>
-                <th className="hidden px-4 py-3 font-normal md:table-cell">
-                  Status
-                </th>
-                <th className="px-4 py-3 font-normal">Updated</th>
+                <th className="px-5 py-3.5 font-normal">Name</th>
+                <th className="hidden px-5 py-3.5 font-normal sm:table-cell">Source</th>
+                <th className="hidden px-5 py-3.5 font-normal md:table-cell">Status</th>
+                <th className="px-5 py-3.5 text-right font-normal">Updated</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[var(--border)]">
+            <tbody className="divide-y divide-hairline">
               {projects.map((project) => (
                 <tr
                   key={project.id}
-                  className="transition hover:bg-[var(--accent-dim)]"
+                  className="group transition-colors hover:bg-white/[0.02]"
                 >
-                  <td className="px-4 py-3">
+                  <td className="px-5 py-3.5">
                     <Link
                       href={`/projects/${project.id}`}
-                      className="inline-flex items-center gap-2 text-[var(--text)] transition hover:text-[#00ff88]"
+                      className="inline-flex items-center gap-2 font-medium text-ink transition-colors hover:text-accent"
                     >
                       {project.title}
-                      <ArrowUpRight className="size-4 text-[var(--muted)]" />
+                      <ArrowUpRight className="size-3.5 text-ink-3 transition-colors group-hover:text-accent" />
                     </Link>
                   </td>
-                  <td className="hidden px-4 py-3 font-mono text-xs text-[var(--accent)] sm:table-cell">
+                  <td className="hidden px-5 py-3.5 font-mono text-xs text-ink-3 sm:table-cell">
                     {project.source_type}
                   </td>
-                  <td className="hidden px-4 py-3 md:table-cell">
-                    <span className="border border-[var(--border)] bg-[#11120d] px-2 py-1 font-mono text-xs text-[var(--accent)]">
-                      {project.status}
-                    </span>
+                  <td className="hidden px-5 py-3.5 md:table-cell">
+                    <Pill tone="neutral">{project.status}</Pill>
                   </td>
-                  <td className="px-4 py-3 font-mono text-xs text-[var(--muted)]">
+                  <td className="px-5 py-3.5 text-right font-mono text-xs text-ink-3">
                     {formatDate(project.updated_at)}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+        </Panel>
       ) : (
-        <div className="border border-[var(--border)] bg-[#15160f]/82 px-4 py-5 text-sm text-[var(--accent)] shadow-[0_18px_44px_rgba(0,0,0,0.22)]">
-          <p>No projects yet.</p>
-          <Link
-            href="/app"
-            className="mt-4 inline-flex h-9 items-center gap-2 border border-[var(--accent-border)] bg-[var(--accent-dim)] px-3 font-mono text-xs text-[var(--text)] transition hover:border-[var(--accent)]"
-          >
-            <Sparkles className="size-4" aria-hidden="true" />
-            Analyze motion
-          </Link>
-        </div>
+        <EmptyState
+          icon={<Sparkles className="size-5" />}
+          title="No projects yet"
+          description="Analyze a motion reference and save it to start building your project library."
+          action={
+            <ButtonLink href="/app" variant="primary" size="sm">
+              <Sparkles className="size-4" aria-hidden="true" />
+              Analyze motion
+            </ButtonLink>
+          }
+        />
       )}
     </section>
   );

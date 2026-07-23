@@ -1,31 +1,37 @@
 import type { Metadata } from "next";
-import { Archivo, Geist, Geist_Mono, JetBrains_Mono } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-// Primary body + display fonts are above-the-fold, so they preload.
-const geistSans = Geist({
-  subsets: ["latin"],
-  variable: "--font-geist-sans",
+// Body / UI face — San Francisco Pro, vendored as a variable woff2 covering
+// wght 1–1000 and both optical sizes (Text ↔ Display). Shared with the site.
+const sfPro = localFont({
+  variable: "--font-sf",
   display: "swap",
+  src: [
+    { path: "./fonts/SF-Pro.woff2", weight: "1 1000", style: "normal" },
+    { path: "./fonts/SF-Pro-Italic.woff2", weight: "1 1000", style: "italic" },
+  ],
 });
 
-const bridgeDisplay = Archivo({
-  subsets: ["latin"],
-  variable: "--font-bridge-display",
+// Display face — PP Neue Montreal, the same grotesk used on the marketing site.
+const neueMontreal = localFont({
+  variable: "--font-ppnm",
   display: "swap",
+  src: [
+    { path: "./fonts/ppnm/ppneuemontreal-thin.otf", weight: "100", style: "normal" },
+    { path: "./fonts/ppnm/ppneuemontreal-book.otf", weight: "400", style: "normal" },
+    { path: "./fonts/ppnm/ppneuemontreal-italic.otf", weight: "400", style: "italic" },
+    { path: "./fonts/ppnm/ppneuemontreal-medium.otf", weight: "500", style: "normal" },
+    { path: "./fonts/ppnm/ppneuemontreal-semibolditalic.otf", weight: "600", style: "italic" },
+    { path: "./fonts/ppnm/ppneuemontreal-bold.otf", weight: "700", style: "normal" },
+  ],
 });
 
-// Mono fonts are used for smaller UI accents; don't let them block render.
-const geistMono = Geist_Mono({
+// Mono — JetBrains Mono for code and UI accents; don't let it block render.
+const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
-  variable: "--font-geist-mono",
-  display: "swap",
-  preload: false,
-});
-
-const bridgeMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-bridge-mono",
+  variable: "--font-jetbrains",
   display: "swap",
   preload: false,
 });
@@ -57,10 +63,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${bridgeDisplay.variable} ${bridgeMono.variable}`}
+      className={`dark ${sfPro.variable} ${neueMontreal.variable} ${jetbrainsMono.variable}`}
     >
       <head />
-      <body className="antialiased">
+      <body className="antialiased" style={{ fontOpticalSizing: "auto" }}>
         {children}
         {modal}
       </body>

@@ -29,9 +29,9 @@ function harnessHead(): string {
     place-items: center;
     min-height: 100%;
     background:
-      radial-gradient(circle at 50% 0%, rgba(0,255,136,0.05), transparent 60%),
-      #11120D;
-    color: #FFFBF4;
+      radial-gradient(circle at 50% 0%, rgba(0, 153, 255, 0.05), transparent 60%),
+      #0a0b0d;
+    color: #f7f8f8;
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     overflow: hidden;
   }
@@ -51,8 +51,8 @@ function harnessHead(): string {
     display: grid;
     place-items: center;
     border-radius: 14px;
-    background: linear-gradient(135deg, #D8CFBC, rgba(216,207,188,0.55));
-    color: #11120D;
+    background: linear-gradient(135deg, #a6a6a6, rgba(255,255,255,0.55));
+    color: #0a0b0d;
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.04em;

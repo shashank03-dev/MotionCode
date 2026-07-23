@@ -37,8 +37,8 @@ export function WorkspaceNode({
         className={cn(
           "group flex h-9 items-center gap-1 pr-1 transition",
           isActive
-            ? "bg-[var(--accent-dim)] text-[var(--text)]"
-            : "text-[var(--accent)] hover:bg-[var(--accent-dim)]/60",
+            ? "bg-[var(--accent-dim)] text-ink"
+            : "text-ink-2 hover:bg-[var(--accent-dim)]/60",
         )}
       >
         <button
@@ -46,7 +46,7 @@ export function WorkspaceNode({
           onClick={onToggle}
           aria-expanded={expanded}
           aria-label={expanded ? "Collapse workspace" : "Expand workspace"}
-          className="flex size-6 shrink-0 items-center justify-center text-[var(--accent)]/60 hover:text-[var(--text)]"
+          className="flex size-6 shrink-0 items-center justify-center text-ink-3 hover:text-ink"
         >
           <ChevronRight
             className={cn(
@@ -59,9 +59,9 @@ export function WorkspaceNode({
           href={`/workspaces/${workspace.id}`}
           aria-current={isActive ? "page" : undefined}
           title={workspace.name}
-          className="flex min-w-0 flex-1 items-center gap-2 font-sans text-[13px] hover:text-[var(--text)]"
+          className="flex min-w-0 flex-1 items-center gap-2 font-sans text-[13px] hover:text-ink"
         >
-          <FolderIcon className="size-3.5 shrink-0 text-[var(--accent)]" />
+          <FolderIcon className="size-3.5 shrink-0 text-ink-2" />
           <span className="truncate">{workspace.name}</span>
         </Link>
         <button
@@ -69,7 +69,7 @@ export function WorkspaceNode({
           onClick={onAddProject}
           aria-label={`New project in ${workspace.name}`}
           title="New project"
-          className="flex size-6 shrink-0 items-center justify-center text-[var(--accent)]/60 opacity-0 transition hover:text-[var(--text)] focus-visible:opacity-100 group-hover:opacity-100"
+          className="flex size-6 shrink-0 items-center justify-center text-ink-3 opacity-0 transition hover:text-ink focus-visible:opacity-100 group-hover:opacity-100"
         >
           <Plus className="size-3.5" />
         </button>
@@ -87,7 +87,7 @@ export function WorkspaceNode({
           ))}
           {createSlot ? <li>{createSlot}</li> : null}
           {projects.length === 0 && !createSlot ? (
-            <li className="py-1 pl-8 pr-2 font-sans text-xs text-[var(--accent)]/60">
+            <li className="py-1 pl-8 pr-2 font-sans text-xs text-ink-3">
               No projects yet
             </li>
           ) : null}

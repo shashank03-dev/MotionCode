@@ -122,7 +122,7 @@ export function ExplorerTree({ tree }: ExplorerTreeProps) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex h-9 items-center justify-between px-3">
-        <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--accent)]/70">
+        <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-3">
           Explorer
         </span>
         <button
@@ -130,7 +130,7 @@ export function ExplorerTree({ tree }: ExplorerTreeProps) {
           onClick={() => setCreatingWorkspace(true)}
           aria-label="New workspace"
           title="New workspace"
-          className="flex size-6 items-center justify-center border border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--text)] transition hover:border-[var(--accent)]"
+          className="flex size-6 items-center justify-center border border-[var(--accent-border)] bg-[var(--accent-dim)] text-ink transition hover:border-[var(--accent)]"
         >
           <Plus className="size-3.5" />
         </button>
@@ -150,12 +150,12 @@ export function ExplorerTree({ tree }: ExplorerTreeProps) {
           <button
             type="button"
             onClick={() => setCreatingWorkspace(true)}
-            className="mx-3 mt-2 flex w-[calc(100%-1.5rem)] flex-col items-start gap-1 border border-dashed border-[var(--border)] px-3 py-4 text-left transition hover:border-[var(--accent-border)]"
+            className="mx-3 mt-2 flex w-[calc(100%-1.5rem)] flex-col items-start gap-1 border border-dashed border-hairline px-3 py-4 text-left transition hover:border-[var(--accent-border)]"
           >
-            <span className="font-sans text-[13px] font-medium text-[var(--text)]">
+            <span className="font-sans text-[13px] font-medium text-ink">
               Create your first workspace
             </span>
-            <span className="font-sans text-xs leading-5 text-[var(--accent)]/75">
+            <span className="font-sans text-xs leading-5 text-ink-3">
               Group projects, then analyze references inside.
             </span>
           </button>

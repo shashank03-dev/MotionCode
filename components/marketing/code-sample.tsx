@@ -21,9 +21,9 @@ export const cssStarter = `.primary-action {
 
 export function MotionSpecPreview() {
   return (
-    <div className="relative overflow-hidden rounded-[8px] border border-white/10 bg-[#151811] shadow-2xl shadow-black/30">
+    <div className="relative overflow-hidden rounded-[8px] border border-white/10 bg-elevated shadow-2xl shadow-black/30">
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-        <div className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.18em] text-[#9ef0c0]">
+        <div className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.18em] text-accent">
           <Braces className="size-4" aria-hidden="true" />
           Motion spec
         </div>
@@ -34,25 +34,25 @@ export function MotionSpecPreview() {
 
       <div className="grid min-w-0 gap-0 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
         <div className="min-w-0 border-b border-white/10 p-4 lg:border-b-0 lg:border-r">
-          <pre className="max-w-full overflow-x-auto text-sm leading-6 text-[#fffbf4]">
+          <pre className="max-w-full overflow-x-auto text-sm leading-6 text-ink">
             <code>{motionSpec}</code>
           </pre>
         </div>
-        <div className="min-w-0 bg-[#0f120d] p-4">
+        <div className="min-w-0 bg-[#0f1115] p-4">
           <div className="mb-3 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.18em] text-[#f58f7c]">
             <Code2 className="size-4" aria-hidden="true" />
             CSS starter
           </div>
-          <pre className="max-w-full overflow-x-auto text-sm leading-6 text-[#d8cfbc]">
+          <pre className="max-w-full overflow-x-auto text-sm leading-6 text-ink-2">
             <code>{cssStarter}</code>
           </pre>
         </div>
       </div>
 
-      <div className="flex items-center gap-3 border-t border-white/10 bg-[#11140f] px-4 py-3 text-sm text-[#d8cfbc]/70">
-        <span className="size-2 rounded-full bg-[#9ef0c0]" aria-hidden="true" />
+      <div className="flex items-center gap-3 border-t border-white/10 bg-[#0f1115] px-4 py-3 text-sm text-ink-2/70">
+        <span className="size-2 rounded-full bg-accent" aria-hidden="true" />
         Review the spec, adjust the code, then paste it into your project.
-        <ArrowRight className="ml-auto size-4 text-[#9ef0c0]" aria-hidden="true" />
+        <ArrowRight className="ml-auto size-4 text-accent" aria-hidden="true" />
       </div>
     </div>
   );

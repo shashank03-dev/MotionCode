@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/dashboard/app-shell";
 import { OnboardingForm } from "@/components/dashboard/onboarding-form";
+import { Eyebrow, Panel } from "@/components/ui/kit";
 import { getEntitlementSummary } from "@/lib/server/entitlements";
 
 import { requireDashboardUser } from "../dashboard/data";
@@ -17,15 +18,17 @@ export default async function OnboardingPage() {
       userId={user.id}
     >
       <div className="mx-auto max-w-2xl py-10">
-        <div className="border border-[var(--border)] bg-[#15160f]/82 p-6 shadow-[0_18px_44px_rgba(0,0,0,0.22)] sm:p-8">
-          <p className="mb-3 font-mono text-xs uppercase tracking-[0.18em] text-[var(--muted)]">
-            Onboarding
-          </p>
-          <h1 className="font-mono text-3xl text-[var(--text)]">
+        <Panel variant="glass" inset="lg" radius="2xl">
+          <Eyebrow dot>Onboarding</Eyebrow>
+          <h1 className="mt-3 font-display text-3xl font-medium leading-[1.05] tracking-tightest text-ink">
             Create a workspace
           </h1>
+          <p className="mt-3 max-w-md text-[15px] leading-7 text-ink-2">
+            Workspaces group your saved analyses. Every run you make lands in one
+            automatically.
+          </p>
           <OnboardingForm />
-        </div>
+        </Panel>
       </div>
     </AppShell>
   );

@@ -51,12 +51,12 @@ export function CommentsPanel({
 
   if (!publicIncluded) {
     return (
-      <section className={cn("rounded-lg border border-zinc-800 p-5", className)}>
-        <div className="flex items-center gap-2 text-zinc-200">
+      <section className={cn("rounded-lg border border-hairline p-5", className)}>
+        <div className="flex items-center gap-2 text-ink">
           <MessageCircle className="size-4" />
           <h2 className="text-lg font-semibold">{heading}</h2>
         </div>
-        <p className="mt-2 text-sm text-zinc-400">
+        <p className="mt-2 text-sm text-ink-2">
           Comments remain private to workspace members.
         </p>
       </section>
@@ -64,23 +64,23 @@ export function CommentsPanel({
   }
 
   return (
-    <section className={cn("rounded-lg border border-zinc-800 p-5", className)}>
+    <section className={cn("rounded-lg border border-hairline p-5", className)}>
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-zinc-200">
+        <div className="flex items-center gap-2 text-ink">
           <MessageCircle className="size-4" />
           <h2 className="text-lg font-semibold">{heading}</h2>
         </div>
-        <span className="text-sm text-zinc-500">{comments.length}</span>
+        <span className="text-sm text-ink-3">{comments.length}</span>
       </div>
 
       <div className="mt-4 space-y-3">
         {comments.length > 0 ? (
           comments.map((comment) => (
             <article
-              className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3"
+              className="rounded-lg border border-hairline bg-panel/60 p-3"
               key={comment.id}
             >
-              <div className="flex items-center justify-between gap-3 text-xs text-zinc-500">
+              <div className="flex items-center justify-between gap-3 text-xs text-ink-3">
                 <span>{comment.authorName ?? "Workspace member"}</span>
                 <time dateTime={comment.createdAt}>
                   {new Intl.DateTimeFormat(undefined, {
@@ -89,11 +89,11 @@ export function CommentsPanel({
                   }).format(new Date(comment.createdAt))}
                 </time>
               </div>
-              <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-200">
+              <p className="mt-2 whitespace-pre-wrap text-sm text-ink">
                 {comment.body}
               </p>
               {comment.resolvedAt ? (
-                <div className="mt-2 flex items-center gap-1 text-xs text-emerald-300">
+                <div className="mt-2 flex items-center gap-1 text-xs text-accent">
                   <CheckCircle2 className="size-3" />
                   <span>Resolved</span>
                 </div>
@@ -101,14 +101,14 @@ export function CommentsPanel({
             </article>
           ))
         ) : (
-          <p className="text-sm text-zinc-400">No comments yet.</p>
+          <p className="text-sm text-ink-2">No comments yet.</p>
         )}
       </div>
 
       {canSubmit ? (
         <form className="mt-4 space-y-3" onSubmit={submit}>
           <textarea
-            className="min-h-24 w-full resize-y rounded-lg border border-zinc-800 bg-zinc-950 p-3 text-sm text-zinc-100 outline-none transition-colors placeholder:text-zinc-600 focus:border-emerald-400"
+            className="min-h-24 w-full resize-y rounded-lg border border-hairline bg-panel p-3 text-sm text-ink outline-none transition-colors placeholder:text-ink-3 focus:border-accent"
             maxLength={2000}
             onChange={(event) => setBody(event.target.value)}
             placeholder="Add a scoped workspace comment"

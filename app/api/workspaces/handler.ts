@@ -1,7 +1,9 @@
 import type { User } from "@supabase/supabase-js";
 import { z } from "zod";
 
+import { PLAN_ENTITLEMENTS, type PlanTier } from "@/lib/contracts/plans";
 import { apiError, apiSuccess, ApiError, isApiError } from "@/lib/server/apiErrors";
+import { resolvePlanTierForUser } from "@/lib/server/entitlements";
 import { ensureProfileForUser } from "@/lib/server/profiles";
 import { createSupabaseAdminClient } from "@/lib/server/supabaseAdmin";
 import {
@@ -38,6 +40,7 @@ type UpdateWorkspaceInput = {
 };
 
 export type WorkspaceRouteDeps = {
+  countOwnedWorkspaces?: (userId: string) => Promise<number>;
   createWorkspace?: (input: CreateWorkspaceInput) => Promise<WorkspaceRow>;
   ensureProfile?: (userId: string) => Promise<void>;
   getCurrentUser?: () => Promise<CurrentUser | null>;
@@ -47,6 +50,7 @@ export type WorkspaceRouteDeps = {
   ) => Promise<WorkspaceAccess | null>;
   listWorkspaces?: (userId: string) => Promise<WorkspaceRow[]>;
   markOnboardingComplete?: (userId: string) => Promise<void>;
+  resolvePlanTier?: (userId: string) => Promise<PlanTier>;
   updateWorkspace?: (input: UpdateWorkspaceInput) => Promise<WorkspaceRow>;
 };
 
@@ -113,6 +117,25 @@ export async function handleCreateWorkspaceRequest(
 
   const name = parsed.data.name;
   const slug = parsed.data.slug ?? slugify(name);
+
+  // Workspace creation is quota-gated by plan. Free tier is 0 (a paid feature),
+  // so any attempt returns BILLING_REQUIRED (402) and the client surfaces the
+  // upgrade prompt. Paid tiers are capped at their plan's workspaceCount.
+  try {
+    const planTier = await resolvedDeps.resolvePlanTier(user.id);
+    const limit = PLAN_ENTITLEMENTS[planTier].workspaceCount;
+    const used = await resolvedDeps.countOwnedWorkspaces(user.id);
+
+    if (used >= limit) {
+      const message =
+        limit === 0
+          ? "Workspaces are a paid feature. Upgrade your plan to create one."
+          : `You've reached your plan's workspace limit (${limit}). Upgrade for more.`;
+      return apiError("BILLING_REQUIRED", message);
+    }
+  } catch (error) {
+    return toErrorResponse(error, "Failed to verify workspace quota.");
+  }
 
   try {
     // The workspaces.owner_id FK requires a public.profiles row. Password
@@ -216,6 +239,8 @@ function resolveWorkspaceDeps(
   deps: WorkspaceRouteDeps,
 ): Required<WorkspaceRouteDeps> {
   return {
+    countOwnedWorkspaces:
+      deps.countOwnedWorkspaces ?? countOwnedWorkspacesWithSupabase,
     createWorkspace: deps.createWorkspace ?? createWorkspaceWithSupabase,
     ensureProfile: deps.ensureProfile ?? ensureProfileWithSupabase,
     getCurrentUser: deps.getCurrentUser ?? getSupabaseCurrentUser,
@@ -223,8 +248,25 @@ function resolveWorkspaceDeps(
     listWorkspaces: deps.listWorkspaces ?? listWorkspacesWithSupabase,
     markOnboardingComplete:
       deps.markOnboardingComplete ?? markOnboardingCompleteWithSupabase,
+    resolvePlanTier:
+      deps.resolvePlanTier ??
+      ((userId: string) => resolvePlanTierForUser({ id: userId })),
     updateWorkspace: deps.updateWorkspace ?? updateWorkspaceWithSupabase,
   };
+}
+
+async function countOwnedWorkspacesWithSupabase(userId: string) {
+  const supabase = await createSupabaseServerClient();
+  const { count, error } = await supabase
+    .from("workspaces")
+    .select("id", { count: "exact", head: true })
+    .eq("owner_id", userId);
+
+  if (error) {
+    throw new ApiError("INTERNAL_ERROR", "Failed to read workspace usage.");
+  }
+
+  return count ?? 0;
 }
 
 async function ensureProfileWithSupabase(userId: string) {

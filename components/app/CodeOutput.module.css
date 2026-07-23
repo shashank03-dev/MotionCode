@@ -1,14 +1,14 @@
 .output {
-  --code-bg: #0c0d09;
-  --code-surface: #11130e;
-  --code-surface-raised: #171911;
+  --code-bg: #0c0d10;
+  --code-surface: #111317;
+  --code-surface-raised: #171922;
   --code-border: rgba(86, 84, 73, 0.58);
-  --code-border-strong: rgba(216, 207, 188, 0.36);
-  --code-text: #f4ecd9;
-  --code-muted: #8f887a;
-  --code-dim: #625e50;
-  --code-accent: #d8cfbc;
-  --code-success: #9ef0c0;
+  --code-border-strong: rgba(255, 255, 255, 0.36);
+  --code-text: #eef0f2;
+  --code-muted: #8a9099;
+  --code-dim: #5f6268;
+  --code-accent: #a6a6a6;
+  --code-success: #0099ff;
   --code-success-soft: rgba(158, 240, 192, 0.12);
   --code-warning: #f4a340;
 
@@ -17,9 +17,9 @@
   flex: 1;
   flex-direction: column;
   overflow: hidden;
-  border-top: 1px solid rgba(255, 251, 244, 0.03);
+  border-top: 1px solid rgba(247, 248, 248, 0.03);
   background:
-    radial-gradient(circle at 82% 0%, rgba(216, 207, 188, 0.075), transparent 28%),
+    radial-gradient(circle at 82% 0%, rgba(255, 255, 255, 0.075), transparent 28%),
     var(--code-bg);
 }
 
@@ -32,10 +32,10 @@
   overflow-x: auto;
   border-bottom: 1px solid var(--code-border);
   background:
-    linear-gradient(180deg, rgba(255, 251, 244, 0.045), rgba(255, 251, 244, 0.012)),
+    linear-gradient(180deg, rgba(247, 248, 248, 0.045), rgba(247, 248, 248, 0.012)),
     var(--code-surface);
   padding: 0 clamp(14px, 3vw, 24px);
-  scrollbar-color: rgba(216, 207, 188, 0.32) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.32) transparent;
   scrollbar-width: thin;
 }
 
@@ -71,13 +71,13 @@
 }
 
 .tabs button:hover {
-  background: rgba(216, 207, 188, 0.06);
+  background: rgba(255, 255, 255, 0.06);
   color: var(--code-text);
 }
 
 .tabActive {
   background:
-    linear-gradient(180deg, rgba(216, 207, 188, 0.12), rgba(216, 207, 188, 0.035)) !important;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.035)) !important;
   color: var(--code-accent) !important;
 }
 
@@ -91,12 +91,12 @@
   flex: 1;
   overflow: auto;
   background:
-    linear-gradient(90deg, rgba(216, 207, 188, 0.035) 0 1px, transparent 1px 100%),
-    linear-gradient(180deg, rgba(255, 251, 244, 0.028), transparent 26%),
-    #090a07;
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 100%),
+    linear-gradient(180deg, rgba(247, 248, 248, 0.028), transparent 26%),
+    #0a0b0d;
   background-size: 44px 100%, auto, auto;
   padding: 58px clamp(16px, 3vw, 24px) 24px;
-  scrollbar-color: rgba(216, 207, 188, 0.3) rgba(17, 18, 13, 0.62);
+  scrollbar-color: rgba(255, 255, 255, 0.3) rgba(10, 11, 13, 0.62);
   scrollbar-width: thin;
 }
 
@@ -120,11 +120,11 @@
   border: 1px solid var(--code-border);
   border-radius: 6px;
   background:
-    linear-gradient(180deg, rgba(255, 251, 244, 0.06), rgba(255, 251, 244, 0.016)),
-    rgba(17, 19, 14, 0.92);
+    linear-gradient(180deg, rgba(247, 248, 248, 0.06), rgba(247, 248, 248, 0.016)),
+    rgba(17, 18, 22, 0.92);
   box-shadow:
     0 10px 22px rgba(0, 0, 0, 0.16),
-    inset 0 1px 0 rgba(255, 251, 244, 0.045);
+    inset 0 1px 0 rgba(247, 248, 248, 0.045);
   color: var(--code-text);
   font-size: 0.7rem;
   font-weight: 700;
@@ -136,7 +136,7 @@
 .actions button:hover {
   border-color: var(--code-border-strong);
   background:
-    linear-gradient(180deg, rgba(216, 207, 188, 0.13), rgba(216, 207, 188, 0.035)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.035)),
     var(--code-surface-raised);
   color: var(--code-accent);
   transform: translateY(-1px);
@@ -181,10 +181,10 @@
 }
 
 .codePanel pre span[style*="color: #38bdf8"] {
-  color: #c8d39f !important;
+  color: #a9b6c8 !important;
 }
 
-.codePanel pre span[style*="color: #a3e635"] {
+.codePanel pre span[style*="color: #5cb3ff"] {
   color: var(--code-success) !important;
 }
 

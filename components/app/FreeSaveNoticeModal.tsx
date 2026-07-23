@@ -56,7 +56,7 @@ export function FreeSaveNoticeModal({
         aria-modal="true"
         aria-labelledby="free-save-title"
         aria-describedby="free-save-body"
-        className="relative z-10 w-full max-w-[420px] rounded-2xl border border-[var(--border)] bg-[#0d0f0b] p-6 shadow-[0_30px_80px_rgba(0,0,0,0.6)]"
+        className="relative z-10 w-full max-w-[420px] rounded-2xl border border-hairline bg-[#0a0b0d] p-6 shadow-[0_30px_80px_rgba(0,0,0,0.6)]"
       >
         <div className="flex items-start gap-3.5">
           <span
@@ -68,20 +68,20 @@ export function FreeSaveNoticeModal({
           <div className="min-w-0">
             <h2
               id="free-save-title"
-              className="text-[0.98rem] font-semibold leading-snug text-[var(--text)]"
+              className="text-[0.98rem] font-semibold leading-snug text-ink"
             >
               Your work won&apos;t be saved
             </h2>
             <p
               id="free-save-body"
-              className="mt-2 text-[0.84rem] leading-relaxed text-[var(--accent)]"
+              className="mt-2 text-[0.84rem] leading-relaxed text-ink-2"
             >
               On the Free plan, this analysis lives only in this tab. Copy the
               CSS, GSAP, or Framer Motion code you need before you close or leave
               the app — once you go, it&apos;s gone.{" "}
               <Link
                 href="/pricing"
-                className="whitespace-nowrap text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 transition-colors hover:decoration-[var(--accent)]"
+                className="whitespace-nowrap text-ink underline decoration-[var(--border)] underline-offset-2 transition-colors hover:decoration-[var(--accent)]"
               >
                 Upgrade to save projects
               </Link>
@@ -90,7 +90,7 @@ export function FreeSaveNoticeModal({
           </div>
         </div>
 
-        <label className="mt-5 flex cursor-pointer select-none items-center gap-2.5 text-[0.78rem] text-[var(--accent)]">
+        <label className="mt-5 flex cursor-pointer select-none items-center gap-2.5 text-[0.78rem] text-ink-2">
           <input
             type="checkbox"
             checked={dontRemind}
@@ -104,7 +104,7 @@ export function FreeSaveNoticeModal({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg border border-[var(--border)] px-3.5 py-2 font-mono text-[0.74rem] text-[var(--accent)] transition-colors hover:border-[var(--accent-border)] hover:text-[var(--text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]"
+            className="rounded-lg border border-hairline px-3.5 py-2 font-mono text-[0.74rem] text-ink-2 transition-colors hover:border-[var(--accent-border)] hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]"
           >
             Cancel
           </button>
@@ -112,7 +112,7 @@ export function FreeSaveNoticeModal({
             ref={confirmRef}
             type="button"
             onClick={() => onConfirm(dontRemind)}
-            className="rounded-lg border border-[var(--accent)] bg-[var(--accent)] px-3.5 py-2 font-mono text-[0.74rem] font-medium text-[#11120d] transition-colors hover:bg-[var(--text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--text)]"
+            className="rounded-lg border border-[var(--accent)] bg-[var(--accent)] px-3.5 py-2 font-mono text-[0.74rem] font-medium text-[#0a0b0d] transition-colors hover:bg-[var(--text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--text)]"
           >
             Continue
           </button>

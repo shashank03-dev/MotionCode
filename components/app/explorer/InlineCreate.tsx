@@ -78,18 +78,18 @@ export function InlineCreate({
     <div style={{ paddingLeft: indent }} className="px-2 py-1">
       <div
         className={cn(
-          "flex h-9 items-center gap-2 rounded-[3px] border bg-[#0d0e09] pl-2 pr-1.5 transition-colors",
+          "flex h-9 items-center gap-2 rounded-[3px] border bg-[#0a0b0d] pl-2 pr-1.5 transition-colors",
           "focus-within:shadow-[0_0_0_3px_var(--accent-dim)]",
           error
             ? "border-[var(--danger-border)] focus-within:border-[var(--danger)]"
-            : "border-[var(--border)] focus-within:border-[var(--accent-border)]",
+            : "border-hairline focus-within:border-[var(--accent-border)]",
         )}
       >
         <Icon
           aria-hidden="true"
           className={cn(
             "size-3.5 shrink-0 transition-colors",
-            error ? "text-[var(--danger)]" : "text-[var(--accent)]/70",
+            error ? "text-[var(--danger)]" : "text-ink-3",
           )}
         />
         <input
@@ -108,17 +108,17 @@ export function InlineCreate({
             if (!value.trim()) onClose();
           }}
           placeholder={placeholder}
-          className="h-full min-w-0 flex-1 bg-transparent font-sans text-[13px] text-[var(--text)] outline-none placeholder:text-[var(--accent)]/60 disabled:opacity-60"
+          className="h-full min-w-0 flex-1 bg-transparent font-sans text-[13px] text-ink outline-none placeholder:text-ink-3 disabled:opacity-60"
         />
         {submitting ? (
-          <Loader2 className="size-3.5 shrink-0 animate-spin text-[var(--accent)]/70" />
+          <Loader2 className="size-3.5 shrink-0 animate-spin text-ink-3" />
         ) : hasValue ? (
-          <span className="flex shrink-0 items-center gap-1 font-mono text-[10px] text-[var(--accent)]/45">
+          <span className="flex shrink-0 items-center gap-1 font-mono text-[10px] text-ink-3">
             <CornerDownLeft className="size-3" aria-hidden="true" />
             <span className="sr-only">Press Enter to create</span>
           </span>
         ) : (
-          <kbd className="shrink-0 rounded-[2px] border border-[var(--border)] px-1 py-px font-mono text-[10px] leading-none text-[var(--accent)]/45">
+          <kbd className="shrink-0 rounded-[2px] border border-hairline px-1 py-px font-mono text-[10px] leading-none text-ink-3">
             esc
           </kbd>
         )}

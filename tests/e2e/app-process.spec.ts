@@ -96,8 +96,11 @@ test.describe("application processing states", () => {
       stage: "analyzing",
       valueRange: [0, 100],
     });
-    await expect(page.getByTestId("process-scan-beam")).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Vector solve" })).toBeVisible();
+    // The particle field is the live progress visual and marks itself as
+    // processing while the analysis is in flight.
+    const field = page.getByTestId("process-field");
+    await expect(field).toBeVisible();
+    await expect(field).toHaveAttribute("data-processing", "true");
 
     releaseAnalyze.resolve();
     await responsePromise;

@@ -29,7 +29,7 @@ export const PLAN_ENTITLEMENTS: Record<PlanTier, PlanEntitlements> = {
     shareLinks: false,
     comments: false,
     teamSeats: 1,
-    workspaceCount: 1,
+    workspaceCount: 0,
     projectVersioning: false,
     auditLogRetentionDays: 7,
     supportPriority: "community",
