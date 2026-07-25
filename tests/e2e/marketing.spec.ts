@@ -113,27 +113,18 @@ test.describe("marketing surface", () => {
 
     const pricing = page.locator("#pricing");
     await expect(
-      pricing.getByRole("heading", { name: /Pricing built for motion teams/i }),
+      pricing.getByRole("heading", { name: /Scale when it ships/i }),
     ).toBeVisible();
-    await expect(pricing.getByRole("heading", { name: /^Preview$/i })).toBeVisible();
-    await expect(pricing.getByRole("heading", { name: /^Pro$/i })).toBeVisible();
-    await expect(pricing.getByRole("heading", { name: /^Studio$/i })).toBeVisible();
-    await expect(pricing.getByTestId("price-preview")).toContainText("₹0");
-    await expect(pricing.getByTestId("price-pro")).toContainText("₹100");
-    await expect(pricing.getByTestId("price-studio")).toContainText("₹500");
-    await expect(pricing.getByTestId("price-pro")).toHaveCSS(
-      "animation-name",
-      /price/i,
-    );
-    await expect(pricing.getByText("Priority analysis queue")).toBeVisible();
-    await expect(pricing.getByText("Team workspaces")).toBeVisible();
-    await expect(
-      pricing.getByRole("button", { name: /Pay with Razorpay/i }).first(),
-    ).toBeVisible();
-
-    const proCard = pricing.getByTestId("pricing-card-pro");
-    await proCard.hover();
-    await expect(proCard).toHaveAttribute("data-hovered", "true");
+    await expect(pricing.getByRole("heading", { name: /^Free$/ })).toBeVisible();
+    await expect(pricing.getByRole("heading", { name: /^Pro$/ })).toBeVisible();
+    await expect(pricing.getByRole("heading", { name: /^Team$/ })).toBeVisible();
+    await expect(pricing.getByText("$0", { exact: true })).toBeVisible();
+    await expect(pricing.getByText("$18", { exact: true })).toBeVisible();
+    await expect(pricing.getByText("$49", { exact: true })).toBeVisible();
+    await expect(pricing.getByText("Most popular")).toBeVisible();
+    await expect(pricing.getByText("Easing curve editor")).toBeVisible();
+    await expect(pricing.getByRole("link", { name: /^Go Pro$/i })).toBeVisible();
+    await expect(pricing.getByRole("link", { name: /^Go Team$/i })).toBeVisible();
 
     const finalCta = page.getByTestId("final-cta");
     await expect(finalCta.getByRole("heading", { name: /Start converting/i })).toBeVisible();

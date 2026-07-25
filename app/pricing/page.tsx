@@ -2,7 +2,12 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 
 import { SiteFooter, SiteHeader } from "@/components/marketing";
-import { PLAN_ENTITLEMENTS, type PlanTier } from "@/lib/contracts/plans";
+import {
+  formatQuota,
+  PLAN_ENTITLEMENTS,
+  PLAN_LABELS,
+  type PlanTier,
+} from "@/lib/contracts/plans";
 import { cn } from "@/lib/utils";
 
 import { CheckoutButton } from "./CheckoutButton";
@@ -22,19 +27,19 @@ const PLAN_COPY: Record<
     cta: "Start free",
     description: "For testing the motion analysis workflow.",
     period: "preview",
-    price: "₹0",
+    price: "$0",
   },
   pro: {
     cta: "Pay with Razorpay",
     description: "For individual production motion work.",
     period: "/ month",
-    price: "₹100",
+    price: "$18",
   },
   studio: {
     cta: "Pay with Razorpay",
     description: "For teams managing shared animation systems.",
     period: "/ month",
-    price: "₹500",
+    price: "$49",
   },
 };
 
@@ -73,7 +78,7 @@ export default function PricingPage() {
           </div>
 
           <p className="mt-10 text-center font-mono text-[11px] uppercase tracking-[0.16em] text-ink-3">
-            Prices in INR, billed monthly through Razorpay. Cancel anytime from
+            Prices in USD, billed monthly through Razorpay. Cancel anytime from
             your account.
           </p>
         </section>
@@ -101,7 +106,7 @@ function PlanColumn({ tier }: { tier: PlanTier }) {
         </span>
       ) : null}
 
-      <h3 className="text-lg font-medium capitalize tracking-tight">{tier}</h3>
+      <h3 className="text-lg font-medium tracking-tight">{PLAN_LABELS[tier]}</h3>
       <p className="mt-2 text-[14px] leading-6 text-ink-2">{copy.description}</p>
 
       <div className="mt-5 flex items-end gap-1.5">
@@ -157,7 +162,7 @@ function PlanColumn({ tier }: { tier: PlanTier }) {
 
 function formatFeatureValue(value: unknown) {
   if (typeof value === "number") {
-    return value.toLocaleString();
+    return formatQuota(value);
   }
 
   if (typeof value === "boolean") {

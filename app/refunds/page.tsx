@@ -11,7 +11,7 @@ const sections = [
   {
     title: "Subscriptions",
     body: [
-      "MotionCode Pro and Studio are billed as recurring monthly subscriptions in Indian Rupees (INR) through Razorpay.",
+      "MotionCode Pro and Team are billed as recurring monthly subscriptions in US Dollars (USD) through Razorpay.",
       "Your subscription renews automatically at the end of each billing cycle until you cancel it.",
     ],
   },

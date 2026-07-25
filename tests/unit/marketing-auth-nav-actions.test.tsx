@@ -121,7 +121,7 @@ describe("MarketingAuthNavActions", () => {
     expect(container.textContent).toContain("Dashboard");
     expect(container.textContent).toContain("Account");
     expect(container.textContent).toContain("Open App");
-    expect(container.textContent).toContain("Out");
+    expect(container.textContent).toContain("Sign out");
     expect(container.textContent).not.toContain("Try Free");
   });
 });

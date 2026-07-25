@@ -53,7 +53,7 @@ export function ShareLinkManager({
 
     return {
       canCreate: true,
-      helper: "Studio share links can include comments.",
+      helper: "Team share links can include comments.",
     };
   }, [planTier]);
 

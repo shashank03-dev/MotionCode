@@ -14,6 +14,7 @@ import {
 } from "@/app/account/actions";
 import { Panel } from "@/components/ui/kit";
 import { ButtonLink } from "@/components/ui/site-button";
+import { formatQuota, isUnlimitedQuota } from "@/lib/contracts/plans";
 import { getEntitlementSummary } from "@/lib/server/entitlements";
 import { getCurrentUser } from "@/lib/supabase/server";
 
@@ -48,16 +49,19 @@ export async function AccountContent({ notices }: AccountContentProps = {}) {
   const monogram = (displayName[0] ?? "?").toUpperCase();
 
   const daily = usage.dailyAnalyses;
+  const dailyUnlimited = isUnlimitedQuota(daily.limit);
   const usedPct =
-    daily.limit > 0 ? Math.min(100, Math.round((daily.used / daily.limit) * 100)) : 0;
+    dailyUnlimited || daily.limit <= 0
+      ? 0
+      : Math.min(100, Math.round((daily.used / daily.limit) * 100));
 
   const planRows: Array<[string, string]> = [
-    ["Daily analyses", daily.limit.toLocaleString()],
+    ["Daily analyses", formatQuota(daily.limit)],
     ["Frames / analysis", entitlements.maxFramesPerAnalysis.toLocaleString()],
     ["Upload limit", `${Math.round(entitlements.maxUploadBytes / 1024 / 1024)} MB`],
-    ["Saved projects", entitlements.savedProjects.toLocaleString()],
-    ["Workspaces", entitlements.workspaceCount.toLocaleString()],
-    ["Team seats", entitlements.teamSeats.toLocaleString()],
+    ["Saved projects", formatQuota(entitlements.savedProjects)],
+    ["Workspaces", formatQuota(entitlements.workspaceCount)],
+    ["Team seats", formatQuota(entitlements.teamSeats)],
   ];
 
   const capabilities: Array<[string, boolean]> = [
@@ -111,10 +115,14 @@ export async function AccountContent({ notices }: AccountContentProps = {}) {
           <div className="flex items-end justify-between">
             <p className="font-display text-4xl font-medium tracking-tightest text-ink">
               {daily.used.toLocaleString()}
-              <span className="text-ink-3">/{daily.limit.toLocaleString()}</span>
+              <span className="text-ink-3">
+                /{dailyUnlimited ? "∞" : daily.limit.toLocaleString()}
+              </span>
             </p>
             <p className="pb-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-ink-3">
-              {daily.remaining.toLocaleString()} left
+              {dailyUnlimited
+                ? "Unlimited"
+                : `${daily.remaining.toLocaleString()} left`}
             </p>
           </div>
           <div

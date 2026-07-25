@@ -8,6 +8,7 @@ import {
 import {
   PLAN_ENTITLEMENTS,
   PLAN_TIERS,
+  UNLIMITED_QUOTA,
   type PlanTier,
 } from "@/lib/contracts/plans";
 
@@ -24,7 +25,8 @@ describe("shared product contracts", () => {
     });
     expect(PLAN_ENTITLEMENTS.studio).toMatchObject({
       tier: "studio",
-      dailyAnalyses: 500,
+      dailyAnalyses: UNLIMITED_QUOTA,
+      workspaceCount: UNLIMITED_QUOTA,
       allowedModels: ["gemini-2.5-flash", "gemini-2.5-pro"],
       shareLinks: true,
       comments: true,

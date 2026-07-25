@@ -6,7 +6,7 @@ import { CancelSubscriptionButton } from "@/app/billing/CancelSubscriptionButton
 import { ChangePlanButton } from "@/app/billing/ChangePlanButton";
 import { Panel, Pill } from "@/components/ui/kit";
 import { ButtonLink } from "@/components/ui/site-button";
-import { type PlanTier } from "@/lib/contracts/plans";
+import { PLAN_LABELS, type PlanTier } from "@/lib/contracts/plans";
 import { getEntitlementSummary } from "@/lib/server/entitlements";
 import {
   getRazorpaySubscriptionSchedule,
@@ -86,7 +86,7 @@ export async function BillingContent({
 
       <Section icon={<Shield className="size-4" aria-hidden="true" />} title="Current plan">
         <dl className="grid gap-4 sm:grid-cols-2">
-          <Detail label="Plan" value={titleCase(planTier)} />
+          <Detail label="Plan" value={PLAN_LABELS[planTier]} />
           <Detail
             label="Status"
             value={
@@ -140,8 +140,8 @@ export async function BillingContent({
           badge={<Pill tone="accent">Gifted</Pill>}
         >
           <p className="text-[14px] leading-6 text-ink-2">
-            An admin granted you {titleCase(planTier)} at no charge. You have full
-            access to every {titleCase(planTier)} feature
+            An admin granted you {PLAN_LABELS[planTier]} at no charge. You have full
+            access to every {PLAN_LABELS[planTier]} feature
             {override?.expires_at
               ? ` until ${formatDate(override.expires_at)}`
               : " with no expiry date"}
@@ -178,12 +178,12 @@ export async function BillingContent({
                   <>
                     <p className="text-[14px] leading-6 text-ink-2">
                       {planTier === "pro"
-                        ? "Upgrade to Studio for more seats, workspaces, and analyses. Takes effect immediately."
+                        ? "Upgrade to Team for more seats, workspaces, and analyses. Takes effect immediately."
                         : "Switch to Pro. The change applies at the end of your current billing cycle."}
                     </p>
                     {planTier === "pro" ? (
                       <ChangePlanButton
-                        label="Upgrade to Studio"
+                        label="Upgrade to Team"
                         targetPlanTier="studio"
                       />
                     ) : (
@@ -205,7 +205,7 @@ export async function BillingContent({
           title="No active subscription"
         >
           <p className="text-[14px] leading-6 text-ink-2">
-            You are on the free plan. Choose Pro or Studio to unlock more analyses,
+            You are on the free plan. Choose Pro or Team to unlock more analyses,
             seats, and workspaces.
           </p>
           <ButtonLink href="/pricing" variant="primary" size="sm" className="mt-6">

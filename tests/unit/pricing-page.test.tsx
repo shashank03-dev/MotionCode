@@ -13,9 +13,10 @@ describe("pricing page Razorpay checkout", () => {
   it("renders Razorpay checkout CTAs for paid plans", () => {
     const renderedHtml = renderToStaticMarkup(<PricingPage />);
 
-    expect(renderedHtml).toContain("₹0");
-    expect(renderedHtml).toContain("₹100");
-    expect(renderedHtml).toContain("₹500");
+    expect(renderedHtml).toContain("$0");
+    expect(renderedHtml).toContain("$18");
+    expect(renderedHtml).toContain("$49");
+    expect(renderedHtml).toContain("Team");
     expect(renderedHtml).toContain("Pay with Razorpay");
     expect(renderedHtml).not.toContain("signup queue");
   });

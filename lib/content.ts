@@ -119,8 +119,8 @@ export const PRICING = [
       "SSO + roles",
       "Priority support",
     ],
-    cta: "Talk to us",
-    href: "/contact",
+    cta: "Go Team",
+    href: "/pricing",
     featured: false,
   },
 ];

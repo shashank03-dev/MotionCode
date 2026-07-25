@@ -35,7 +35,7 @@ async function renderBilling() {
 }
 
 describe("BillingContent admin-override (complimentary) state", () => {
-  it("renders a complimentary Studio plan with real override dates and no free-plan copy", async () => {
+  it("renders a complimentary Team plan with real override dates and no free-plan copy", async () => {
     mockUser();
     mockRazorpay();
     vi.doMock("@/lib/server/entitlements", () => ({
@@ -59,7 +59,7 @@ describe("BillingContent admin-override (complimentary) state", () => {
     const html = await renderBilling();
 
     // Plan reflects the override; status reads as a giveaway, not "Free".
-    expect(html).toContain("Studio");
+    expect(html).toContain("Team");
     expect(html).toContain("Complimentary");
     expect(html).toContain("Complimentary access");
     // Real override dates surface — no "No expiry" placeholder when set.
