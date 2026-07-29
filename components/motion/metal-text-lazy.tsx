@@ -44,23 +44,29 @@ const MetalTextImpl = React.lazy(() =>
 );
 
 /**
- * false while server-rendering, true on the client. `useSyncExternalStore` with
- * a no-op subscription is the sanctioned way to read that difference without
- * setting state from an effect.
+ * false while server-rendering and on the hydrating frame, true afterwards.
+ *
+ * An earlier version used `useSyncExternalStore` with a no-op subscription.
+ * That reads as the idiomatic "am I on the client" hook, but because the store
+ * never notifies, React kept the hydration-time snapshot and never re-rendered
+ * — so the shader never mounted and the footer sat on its CSS fallback
+ * forever. Scheduling the flip in rAF guarantees the re-render actually
+ * happens (and keeps the state update out of the effect body, which the
+ * react-hooks lint rule forbids).
  */
-const subscribeNoop = () => () => {};
-function useIsClient() {
-  return React.useSyncExternalStore(
-    subscribeNoop,
-    () => true,
-    () => false,
-  );
+function useAfterHydration() {
+  const [ready, setReady] = React.useState(false);
+  React.useEffect(() => {
+    const id = requestAnimationFrame(() => setReady(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+  return ready;
 }
 
 export function MetalText(props: MetalTextProps) {
-  // Server render and first client frame both produce the CSS wordmark, so
+  // Server render and the hydrating frame both produce the CSS wordmark, so
   // hydration matches and the shader upgrade happens strictly afterwards.
-  const mounted = useIsClient();
+  const mounted = useAfterHydration();
 
   if (!mounted) return <MetalTextFallback {...props} />;
 

@@ -64,13 +64,17 @@ export function Footer() {
           ))}
         </div>
 
-        {/* Oversized interactive brand mark — liquid metal reacts to the cursor */}
-        <div className="mt-16 select-none">
+        {/* Oversized interactive brand mark - liquid metal reacts to the cursor.
+            Sized against this container (cqw), not the viewport: the wordmark
+            renders at 5.12x its font-size, so the old `lg:text-[15rem]` (240px)
+            overflowed the 1200px container by a few pixels and clipped the
+            final "e". Container units keep it flush at every width. */}
+        <div className="mt-16 select-none [container-type:inline-size]">
           <MetalText
             text="MotionCode"
             interactive
             blue={0.5}
-            className="block cursor-default font-display text-[19vw] font-medium leading-[0.85] tracking-tighter lg:text-[15rem]"
+            className="block cursor-default font-display text-[20.3cqw] font-medium leading-[0.85] tracking-tighter"
           />
         </div>
 

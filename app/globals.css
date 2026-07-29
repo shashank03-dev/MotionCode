@@ -15,8 +15,13 @@
     background:
       linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.012) 60%),
       rgba(12, 13, 16, 0.55);
-    backdrop-filter: blur(18px) saturate(140%);
+    /* Prefixed first, standard last. The CSS minifier de-duplicates these two
+       and keeps whichever comes last, so declaring the standard property first
+       silently shipped a rule with ONLY -webkit-backdrop-filter — the blur was
+       dead on every .glass-card on the site. Every other glass rule in this
+       file already uses this order; these two were the outliers. */
     -webkit-backdrop-filter: blur(18px) saturate(140%);
+    backdrop-filter: blur(18px) saturate(140%);
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.1),
@@ -99,8 +104,9 @@
     background:
       linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.015) 100%),
       rgba(10, 11, 13, 0.3);
-    backdrop-filter: blur(16px) saturate(160%);
+    /* Prefixed first, standard last — see the note on .glass-card above. */
     -webkit-backdrop-filter: blur(16px) saturate(160%);
+    backdrop-filter: blur(16px) saturate(160%);
     border: 1px solid rgba(255, 255, 255, 0.09);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.14),
