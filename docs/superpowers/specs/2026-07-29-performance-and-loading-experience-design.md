@@ -154,19 +154,28 @@ shimmer is static under `prefers-reduced-motion`.
 "Adaptive" means each skeleton mirrors *that page's* real layout, so the
 transition to loaded content is a fill-in rather than a swap.
 
-**Add** (`loading.tsx` per route — 17 of the 21 missing):
-`/pricing`, `/billing`, `/login`, `/onboarding`, `/support`, `/contact`,
-`/share/[token]`, `/admin`, `/admin/users`, `/app`, `/projects`,
+**Add** (`loading.tsx` per route — 15 of the 21 missing):
+`/pricing`, `/billing`, `/login`, `/onboarding`, `/support`,
+`/share/[token]`, `/admin`, `/admin/users`, `/app`,
 `/projects/[projectId]`, `/projects/[projectId]/versions/[versionId]`,
 `/workspaces`, `/workspaces/[workspaceId]`, and the two intercepted modal
 routes `@modal/(.)account`, `@modal/(.)billing`.
 
 **Upgrade** to the new primitives: `/`, `/dashboard`, `/account`.
 
-**Deliberately excluded** (the remaining 4): `/terms`, `/privacy`, `/refunds`,
-`/shipping`.
-These are static and render instantly; a skeleton would add work and flash for
-no benefit.
+**Deliberately excluded** (the remaining 6): `/terms`, `/privacy`, `/refunds`,
+`/shipping`, and — corrected during implementation — `/contact` and
+`/projects`. `/contact` renders `LegalPage` with no async work at all, and
+`/projects` is a bare `redirect()` to `/workspaces`. A skeleton on either would
+paint and then immediately vanish, which is worse than no skeleton.
+
+The two intercepted modal skeletons reuse `RouteModal`, so the dialog frame
+(header, backdrop, Escape handling) is interactive while only the body streams.
+
+Workbench skeletons render *inside* the persistent `Workbench` shell from
+`app/(workbench)/layout.tsx`, so they cover the inner content area only. Note
+that `loading.tsx` does not cover its sibling layout's own data fetch — the
+workbench layout awaits `getDashboardData` before any of these appear.
 
 ---
 
@@ -185,7 +194,7 @@ no benefit.
 1. Measured Lighthouse improvement against the Step 0 baseline.
 2. `ogl` absent from the initial landing bundle, verified in the treemap.
 3. WebGL render loops verifiably paused when offscreen or tab-hidden.
-4. All 17 listed routes show an instant structural skeleton, and the 3 existing
+4. All 15 listed routes show an instant structural skeleton, and the 3 existing
    ones use the new primitives.
 5. Preloader: once per session, hard-capped, reduced-motion-safe, and free of
    hydration flash on returning navigations.

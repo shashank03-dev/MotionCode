@@ -53,6 +53,11 @@ export const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
+  // Escape hatch for measurement builds: `NEXT_DIST_DIR=.next-measure npm run
+  // build` writes to an isolated directory so a running `next dev` (which owns
+  // .next and rewrites it on demand) can't clobber the artifacts mid-analysis.
+  // Unset in CI and production, so the default output path is unchanged.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   // Pin the workspace root to this project. A stray lockfile in a parent
   // directory (e.g. /home/user/package-lock.json) otherwise makes Turbopack
   // infer the wrong root, which breaks App Router route resolution in dev

@@ -241,6 +241,51 @@ body::after {
   animation: marquee 24s linear infinite;
 }
 
+/* --------------------------------------------------------------------------
+   Skeleton loading wells (components/ui/skeleton.tsx)
+
+   A hairline well with a single accent-tinted sweep travelling across it. The
+   sweep animates `transform` only — no background-position — so it stays on
+   the compositor and costs nothing on the main thread while a route streams.
+   Kept dim: a loading state must never read as bright as a real CTA.
+   -------------------------------------------------------------------------- */
+@keyframes mc-skeleton-sweep {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+
+.mc-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.045);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.mc-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 42%,
+    var(--accent-dim) 50%,
+    rgba(255, 255, 255, 0.05) 58%,
+    transparent 100%
+  );
+  animation: mc-skeleton-sweep 1.9s cubic-bezier(.4, 0, .2, 1) infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mc-skeleton::after {
+    animation: none;
+    /* Keep a faint static tint so the well still reads as "pending" rather
+       than as an empty box, without any movement. */
+    background: rgba(255, 255, 255, 0.02);
+  }
+}
+
 @keyframes heroPulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.4; transform: scale(0.8); }

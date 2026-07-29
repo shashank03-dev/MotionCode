@@ -1,39 +1,46 @@
+import {
+  Skeleton,
+  SkeletonPage,
+  SkeletonPageHeader,
+} from "@/components/ui/skeleton";
+
 // Shown instantly while the dynamic dashboard server component fetches its data
 // (profile, workspaces, projects, usage). Replaces the blank wait on navigation
 // with a structural skeleton so the page feels responsive on slow connections.
 export default function DashboardLoading() {
   return (
-    <main
-      aria-label="Loading dashboard"
-      className="min-h-screen bg-canvas px-4 py-10 text-ink sm:px-6 lg:px-8"
-    >
-      <div className="mx-auto w-full max-w-6xl space-y-8">
-        <div className="space-y-4 border-b border-hairline pb-6">
-          <div className="h-3 w-40 animate-pulse rounded-[6px] bg-white/10" />
-          <div className="h-10 w-full max-w-2xl animate-pulse rounded-[8px] bg-white/10" />
-          <div className="h-4 w-3/4 max-w-xl animate-pulse rounded-[6px] bg-white/10" />
-        </div>
+    <SkeletonPage label="Loading dashboard">
+      <div className="space-y-8">
+        <SkeletonPageHeader />
 
         <div className="grid gap-4 sm:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-24 animate-pulse rounded-[8px] border border-hairline bg-white/10"
-            />
+            <div key={i} aria-hidden className="rounded-xl bg-panel p-5 shadow-ring">
+              <Skeleton shape="text" className="h-2.5 w-20" />
+              <Skeleton shape="text" className="mt-3 h-8 w-16" />
+            </div>
           ))}
         </div>
 
-        <div className="h-11 w-full max-w-md animate-pulse rounded-[8px] bg-white/10" />
+        <Skeleton shape="block" className="h-11 w-full max-w-md" />
 
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className="h-16 animate-pulse rounded-[8px] border border-hairline bg-white/10"
-            />
+              aria-hidden
+              className="flex items-center gap-4 rounded-xl bg-panel p-4 shadow-ring"
+            >
+              <Skeleton shape="block" className="size-10 shrink-0 rounded-lg" />
+              <div className="min-w-0 flex-1">
+                <Skeleton shape="text" className="h-3.5 w-1/3" />
+                <Skeleton shape="text" className="mt-2 h-3 w-1/5" />
+              </div>
+              <Skeleton shape="pill" className="h-6 w-16" />
+            </div>
           ))}
         </div>
       </div>
-    </main>
+    </SkeletonPage>
   );
 }
