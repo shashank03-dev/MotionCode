@@ -23,6 +23,7 @@ const FRAG = /* glsl */ `
   uniform vec2  uMouse;       // top-left px
   uniform float uScrollPx;    // window.scrollY
   uniform float uHeroPx;      // first-screen height
+  uniform vec2  uRevive;      // page-Y band [top, bottom] to relight; <0 = inactive
   uniform vec2  uPulse0;
   uniform vec2  uPulse1;
   uniform vec2  uPulse2;
@@ -84,6 +85,16 @@ const FRAG = /* glsl */ `
     float heroMask = smoothstep(uHeroPx * 1.15, uHeroPx * 0.35, pageY);
     float strength = mix(0.12, 1.0, heroMask);
 
+    // revival band: relight the field behind the pinned "how it works" stage,
+    // fading softly in/out at the band edges so there's no hard seam. Inactive
+    // when uRevive.x < 0 (band not on screen / not rendered).
+    if (uRevive.x >= 0.0) {
+      float fade = 220.0; // px of soft ramp at each edge
+      float reviveMask = smoothstep(uRevive.x - fade, uRevive.x + fade, pageY)
+                       * smoothstep(uRevive.y + fade, uRevive.y - fade, pageY);
+      strength = max(strength, mix(0.12, 0.5, reviveMask));
+    }
+
     // horizontal edge fade keeps the field off the extreme margins
     vec2 np = fc / uResolution;
     float edge = smoothstep(0.0, 0.14, np.x) * smoothstep(1.0, 0.86, np.x);
@@ -129,6 +140,11 @@ export function ContourGrid() {
     gl.canvas.style.width = "100%";
     gl.canvas.style.height = "100%";
     gl.canvas.style.display = "block";
+    // This component arrives in a lazy chunk, so it mounts after the static
+    // grid-fade fallback is already on screen. Fade the canvas in over it
+    // instead of snapping, which would read as a pop-in.
+    gl.canvas.style.opacity = "0";
+    gl.canvas.style.transition = "opacity 600ms cubic-bezier(.2,.8,.2,1)";
 
     const program = new Program(gl, {
       vertex: VERT,
@@ -140,6 +156,7 @@ export function ContourGrid() {
         uMouse: { value: new Vec2(-999, -999) },
         uScrollPx: { value: 0 },
         uHeroPx: { value: window.innerHeight },
+        uRevive: { value: new Vec2(-1, -1) },
         uPulse0: { value: new Vec2(0, 0) },
         uPulse1: { value: new Vec2(0, 0) },
         uPulse2: { value: new Vec2(0, 0) },
@@ -189,6 +206,7 @@ export function ContourGrid() {
 
     let raf = 0;
     let running = true;
+    let revealed = false;
     const start = performance.now();
     function loop(now: number) {
       if (!running) return;
@@ -201,12 +219,30 @@ export function ContourGrid() {
       const t = (now - start) / 1000;
       program.uniforms.uTime.value = t;
       program.uniforms.uScrollPx.value = window.scrollY;
+
+      // Relight the field behind the pinned "how it works" stage. Only the
+      // desktop layout renders #how; when absent the band stays inactive.
+      const how = document.getElementById("how");
+      if (how) {
+        const rect = how.getBoundingClientRect();
+        const top = rect.top + window.scrollY;
+        program.uniforms.uRevive.value.set(top, top + rect.height);
+      } else {
+        program.uniforms.uRevive.value.set(-1, -1);
+      }
+
       for (let i = 0; i < MAX_PULSES; i++) {
         const s = pulseStart[i];
         const age = s < 0 ? -1 : (now - s) / 1000;
         pulseUniforms[i].value = age > 4 ? -1 : age; // expire after 4s
       }
       renderer.render({ scene: mesh });
+      // Reveal only once there's a real frame on the canvas, so the fade goes
+      // fallback → grid rather than fallback → blank → grid.
+      if (!revealed) {
+        revealed = true;
+        gl.canvas.style.opacity = "1";
+      }
       raf = requestAnimationFrame(loop);
     }
     raf = requestAnimationFrame(loop);
@@ -230,11 +266,8 @@ export function ContourGrid() {
     };
   }, []);
 
-  return (
-    <div className="absolute inset-0" aria-hidden>
-      {/* Static fallback under reduced-motion / no-WebGL */}
-      <div className="absolute inset-0 grid-fade opacity-60" />
-      <div ref={ref} className="absolute inset-0" />
-    </div>
-  );
+  // Only the WebGL canvas mount. The static `grid-fade` fallback lives in
+  // SiteBackground so it paints on first frame — this component is loaded
+  // lazily, and a fallback that arrived with it would defeat the purpose.
+  return <div ref={ref} className="absolute inset-0" aria-hidden />;
 }

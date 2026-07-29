@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Logo } from "./logo";
-import { MetalText } from "@/components/motion/metal-text";
+import { MetalText } from "@/components/motion/metal-text-lazy";
 
 const COLUMNS = [
   {

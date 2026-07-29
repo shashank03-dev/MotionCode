@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { Logo } from "@/components/site/logo";
-import { MetalText } from "@/components/motion/metal-text";
+import { MetalText } from "@/components/motion/metal-text-lazy";
 
 import { MarketingAuthNavActions } from "./auth-nav-actions";
 

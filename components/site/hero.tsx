@@ -5,9 +5,20 @@ import { ArrowRight, Play } from "lucide-react";
 import { ButtonLink } from "@/components/ui/site-button";
 import { Badge } from "@/components/ui/badge";
 import { Magnetic } from "@/components/motion/magnetic-button";
-import { AuraCursor } from "@/components/motion/aura-cursor";
+import dynamic from "next/dynamic";
 import { ArtifactPanel } from "./artifact-panel";
 import { EASE } from "@/lib/motion";
+
+/**
+ * The cursor aura is a WebGL (`ogl`) flourish bound to the hero. It carries no
+ * content and affects no layout, so it loads lazily rather than putting the
+ * whole renderer on the landing page's critical path — pointer-driven decoration
+ * that nobody sees until they move the mouse should not gate first paint.
+ */
+const AuraCursor = dynamic(
+  () => import("@/components/motion/aura-cursor").then((m) => m.AuraCursor),
+  { ssr: false },
+);
 
 const words = ["Motion,", "decoded."];
 

@@ -7,6 +7,8 @@ const eslintConfig = [
   {
     ignores: [
       ".next/**",
+      // Output of a NEXT_DIST_DIR measurement build (see next.config.mjs).
+      ".next-*/**",
       "coverage/**",
       "node_modules/**",
       "playwright-report/**",

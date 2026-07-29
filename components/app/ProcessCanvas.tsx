@@ -1,11 +1,28 @@
 /* eslint-disable @next/next/no-img-element -- Frame thumbnails are local blob/data URLs that next/image cannot optimize. */
 "use client";
 
+import dynamic from "next/dynamic";
 import type { CSSProperties } from "react";
 
-import { MotionParticleField } from "./MotionParticleField";
 import type { AnalysisStage } from "./types";
 import styles from "./ProcessCanvas.module.css";
+
+/**
+ * The particle field is a WebGL surface (`ogl`) that only matters once an
+ * analysis is actually running, so it loads lazily and client-only rather than
+ * riding in the workbench's initial bundle. The placeholder holds the same box
+ * so nothing reflows when the real field arrives.
+ *
+ * The `process-field` test hook lives on the wrapper below, not in here, so it
+ * stays present from first render regardless of chunk timing.
+ */
+const MotionParticleField = dynamic(
+  () => import("./MotionParticleField").then((m) => m.MotionParticleField),
+  {
+    ssr: false,
+    loading: () => <div className={styles.field} aria-hidden />,
+  },
+);
 
 type ProcessCanvasProps = {
   activeStep?: number;

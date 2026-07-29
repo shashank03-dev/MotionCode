@@ -242,6 +242,86 @@ body::after {
 }
 
 /* --------------------------------------------------------------------------
+   Landing preloader (components/site/preloader.tsx)
+
+   Visibility is driven by `data-intro` on <html>, which the inline script in
+   app/layout.tsx sets before first paint. The default here is `display:none`
+   so that if the attribute is somehow missing the page is never blocked — the
+   overlay is opt-in, not opt-out.
+   -------------------------------------------------------------------------- */
+.mc-preloader {
+  display: none;
+}
+
+html[data-intro="play"] .mc-preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  opacity: 1;
+  transition: opacity 440ms cubic-bezier(.2, .8, .2, 1);
+}
+
+html[data-intro="play"] .mc-preloader[data-state="leaving"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mc-preloader__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The static mark, shown only on the reduced-motion path where no particles
+   run. The canvas draws the wordmark itself in the animated path. */
+.mc-preloader__fallback {
+  position: relative;
+  display: none;
+  text-align: center;
+}
+
+.mc-preloader[data-reduced="true"] .mc-preloader__canvas {
+  display: none;
+}
+
+.mc-preloader[data-reduced="true"] .mc-preloader__fallback {
+  display: block;
+}
+
+.mc-preloader__wordmark {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 6vw, 3.25rem);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  color: var(--text);
+}
+
+.mc-preloader__ticker {
+  position: absolute;
+  bottom: clamp(2rem, 8vh, 4.5rem);
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-intro="play"] .mc-preloader {
+    /* No convergence, just a brief hold and fade. */
+    transition-duration: 200ms;
+  }
+}
+
+/* --------------------------------------------------------------------------
    Skeleton loading wells (components/ui/skeleton.tsx)
 
    A hairline well with a single accent-tinted sweep travelling across it. The

@@ -1,3 +1,4 @@
+import { Preloader } from "@/components/site/preloader";
 import { SiteBackground } from "@/components/motion/site-background";
 import { Nav } from "@/components/site/nav";
 import { Hero } from "@/components/site/hero";
@@ -14,6 +15,8 @@ import { ProgressiveBlur } from "@/components/motion/progressive-blur";
 export default function Page() {
   return (
     <>
+      {/* First visit of a session only — gated pre-paint in app/layout.tsx. */}
+      <Preloader />
       <SiteBackground />
       {/* iOS-style gradient blur pinned to the viewport edges: strongest behind
           the nav pill at the top, easing to crisp; a matching band at the base. */}

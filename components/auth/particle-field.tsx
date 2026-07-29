@@ -228,6 +228,16 @@ export function ParticleField({
     let rafId = 0;
     let time = 0;
     let destroyed = false;
+    // Paused while the tab is backgrounded. Without this the field animated a
+    // full RAF loop forever behind other tabs, burning CPU on a page the user
+    // wasn't looking at.
+    let paused = document.visibilityState === "hidden";
+    // Honour the OS reduced-motion setting like every other motion component
+    // in the app: particles still render (the image is the point), they just
+    // settle into place instead of drifting and springing.
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     let resizeRaf = 0;
     let resizeTimer: ReturnType<typeof setTimeout> | null = null;
     let currentImage: HTMLImageElement | null = null;
@@ -434,12 +444,15 @@ export function ParticleField({
     };
 
     const render = () => {
-      if (destroyed) return;
-      time += 0.016;
+      if (destroyed || paused) return;
+      // Under reduced motion the clock is frozen: particles still spring to
+      // their sampled positions, but the twinkle and ripple driven by `time`
+      // hold still.
+      if (!reducedMotion) time += 0.016;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = fillColorRef.current;
 
-      const mouseForceV = mouseForceRef.current;
+      const mouseForceV = reducedMotion ? 0 : mouseForceRef.current;
       const mouseRadiusV = mouseRadiusRef.current;
       const springV = springRef.current;
       const dampingV = dampingRef.current;
@@ -568,12 +581,26 @@ export function ParticleField({
     // second load (e.g. parallel src-change effect) supersedes the initial
     // load's onload before it had a chance to kick off the RAF.
     ro.observe(wrapper);
-    rafId = requestAnimationFrame(render);
+    if (!paused) rafId = requestAnimationFrame(render);
 
     loadAndApply(srcRef.current, false);
 
     wrapper.addEventListener("pointermove", onPointerMove);
     wrapper.addEventListener("pointerleave", onPointerLeave);
+
+    // Stop the loop entirely while the tab is hidden and pick it back up on
+    // return. `render` re-arms its own RAF, so restarting is a single call.
+    const onVisibility = () => {
+      const hidden = document.visibilityState === "hidden";
+      if (hidden === paused) return;
+      paused = hidden;
+      if (paused) {
+        cancelAnimationFrame(rafId);
+      } else {
+        rafId = requestAnimationFrame(render);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
       destroyed = true;
@@ -583,6 +610,7 @@ export function ParticleField({
       ro.disconnect();
       wrapper.removeEventListener("pointermove", onPointerMove);
       wrapper.removeEventListener("pointerleave", onPointerLeave);
+      document.removeEventListener("visibilitychange", onVisibility);
       applySrcRef.current = null;
     };
     // Tuning props (threshold, dotSize, align, etc.) are read from refs,
