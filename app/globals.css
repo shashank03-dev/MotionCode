@@ -275,6 +275,22 @@ html[data-intro="play"] .mc-preloader[data-state="leaving"] {
   pointer-events: none;
 }
 
+/* Failsafe. Every path that dismisses this overlay runs in JavaScript, so a
+   chunk that fails to load would leave a first-time visitor staring at a black
+   screen with no way out. This clears it after 4s using CSS alone — well past
+   the 2.5s hard cap, so in a healthy load the overlay is already gone and this
+   never fires. */
+@keyframes mc-preloader-failsafe {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+html[data-intro="play"] .mc-preloader {
+  animation: mc-preloader-failsafe 400ms linear 4s forwards;
+}
+
 .mc-preloader__canvas {
   position: absolute;
   inset: 0;

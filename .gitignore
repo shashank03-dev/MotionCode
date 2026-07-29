@@ -58,3 +58,6 @@ next-env.d.ts
 /.codex-*.png
 /build_log.txt
 .env*
+
+# Local MCP server config (machine-specific absolute paths).
+.mcp.json

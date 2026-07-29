@@ -57,6 +57,10 @@ const nextConfig = {
   // build` writes to an isolated directory so a running `next dev` (which owns
   // .next and rewrites it on demand) can't clobber the artifacts mid-analysis.
   // Unset in CI and production, so the default output path is unchanged.
+  //
+  // Note: `next build` rewrites tsconfig.json's `include` to point at whatever
+  // distDir is active, so a measurement build leaves tsconfig dirty. Revert it
+  // (`git checkout -- tsconfig.json`) before committing.
   distDir: process.env.NEXT_DIST_DIR || ".next",
   // Pin the workspace root to this project. A stray lockfile in a parent
   // directory (e.g. /home/user/package-lock.json) otherwise makes Turbopack
