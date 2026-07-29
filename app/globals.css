@@ -267,7 +267,7 @@ html[data-intro="play"] .mc-preloader {
   place-items: center;
   background: var(--bg);
   opacity: 1;
-  transition: opacity 440ms cubic-bezier(.2, .8, .2, 1);
+  transition: opacity 380ms cubic-bezier(.2, .8, .2, 1);
 }
 
 html[data-intro="play"] .mc-preloader[data-state="leaving"] {
@@ -277,7 +277,7 @@ html[data-intro="play"] .mc-preloader[data-state="leaving"] {
 
 /* Failsafe. Every path that dismisses this overlay runs in JavaScript, so a
    chunk that fails to load would leave a first-time visitor staring at a black
-   screen with no way out. This clears it after 4s using CSS alone — well past
+   screen with no way out. This clears it after 3s using CSS alone - past
    the 2.5s hard cap, so in a healthy load the overlay is already gone and this
    never fires. */
 @keyframes mc-preloader-failsafe {
@@ -288,7 +288,15 @@ html[data-intro="play"] .mc-preloader[data-state="leaving"] {
 }
 
 html[data-intro="play"] .mc-preloader {
-  animation: mc-preloader-failsafe 400ms linear 4s forwards;
+  /* 2.2s + 300ms = gone by 2.5s measured from CSS parse, which is the real
+     ceiling on how long a first-time visitor can be held. The JS path cannot
+     be that ceiling on its own: the overlay paints from the first frame but
+     only JS removes it, so on a slow device its removal waits on hydration
+     (measured at ~2.9s in a throttled headless run, which is how the intro
+     ended up taking 4-5s before this). On a fast device the JS path finishes
+     well inside this and the full animation plays; on a slow one the intro is
+     cut short, which is the correct trade for a landing page. */
+  animation: mc-preloader-failsafe 300ms linear 2.2s forwards;
 }
 
 .mc-preloader__canvas {

@@ -24,14 +24,28 @@ import * as React from "react";
  * and client hydration agree; only the animation is conditional.
  */
 
-/** Floor, so the intro reads as intentional rather than as a glitch. */
-const MIN_VISIBLE_MS = 1200;
-/** Ceiling, so a slow asset can never trap the visitor behind the overlay. */
-const MAX_VISIBLE_MS = 2500;
+/**
+ * Floor, measured from mount, so the intro reads as intentional rather than as
+ * a glitch.
+ */
+const MIN_VISIBLE_MS = 1000;
+/**
+ * Ceiling, measured from NAVIGATION START rather than from mount.
+ *
+ * This distinction is the whole point. Anchoring the cap to mount meant
+ * hydration time stacked on top of it: a production build measured 4.5-5.3s
+ * before the overlay cleared, against a 2.5s budget, because the clock only
+ * started once React ran. Measuring from navigation start makes the budget
+ * mean what it says to the person waiting.
+ *
+ * Dispersal (400ms) and the CSS fade (380ms) run after this fires, so the
+ * overlay is fully gone by roughly 2.6s worst case.
+ */
+const MAX_SINCE_NAV_MS = 1800;
 /** Convergence phase — scattered → settled into the mark. */
 const CONVERGE_MS = 900;
 /** Dispersal phase — settled → flung outward while the overlay fades. */
-const DISPERSE_MS = 520;
+const DISPERSE_MS = 400;
 /** Upper bound on particles; the sample step adapts to hit roughly this. */
 const MAX_PARTICLES = 2600;
 
@@ -195,7 +209,7 @@ export function Preloader() {
       // Match the CSS fade before unmounting the overlay from the a11y tree.
       window.setTimeout(() => {
         document.documentElement.dataset.intro = "seen";
-      }, 460);
+      }, 380);
     };
 
     // Reduced motion: no particles, no convergence — the mark is simply
@@ -256,11 +270,15 @@ export function Preloader() {
     let disperseAt = 0;
 
     const frame = (now: number) => {
+      // `now` (the rAF timestamp) shares its time origin with performance.now(),
+      // so it is already milliseconds since navigation start — which is what the
+      // hard cap is measured against. `elapsed` stays relative to mount, since
+      // the convergence animation should run its own length either way.
       const elapsed = now - start;
       ctx.clearRect(0, 0, width, height);
 
       const shouldLeave =
-        elapsed >= MAX_VISIBLE_MS || (ready && elapsed >= MIN_VISIBLE_MS);
+        now >= MAX_SINCE_NAV_MS || (ready && elapsed >= MIN_VISIBLE_MS);
       if (shouldLeave && !disperseAt) {
         disperseAt = now;
         for (const p of particles) {
