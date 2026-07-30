@@ -1,153 +1,102 @@
 <div align="center">
 
-<a href="https://motioncode.live">
-  <img src=".github/assets/banner.svg" alt="MotionCode — turn any animation into production code" width="100%" />
-</a>
+<img src="public/brand/motioncode-mark.svg" alt="MotionCode" width="96" height="96" />
 
-<br/>
+# MotionCode
 
-**Turn a short UI motion reference into a normalized motion spec and starter code for CSS, GSAP, and Framer Motion.**
+### Turn motion into production code.
 
-[![Live](https://img.shields.io/badge/live-motioncode.live-9ef0c0?style=flat-square&labelColor=10120d)](https://motioncode.live)
-[![Next.js 16](https://img.shields.io/badge/Next.js-16-fffbf4?style=flat-square&logo=nextdotjs&labelColor=10120d)](https://nextjs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?style=flat-square&logo=typescript&logoColor=white&labelColor=10120d)](https://www.typescriptlang.org)
-[![Supabase](https://img.shields.io/badge/Supabase-Postgres%20%2B%20RLS-3ecf8e?style=flat-square&logo=supabase&logoColor=white&labelColor=10120d)](https://supabase.com)
-[![Tests](https://img.shields.io/badge/tests-vitest%20%2B%20playwright-ffd166?style=flat-square&labelColor=10120d)](#testing)
+Drop in a video or GIF of a UI animation. Get a normalized motion spec and
+ready-to-ship **CSS**, **GSAP**, and **Framer Motion** code in seconds.
 
-[Live site](https://motioncode.live) · [How it works](#how-it-works) · [Getting started](#getting-started) · [Security model](#security-model) · [Docs](#documentation)
+<br />
+
+[![Live](https://img.shields.io/badge/live-motioncode.live-0099ff?style=for-the-badge&labelColor=000000)](https://motioncode.live)
+[![Next.js](https://img.shields.io/badge/Next.js-16-0099ff?style=for-the-badge&logo=next.js&logoColor=white&labelColor=000000)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-0099ff?style=for-the-badge&logo=typescript&logoColor=white&labelColor=000000)](https://www.typescriptlang.org)
+[![License](https://img.shields.io/badge/license-MIT-0099ff?style=for-the-badge&labelColor=000000)](LICENSE)
 
 </div>
 
 ---
 
-> **Status: free beta.** Analysis runs on Gemini with a per‑user daily quota. Pro and Studio are early‑access tracks; paid checkout (Razorpay) and OpenAI‑backed analysis stay gated behind launch‑phase flags until paid‑readiness gates pass.
-
-## Contents
-
-- [What it does](#what-it-does)
-- [How it works](#how-it-works)
-- [Tech stack](#tech-stack)
-- [Project structure](#project-structure)
-- [Getting started](#getting-started)
-- [Environment variables](#environment-variables)
-- [Scripts](#scripts)
-- [Testing](#testing)
-- [Security model](#security-model)
-- [Deployment](#deployment)
-- [Documentation](#documentation)
-- [License](#license)
-
----
-
 ## What it does
 
-- **Motion analysis workspace** (`/app`) — upload a video/GIF, the app extracts frames in the browser and sends them to the analysis API.
-- **Normalized motion specs + starter code** — duration, easing, transforms, and per‑framework snippets you can copy and ship.
-- **Accounts, workspaces & projects** — Supabase‑backed auth (Google OAuth + magic link), saved projects with versions, and team workspaces.
-- **Billing** — Pro/Studio tiers via Razorpay (subscriptions), with server‑verified webhooks and launch‑phase gating.
-- **Support & admin** — user support tickets (`/support`), an internal admin support queue (`/admin`), and audited plan overrides (`/admin/users`).
-
-## How it works
+Reverse-engineering an animation by eye is slow and imprecise. MotionCode does it
+for you. Give it a short motion reference and it extracts representative frames,
+analyzes the movement server-side, and returns a **motion spec** you can trust plus
+starter code in the framework you actually use.
 
 ```
- video / gif
-     │  (browser) extract representative frames
-     ▼
- POST /api/analyze ──► auth + entitlement + rate-limit preflight
-     │                 (Supabase user, daily quota, abuse guard)
-     ▼
- Gemini analysis ──► normalized motion spec
-     │
-     ▼
- CSS · GSAP · Framer Motion snippets ──► saved to project / version
+ video / gif ──▶ frame extraction ──▶ motion analysis ──▶ normalized spec ──▶ code
+                                       (Gemini · OpenAI)          (CSS · GSAP · Framer Motion)
 ```
 
-Every analysis is authenticated, quota‑checked against an atomic Postgres reservation, and recorded as a usage + audit event.
+The interface is built to feel like a focused motion lab: dark, high-contrast,
+instrumented, and sharp. Every result is a visible artifact - frames, timing,
+easing, and code - not a vague description.
+
+## Features
+
+- **Reference to spec** - upload a clip, get normalized timing, easing, and keyframe data.
+- **Multi-framework export** - the same motion emitted as CSS, GSAP (`.ts`), and Framer Motion (`.tsx`).
+- **Live preview** - a sandboxed player renders the generated animation before you copy it.
+- **Workspaces** - organize saved analyses and projects; reopen generated code without re-running anything.
+- **Accounts & billing** - Supabase auth (Google OAuth + magic link) with Razorpay subscription tiers.
+- **Built for confidence** - WCAG AA contrast, visible focus states, and reduced-motion fallbacks throughout.
 
 ## Tech stack
 
-| Layer | Choice |
+| Layer | Tools |
 | --- | --- |
-| Framework | [Next.js 16](https://nextjs.org) (App Router, Server Components, `proxy.ts` middleware) |
-| Language | TypeScript, React 18 |
-| Styling | Tailwind CSS, custom design tokens |
-| Animation | GSAP, Framer Motion, OGL (WebGL background) |
-| Auth & data | [Supabase](https://supabase.com) (Postgres + Row Level Security + Storage) |
-| AI | Google Gemini (beta); OpenAI gated for paid readiness |
-| Billing | [Razorpay](https://razorpay.com) subscriptions + verified webhooks |
+| Framework | Next.js 16 (App Router), React 18, TypeScript |
+| Styling | Tailwind CSS, CSS variables, design-system kit |
+| Motion | GSAP, Framer Motion, OGL (WebGL) |
+| Editor | CodeMirror 6 |
+| Data & auth | Supabase (Postgres, Auth, SSR) |
+| Analysis | Google Gemini (default), OpenAI (optional) |
+| Payments | Razorpay subscriptions |
 | Validation | Zod |
 | Testing | Vitest (unit), Playwright (e2e) |
-| Hosting | Vercel |
-
-## Project structure
-
-```
-app/                  Next.js App Router
-  api/                Route handlers (analyze, projects, workspaces,
-                      share, support, admin, razorpay)
-  app/                Motion analysis workspace
-  dashboard/ account/ billing/ projects/ workspaces/   Authenticated surfaces
-  login/ onboarding/ auth/                              Auth flow
-  pricing/ support/ privacy/ terms/ share/             Public surfaces
-components/           UI, marketing, dashboard, and React-Bits components
-lib/
-  auth/               Redirect normalization & safe `next` handling
-  server/             Entitlements, rate limiting, Razorpay, Gemini,
-                      admin, profiles, audit, env (server-only)
-  supabase/           Browser + server Supabase clients
-  hooks/              Client hooks (e.g. hydrated reduced-motion)
-supabase/migrations/  SQL schema, RLS policies, atomic usage RPC
-tests/                unit (vitest) · integration (RLS) · e2e (playwright)
-docs/                 Product scope, ops runbooks, environment notes
-```
 
 ## Getting started
 
-### Prerequisites
-
-- **Node.js 20.19+** and npm
-- A **Supabase** project (or local Supabase stack)
-- A **Gemini API key** for beta analysis
-- Razorpay / OpenAI keys only when validating paid readiness
-
-### Install & run
+**Requirements:** Node.js 24+ and npm.
 
 ```bash
+# 1. Clone
+git clone https://github.com/shashank03-dev/MotionCode.git
+cd MotionCode
+
+# 2. Install
 npm install
-cp .env.local.example .env.local   # then fill in the values below
+
+# 3. Configure environment
+cp .env.local.example .env.local
+#    then fill in the values below
+
+# 4. Run
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
-### Supabase setup
+### Environment
 
-1. Apply the migrations in `supabase/migrations/` (via the Supabase CLI or dashboard). They create the schema, enable **RLS on every table**, keep the `project-assets` bucket private, and install the atomic analysis‑usage RPC.
-2. In **Supabase Auth**: set the Site URL and redirect allowlist to include `http://localhost:3000/auth/callback` and your production `/auth/callback`. Enable the **Google** provider and configure its OAuth client; for magic links, configure SMTP.
-3. Set the **service role key** only in server environments — never expose it to the browser.
+Copy `.env.local.example` and set the following. Supabase and a Gemini key are the
+minimum needed to run the analysis flow; Razorpay is only required for paid checkout.
 
-## Environment variables
+| Variable | Purpose |
+| --- | --- |
+| `NEXT_PUBLIC_SITE_URL` | App origin used for OAuth and magic-link callbacks |
+| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase client credentials |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-side Supabase access |
+| `GEMINI_API_KEY` | Default motion-analysis provider |
+| `OPENAI_API_KEY` | Optional alternate analysis provider |
+| `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` / `RAZORPAY_WEBHOOK_SECRET` | Billing (optional) |
+| `ANALYTICS_SALT` | Hashing salt for analytics identifiers (required in prod) |
 
-Copy `.env.local.example` and fill in:
-
-| Variable | Required | Purpose |
-| --- | --- | --- |
-| `NEXT_PUBLIC_SITE_URL` | ✅ | Canonical origin for OAuth/magic‑link callbacks (HTTPS in prod) |
-| `NEXT_PUBLIC_SUPABASE_URL` | ✅ | Supabase project URL (public) |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | Supabase anon key (public) |
-| `SUPABASE_SERVICE_ROLE_KEY` | ✅ | Server‑only admin key (never `NEXT_PUBLIC_`) |
-| `GEMINI_API_KEY` | ✅ | Beta motion analysis |
-| `MOTIONCODE_LAUNCH_PHASE` | – | `beta` (default) gates paid/OpenAI features |
-| `MOTIONCODE_ENABLE_PAID_CHECKOUT` | – | Enables Razorpay checkout when `true` |
-| `MOTIONCODE_ENABLE_RAZORPAY_TEST_CHECKOUT` | – | Test‑mode checkout during beta |
-| `MOTIONCODE_ENABLE_OPENAI_ANALYSIS` | – | Enables OpenAI analysis when `true` |
-| `OPENAI_API_KEY` | – | OpenAI analysis (paid readiness only) |
-| `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | – | Razorpay API credentials |
-| `RAZORPAY_WEBHOOK_SECRET` | – | HMAC secret for webhook verification |
-| `RAZORPAY_PRO_PLAN_ID` / `RAZORPAY_STUDIO_PLAN_ID` | – | Subscription plan mapping |
-| `MOTIONCODE_INTERNAL_ADMIN_EMAILS` / `_USER_IDS` | – | Internal admin allowlist (bootstrap) |
-
-> No secret ever uses a `NEXT_PUBLIC_` prefix — only the Supabase URL, anon key, and site URL are public.
+See `.env.local.example` for the full, commented list including provider setup notes.
 
 ## Scripts
 
@@ -155,42 +104,49 @@ Copy `.env.local.example` and fill in:
 | --- | --- |
 | `npm run dev` | Start the dev server |
 | `npm run build` | Production build |
-| `npm start` | Serve the production build |
+| `npm run start` | Serve the production build |
 | `npm run lint` | ESLint |
-| `npm run typecheck` | `tsc --noEmit` |
+| `npm run typecheck` | TypeScript, no emit |
 | `npm test` | Unit tests (Vitest) |
-| `npm run test:e2e` | End‑to‑end tests (Playwright) |
-| `npm run check` | typecheck + lint + test + build |
+| `npm run test:e2e` | End-to-end tests (Playwright) |
+| `npm run check` | typecheck + lint + test + build (run before pushing) |
 
-## Testing
+## Project structure
 
-- **Unit** (`tests/unit`, Vitest) — auth redirects, route protection, API handlers, contracts, runtime guards.
-- **Integration** (`tests/integration`) — Supabase RLS policy coverage.
-- **End‑to‑end** (`tests/e2e`, Playwright) — marketing surface, auth/dashboard gating, and the analysis flow.
-
-```bash
-npm test            # unit
-npm run test:e2e    # e2e (boots the dev server automatically)
+```
+app/            App Router routes (marketing, auth, dashboard, workbench, api)
+components/     UI kit and feature components (motion, workspace, billing, ...)
+lib/            Analysis pipeline, exporters, preview sandbox, Supabase, contracts
+public/brand/   Logo and brand assets
+supabase/       Database schema and migrations
+tests/          Unit and e2e tests
 ```
 
-## Security model
+The analysis pipeline lives in `lib/` - `extractFrames.ts` pulls frames, the
+`app/api/analyze` route runs the model, and `lib/exporters` turns the resulting
+spec into per-framework code.
 
-- **Auth** is validated server‑side (`supabase.auth.getUser()`), not by decoding cookies. Protected routes check the session on the server.
-- **Authorization / RLS** — every public table has Row Level Security; handlers verify ownership of the project/workspace/ticket before read or write. The `project-assets` storage bucket is private.
-- **Rate limiting & quota** — the Gemini daily limit is enforced by an atomic Postgres reservation (advisory‑locked, keyed on the user) so it can't be bypassed by clearing cookies or racing requests.
-- **Billing** — Razorpay webhooks are HMAC‑verified with a constant‑time compare *before* the payload is trusted, are idempotent, and plan tier is derived server‑side from the Razorpay plan id.
-- **Redirects** — the post‑auth `next` path is normalized and constrained to same‑origin (protocol‑relative bypasses rejected) to prevent open redirects.
+## Brand
 
-## Deployment
+<table>
+  <tr>
+    <td align="center"><code>#000000</code><br/>Canvas</td>
+    <td align="center"><code>#0a0b0d</code><br/>Surface</td>
+    <td align="center"><code>#0099ff</code><br/>Electric blue</td>
+  </tr>
+</table>
 
-Deployed on **Vercel**. Pushing to `main` triggers a production deploy. Ensure the production environment has `NEXT_PUBLIC_SITE_URL` set to the canonical domain and all Supabase/Gemini (and, for paid readiness, Razorpay) variables configured. See [`docs/ops/environment.md`](docs/ops/environment.md).
-
-## Documentation
-
-- [`docs/product/`](docs/product) — product scope and user workflows
-- [`docs/ops/`](docs/ops) — environment, payment workflow, data retention, readiness reports
-- [`launch-checklist.md`](launch-checklist.md) — beta launch gates
+A single electric-blue accent on a near-black canvas - reserved for calls to
+action, focus, and active state. Typefaces: **PP Neue Montreal** (display),
+**SF Pro** (UI), **JetBrains Mono** (code). The mark is the same one used across
+the app and landing page: three sampled frames easing into a curve - motion,
+captured and read.
 
 ## License
 
-See [`LICENSE`](LICENSE).
+Released under the [MIT License](LICENSE).
+
+<div align="center">
+<br />
+<sub>Built for designers and frontend engineers who'd rather ship the animation than measure it frame by frame.</sub>
+</div>
