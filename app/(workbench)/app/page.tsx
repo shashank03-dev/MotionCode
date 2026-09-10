@@ -1,8 +1,8 @@
 import { AppAuthGate } from "@/components/app/AppAuthGate";
 import { AppShell as AnalyzeWorkspace } from "@/components/app/AppShell";
 import { AppShell as WorkspaceShell } from "@/components/dashboard/app-shell";
-import { getEntitlementSummary } from "@/lib/server/entitlements";
-import { getCurrentUser } from "@/lib/supabase/server";
+import { getEntitlementSummaryCached } from "@/lib/server/entitlements";
+import { getCurrentUserCached } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +22,7 @@ type AnimationConverterProps = {
 export default async function AnimationConverter({
   searchParams,
 }: AnimationConverterProps) {
-  const user = await getCurrentUser();
+  const user = await getCurrentUserCached();
 
   if (!user) {
     // The analyzer is a signed-in surface: render it blurred + inert behind a
@@ -41,7 +41,7 @@ export default async function AnimationConverter({
   }
 
   const [summary, params] = await Promise.all([
-    getEntitlementSummary(user.id),
+    getEntitlementSummaryCached(user.id),
     searchParams,
   ]);
 

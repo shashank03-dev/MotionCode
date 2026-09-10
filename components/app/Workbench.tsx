@@ -25,13 +25,10 @@ import { PlanSync } from "@/components/dashboard/PlanSync";
 import { Logo } from "@/components/site/logo";
 import { AppBackground } from "@/components/ui/app-background";
 import type { PlanTier } from "@/lib/contracts/plans";
-import type { WorkspaceTreeNode } from "@/lib/workbench/tree";
 import { cn } from "@/lib/utils";
 
-import { ExplorerTree } from "./explorer/ExplorerTree";
-
 type WorkbenchProps = {
-  tree: WorkspaceTreeNode[];
+  explorer: ReactNode;
   userEmail?: string | null;
   /** Current user's id; enables live plan sync via Supabase Realtime. */
   userId?: string | null;
@@ -185,7 +182,7 @@ function SidebarLink({
 }
 
 export function Workbench({
-  tree,
+  explorer,
   userEmail,
   userId,
   children,
@@ -418,7 +415,7 @@ export function Workbench({
           </nav>
 
           <div className="min-h-0 flex-1 border-t border-hairline pt-1">
-            <ExplorerTree tree={tree} />
+            {explorer}
           </div>
 
           <div className="shrink-0 border-t border-hairline px-3 py-3">

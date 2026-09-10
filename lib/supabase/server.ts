@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import * as React from "react";
 
 import type { Database } from "@/types/database";
 
@@ -9,6 +10,15 @@ import { getSupabasePublicConfig } from "./config";
 type SupabaseAuthReader = {
   auth: Pick<SupabaseClient<Database>["auth"], "getUser">;
 };
+
+type ReactServerCache = <T extends (...args: any[]) => any>(fn: T) => T;
+
+// React 18's browser/test runtime does not expose the Server Components cache,
+// while Next's server condition does. Keep the fallback for unit-test imports;
+// production Server Components use React's request-scoped cache.
+const requestCache =
+  (React as typeof React & { cache?: ReactServerCache }).cache ??
+  ((fn: ReactServerCache) => fn);
 
 export async function createSupabaseServerClient() {
   const { url, publishableKey } = getSupabasePublicConfig();
@@ -52,3 +62,5 @@ export async function getCurrentUser(
 
   return user;
 }
+
+export const getCurrentUserCached = requestCache(async () => getCurrentUser());

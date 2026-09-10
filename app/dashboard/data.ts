@@ -12,9 +12,11 @@ import type { Database } from "@/types/database";
 
 export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 export type WorkspaceRow = Database["public"]["Tables"]["workspaces"]["Row"];
+export type Workspace = WorkspaceRow;
 export type WorkspaceMemberRow =
   Database["public"]["Tables"]["workspace_members"]["Row"];
 export type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
+export type Project = ProjectRow;
 export type ProjectVersionRow =
   Database["public"]["Tables"]["project_versions"]["Row"];
 export type UsageEventRow =
@@ -26,6 +28,11 @@ export type DashboardData = {
   projects: ProjectRow[];
   usageEvents: UsageEventRow[];
   workspaces: WorkspaceRow[];
+};
+
+export type WorkbenchTreeData = {
+  projects: Project[];
+  workspaces: Workspace[];
 };
 
 export type WorkspacePageData = {
@@ -134,6 +141,32 @@ export async function getDashboardData(user: Pick<User, "id">) {
     usageEvents: usageEvents.data ?? [],
     workspaces: workspaces.data ?? [],
   } satisfies DashboardData;
+}
+
+/** Loads only the workspace and project rows required by the workbench tree. */
+export async function getWorkbenchTreeData(
+  _user: Pick<User, "id">,
+): Promise<WorkbenchTreeData> {
+  const supabase = await createSupabaseServerClient();
+  const [workspaces, projects] = await Promise.all([
+    supabase
+      .from("workspaces")
+      .select("*")
+      .order("updated_at", { ascending: false }),
+    supabase
+      .from("projects")
+      .select("*")
+      .order("updated_at", { ascending: false }),
+  ]);
+
+  if (workspaces.error || projects.error) {
+    throw new Error("Failed to load workbench tree data.");
+  }
+
+  return {
+    projects: projects.data ?? [],
+    workspaces: workspaces.data ?? [],
+  };
 }
 
 /**

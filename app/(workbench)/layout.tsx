@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
+import { Suspense } from "react";
 
+import { ExplorerLoading } from "@/components/app/ExplorerLoading";
 import { Workbench } from "@/components/app/Workbench";
-import { getEntitlementSummary } from "@/lib/server/entitlements";
-import { getCurrentUser } from "@/lib/supabase/server";
-import { buildWorkspaceTree } from "@/lib/workbench/tree";
-
-import { getDashboardData } from "../dashboard/data";
+import { WorkbenchTree } from "@/components/app/WorkbenchTree";
+import { getEntitlementSummaryCached } from "@/lib/server/entitlements";
+import { getCurrentUserCached } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -17,20 +17,20 @@ export default async function WorkbenchLayout({
   // The layout can't know the requested path, so it must not own the auth
   // redirect — each page calls requireDashboardUser() with the correct `next`.
   // When signed out we render children bare and let that page-level guard fire.
-  const user = await getCurrentUser();
+  const user = await getCurrentUserCached();
   if (!user) {
     return <>{children}</>;
   }
 
-  const [data, summary] = await Promise.all([
-    getDashboardData(user),
-    getEntitlementSummary(user.id),
-  ]);
-  const tree = buildWorkspaceTree(data.workspaces, data.projects);
+  const summary = await getEntitlementSummaryCached(user.id);
 
   return (
     <Workbench
-      tree={tree}
+      explorer={
+        <Suspense fallback={<ExplorerLoading />}>
+          <WorkbenchTree user={{ id: user.id }} />
+        </Suspense>
+      }
       planTier={summary.planTier}
       userEmail={user.email}
       userId={user.id}

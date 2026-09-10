@@ -7,6 +7,7 @@ import {
   canTrustPaidBillingEntitlements,
   isBetaInternalTestingEnabled,
 } from "@/lib/contracts/launch";
+import * as React from "react";
 
 import { ApiError } from "./apiErrors";
 import { createTrustedSupabaseServerClient } from "./audit";
@@ -107,6 +108,12 @@ const ACTIVE_SUBSCRIPTION_STATUSES = new Set([
 ]);
 const INTERNAL_BETA_FREE_DAILY_ANALYSES = 3;
 
+type ReactServerCache = <T extends (...args: any[]) => any>(fn: T) => T;
+
+const requestCache =
+  (React as typeof React & { cache?: ReactServerCache }).cache ??
+  ((fn: ReactServerCache) => fn);
+
 export async function resolvePlanTierForUser(
   user: CurrentUser,
   options: EntitlementOptions = {},
@@ -152,6 +159,10 @@ export async function getEntitlementSummary(
     },
   };
 }
+
+export const getEntitlementSummaryCached = requestCache(
+  async (userId: string) => getEntitlementSummary(userId),
+);
 
 function getEntitlementsClient(client?: EntitlementsSupabaseClient) {
   return (
