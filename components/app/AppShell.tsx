@@ -110,26 +110,6 @@ export function AppShell({
   // Free tier gets a read-only studio: preview + copy only. Paid tiers edit.
   const editable = userPlan !== "free";
 
-  // Re-read entitlements from the server when the user returns to the tab so an
-  // open session reflects plan changes made elsewhere (admin override, billing).
-  // router.refresh() re-runs the server component, which re-resolves the plan
-  // from the database and feeds the new values back through the props above.
-  useEffect(() => {
-    const refreshOnFocus = () => {
-      if (document.visibilityState === "visible") {
-        router.refresh();
-      }
-    };
-
-    window.addEventListener("focus", refreshOnFocus);
-    document.addEventListener("visibilitychange", refreshOnFocus);
-
-    return () => {
-      window.removeEventListener("focus", refreshOnFocus);
-      document.removeEventListener("visibilitychange", refreshOnFocus);
-    };
-  }, [router]);
-
   const [file, setFile] = useState<File | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [frameCount, setFrameCount] = useState(DEFAULT_FRAME_COUNT);
