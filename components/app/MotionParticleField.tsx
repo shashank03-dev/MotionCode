@@ -329,10 +329,12 @@ export function MotionParticleField({
     }
 
     let raf = 0;
-    let running = true;
+    let disposed = false;
+    let inViewport = true;
+    let documentVisible = document.visibilityState === "visible";
     let morph = 0;
-    const start = performance.now();
-    let last = start;
+    let elapsed = 0;
+    let last = performance.now();
 
     // Text morph transition state: dissolve the old word (blend → 0), swap the
     // glyph targets, then re-form the new word (blend → 1).
@@ -345,20 +347,35 @@ export function MotionParticleField({
     // giving each formation a readable beat while the morph stays fluid.
     const MORPH_TAU = 0.34;
 
+    function stopLoop() {
+      if (raf !== 0) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+    }
+
+    function startLoop() {
+      if (disposed || !documentVisible || !inViewport || raf !== 0) return;
+      last = performance.now();
+      raf = requestAnimationFrame(loop);
+    }
+
     function loop(now: number) {
-      if (!running) return;
+      raf = 0;
+      if (disposed || !documentVisible || !inViewport) return;
       // A context evicted by the browser (per-tab WebGL cap) makes ogl read
       // undefined internals and throw. Stop instead; the static grid stays.
       if (gl.isContextLost?.()) {
-        running = false;
+        disposed = true;
         return;
       }
-      program.uniforms.uTime.value = (now - start) / 1000;
 
       // Frame-rate-independent easing so the morph settles at the same pace on
       // 60Hz and 120Hz displays; clamp dt so a backgrounded tab doesn't snap.
       const dt = Math.min((now - last) / 1000, 0.05);
       last = now;
+      elapsed += dt;
+      program.uniforms.uTime.value = elapsed;
 
       // 0–100% maps across the five transitions; ease toward the target so
       // progress jumps glide through the formations instead of snapping.
@@ -392,23 +409,41 @@ export function MotionParticleField({
       program.uniforms.uTextBlend.value = textBlend;
 
       renderer.render({ scene: mesh });
-      raf = requestAnimationFrame(loop);
+      startLoop();
     }
-    raf = requestAnimationFrame(loop);
 
     function onVisibility() {
-      running = document.visibilityState === "visible";
-      if (running) {
-        last = performance.now();
-        raf = requestAnimationFrame(loop);
-      }
+      documentVisible = document.visibilityState === "visible";
+      if (documentVisible) startLoop();
+      else stopLoop();
     }
+
+    const observer =
+      typeof IntersectionObserver === "undefined"
+        ? null
+        : new IntersectionObserver(([entry]) => {
+            inViewport = entry?.isIntersecting ?? false;
+            if (inViewport) startLoop();
+            else stopLoop();
+          });
+
+    function onContextLost(event: Event) {
+      event.preventDefault();
+      stopLoop();
+      disposed = true;
+    }
+
+    gl.canvas.addEventListener("webglcontextlost", onContextLost, false);
     document.addEventListener("visibilitychange", onVisibility);
+    observer?.observe(el);
+    startLoop();
 
     return () => {
-      running = false;
-      cancelAnimationFrame(raf);
+      disposed = true;
+      stopLoop();
       ro.disconnect();
+      observer?.disconnect();
+      gl.canvas.removeEventListener("webglcontextlost", onContextLost);
       document.removeEventListener("visibilitychange", onVisibility);
       gl.canvas.remove();
       const ext = gl.getExtension("WEBGL_lose_context");

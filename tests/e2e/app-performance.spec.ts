@@ -133,4 +133,72 @@ test.describe("application performance baseline", () => {
       }),
     );
   });
+
+  test("pauses the particle RAF while hidden or outside the viewport", async ({ page }) => {
+    await mockSupabaseBrowserRequests(page);
+    await openInteractiveApp(page);
+
+    const field = page.getByTestId("process-field");
+    await expect(field).toBeVisible();
+    test.skip(
+      (await field.locator("canvas").count()) === 0,
+      "WebGL is unavailable in this browser",
+    );
+
+    await page.evaluate(() => {
+      let count = 0;
+      const nativeRequestAnimationFrame = window.requestAnimationFrame.bind(window);
+      window.requestAnimationFrame = (callback) => {
+        count += 1;
+        return nativeRequestAnimationFrame(callback);
+      };
+      Object.defineProperty(window, "__motioncodeRafCount", {
+        configurable: true,
+        get: () => count,
+      });
+    });
+
+    await expect
+      .poll(() => page.evaluate(() => (window as Window & { __motioncodeRafCount?: number }).__motioncodeRafCount ?? 0))
+      .toBeGreaterThan(0);
+
+    await page.evaluate(() => {
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "hidden",
+      });
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    const hiddenCount = await page.evaluate(
+      () => (window as Window & { __motioncodeRafCount?: number }).__motioncodeRafCount ?? 0,
+    );
+    await page.waitForTimeout(180);
+    await expect
+      .poll(() => page.evaluate(() => (window as Window & { __motioncodeRafCount?: number }).__motioncodeRafCount ?? 0))
+      .toBe(hiddenCount);
+
+    await page.evaluate(() => {
+      const processField = document.querySelector<HTMLElement>('[data-testid="process-field"]');
+      if (!processField) throw new Error("Process field not found");
+      processField.style.transform = "translateY(200vh)";
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "visible",
+      });
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    await page.waitForTimeout(180);
+    await expect
+      .poll(() => page.evaluate(() => (window as Window & { __motioncodeRafCount?: number }).__motioncodeRafCount ?? 0))
+      .toBe(hiddenCount);
+
+    await page.evaluate(() => {
+      const processField = document.querySelector<HTMLElement>('[data-testid="process-field"]');
+      if (!processField) throw new Error("Process field not found");
+      processField.style.transform = "";
+    });
+    await expect
+      .poll(() => page.evaluate(() => (window as Window & { __motioncodeRafCount?: number }).__motioncodeRafCount ?? 0))
+      .toBeGreaterThan(hiddenCount);
+  });
 });

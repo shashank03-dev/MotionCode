@@ -8,6 +8,7 @@ import {
   type DragEvent,
   type MouseEvent,
 } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -18,7 +19,6 @@ import {
 } from "@/components/app/intent-colors";
 import { FreeSaveNoticeModal } from "@/components/app/FreeSaveNoticeModal";
 import { ProcessCanvas } from "@/components/app/ProcessCanvas";
-import { AnalyzeStudio } from "@/components/app/studio/AnalyzeStudio";
 import { UploadPanel } from "@/components/app/UploadPanel";
 import type { ApiResponse } from "@/lib/contracts/errors";
 import type { AnalysisResult } from "@/lib/contracts/motion";
@@ -42,6 +42,17 @@ import type { AnalysisStage } from "./types";
 
 const DEFAULT_ENTITLEMENTS = PLAN_ENTITLEMENTS.free;
 const DEFAULT_FRAME_COUNT = DEFAULT_ENTITLEMENTS.maxFramesPerAnalysis;
+
+// The result studio brings CodeMirror and its language packages with it. Keep
+// that dependency tree out of the initial workbench path until an analysis has
+// produced a result to display.
+const AnalyzeStudio = dynamic(
+  () => import("@/components/app/studio/AnalyzeStudio").then((module) => module.AnalyzeStudio),
+  {
+    loading: () => <AnalyzeStudioLoading />,
+    ssr: false,
+  },
+);
 
 // Free-tier "your work won't be saved" consent. Acknowledged once per session;
 // the permanent key lets a user opt out of the reminder for good on this device.
@@ -728,6 +739,44 @@ function SaveStatePill({ saveState }: { saveState: SaveState }) {
     >
       Not saved
     </span>
+  );
+}
+
+function AnalyzeStudioLoading() {
+  return (
+    <div
+      aria-busy="true"
+      aria-label="Loading analysis studio"
+      className="relative flex h-full min-h-0 flex-col"
+    >
+      <div className="flex min-h-[58px] items-center justify-between gap-3 border-b border-hairline px-4 py-2.5">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="inline-flex size-2 shrink-0 rounded-full bg-accent/50" aria-hidden="true" />
+          <div className="space-y-1.5">
+            <div className="h-2 w-24 rounded bg-white/[0.08]" />
+            <div className="h-3 w-32 rounded bg-white/[0.06]" />
+          </div>
+        </div>
+        <div className="h-8 w-24 rounded-md border border-hairline bg-white/[0.03]" />
+      </div>
+      <div className="grid min-h-0 flex-1 grid-cols-2">
+        <div className="min-w-0 border-r border-hairline">
+          <div className="flex h-10 items-center border-b border-hairline px-3">
+            <div className="h-2.5 w-28 rounded bg-white/[0.07]" />
+          </div>
+          <div className="space-y-3 p-4">
+            <div className="h-2 w-4/5 rounded bg-white/[0.06]" />
+            <div className="h-2 w-3/5 rounded bg-white/[0.05]" />
+            <div className="h-2 w-2/3 rounded bg-white/[0.05]" />
+          </div>
+        </div>
+        <div className="min-w-0">
+          <div className="flex h-10 items-center border-b border-hairline px-3">
+            <div className="h-2.5 w-24 rounded bg-white/[0.07]" />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
