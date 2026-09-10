@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 import { ConsolePanel } from "./ConsolePanel";
 
-export type PreviewStatus = "idle" | "running" | "ready" | "error";
+export type PreviewStatus = "idle" | "running" | "ready" | "error" | "timeout";
 
 type PreviewPaneProps = {
   srcDoc: string;
@@ -29,6 +29,7 @@ const STATUS_TEXT: Record<PreviewStatus, string> = {
   running: "RUNNING",
   ready: "READY",
   error: "ERROR",
+  timeout: "TIMED OUT",
 };
 
 export function PreviewPane({
@@ -97,7 +98,7 @@ export function PreviewPane({
         <span
           className={cn(
             "inline-flex items-center gap-1.5",
-            status === "error" ? "text-[#f58f7c]" : "text-ink-3",
+            status === "error" || status === "timeout" ? "text-[#f58f7c]" : "text-ink-3",
           )}
         >
           <span
@@ -105,7 +106,7 @@ export function PreviewPane({
               "inline-flex size-1.5 rounded-full",
               status === "ready"
                 ? "bg-accent"
-                : status === "error"
+                  : status === "error" || status === "timeout"
                   ? "bg-[#f58f7c]"
                   : status === "running"
                     ? "bg-[#ffd166]"

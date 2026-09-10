@@ -86,22 +86,35 @@ export function AnalyzeStudio({
   const [status, setStatus] = useState<PreviewStatus>("idle");
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
   const [consoleEntries, setConsoleEntries] = useState<ConsoleEntry[]>([]);
+  const [isNarrow, setIsNarrow] = useState(false);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const runIdRef = useRef(0);
   const runStartRef = useRef(0);
   const consoleIdRef = useRef(0);
+  const previewTimeoutRef = useRef<number | null>(null);
 
   const errorCount = useMemo(
     () => consoleEntries.filter((entry) => entry.level === "error").length,
     [consoleEntries],
   );
 
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const update = () => setIsNarrow(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
   const run = useCallback(
     (tab: CodeTab, code: string) => {
       const nextRunId = runIdRef.current + 1;
       runIdRef.current = nextRunId;
       runStartRef.current = performance.now();
+      if (previewTimeoutRef.current !== null) {
+        window.clearTimeout(previewTimeoutRef.current);
+      }
 
       const doc = buildPreviewDoc({
         framework: getFrameworkForTab(tab),
@@ -122,6 +135,9 @@ export function AnalyzeStudio({
       setStatus("running");
       setRunId(nextRunId);
       setSrcDoc(doc);
+      previewTimeoutRef.current = window.setTimeout(() => {
+        if (runIdRef.current === nextRunId) setStatus("timeout");
+      }, 8000);
     },
     [result.spec],
   );
@@ -141,8 +157,13 @@ export function AnalyzeStudio({
       const data = event.data;
       if (!isPreviewMessage(data)) return;
       if (data.runId !== runIdRef.current) return;
+      if (event.source !== iframeRef.current?.contentWindow) return;
 
       if (data.type === "ready") {
+        if (previewTimeoutRef.current !== null) {
+          window.clearTimeout(previewTimeoutRef.current);
+          previewTimeoutRef.current = null;
+        }
         setElapsedMs(Math.max(0, Math.round(performance.now() - runStartRef.current)));
         setStatus((current) => (current === "error" ? "error" : "ready"));
         return;
@@ -152,6 +173,10 @@ export function AnalyzeStudio({
         return;
       }
       if (data.type === "error") {
+        if (previewTimeoutRef.current !== null) {
+          window.clearTimeout(previewTimeoutRef.current);
+          previewTimeoutRef.current = null;
+        }
         appendConsole("error", data.text);
         setStatus("error");
       }
@@ -166,7 +191,12 @@ export function AnalyzeStudio({
     }
 
     window.addEventListener("message", handler);
-    return () => window.removeEventListener("message", handler);
+    return () => {
+      window.removeEventListener("message", handler);
+      if (previewTimeoutRef.current !== null) {
+        window.clearTimeout(previewTimeoutRef.current);
+      }
+    };
   }, []);
 
   const activeCode = editorCode[activeTab] ?? "";
@@ -261,7 +291,10 @@ export function AnalyzeStudio({
 
       {/* Split body */}
       <div className="min-h-0 flex-1">
-        <PanelGroup direction="horizontal" autoSaveId="motioncode-studio-split">
+        <PanelGroup
+          direction={isNarrow ? "vertical" : "horizontal"}
+          autoSaveId="motioncode-studio-split"
+        >
           <Panel defaultSize={50} minSize={28} className="min-w-0">
             <EditorPane
               tabs={CODE_TABS}
