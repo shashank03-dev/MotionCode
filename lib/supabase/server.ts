@@ -11,7 +11,9 @@ type SupabaseAuthReader = {
   auth: Pick<SupabaseClient<Database>["auth"], "getUser">;
 };
 
-type ReactServerCache = <T extends (...args: any[]) => any>(fn: T) => T;
+type ReactServerCache = <Args extends unknown[], Result>(
+  fn: (...args: Args) => Result,
+) => (...args: Args) => Result;
 
 // React 18's browser/test runtime does not expose the Server Components cache,
 // while Next's server condition does. Keep the fallback for unit-test imports;

@@ -162,6 +162,16 @@ export function AppShell({
   const [saveState, setSaveState] = useState<SaveState>({ status: "idle" });
   const pendingFileRef = useRef<File | null>(null);
   const saveRunRef = useRef(0);
+  const extractionControllerRef = useRef<AbortController | null>(null);
+  const analysisControllerRef = useRef<AbortController | null>(null);
+  const operationIdRef = useRef(0);
+
+  useEffect(() => {
+    return () => {
+      extractionControllerRef.current?.abort();
+      analysisControllerRef.current?.abort();
+    };
+  }, []);
 
   const localUsageRemaining = usagesLeft(entitlements.dailyAnalyses);
   const usageRemaining =
@@ -231,6 +241,11 @@ export function AppShell({
       }
 
       setValidationError(null);
+      extractionControllerRef.current?.abort();
+      const controller = new AbortController();
+      extractionControllerRef.current = controller;
+      const operationId = operationIdRef.current + 1;
+      operationIdRef.current = operationId;
       setFile(selectedFile);
       revokeCurrentFileUrl();
 
@@ -247,11 +262,14 @@ export function AppShell({
         const extracted = await extractFrames(selectedFile, count, {
           maxBytes: entitlements.maxUploadBytes,
           maxFrames: entitlements.maxFramesPerAnalysis,
+          signal: controller.signal,
         });
+        if (operationId !== operationIdRef.current) return;
         setFrames(extracted);
         setFrameThumbs(extracted.map((frame) => `data:image/jpeg;base64,${frame}`));
         setStage("idle");
       } catch (caught) {
+        if (isAbortError(caught) || operationId !== operationIdRef.current) return;
         const message =
           caught instanceof Error ? caught.message : "Failed to extract frames.";
         setStage("error");
@@ -319,6 +337,10 @@ export function AppShell({
   const handleRemoveFile = useCallback(
     (event?: MouseEvent) => {
       event?.stopPropagation();
+      extractionControllerRef.current?.abort();
+      analysisControllerRef.current?.abort();
+      operationIdRef.current += 1;
+      setLoading(false);
       setFile(null);
       revokeCurrentFileUrl();
       setFrames([]);
@@ -398,6 +420,11 @@ export function AppShell({
     }
 
     setLoading(true);
+    analysisControllerRef.current?.abort();
+    const controller = new AbortController();
+    analysisControllerRef.current = controller;
+    const operationId = operationIdRef.current + 1;
+    operationIdRef.current = operationId;
     setStage("analyzing");
     setResult(null);
     setError(null);
@@ -407,7 +434,10 @@ export function AppShell({
       const analyzed = await analyzeViaApi({
         frames,
         planTier: userPlan,
+        signal: controller.signal,
       });
+
+      if (operationId !== operationIdRef.current) return;
 
       if (userPlan === "free") {
         incrementUsage();
@@ -422,10 +452,21 @@ export function AppShell({
       setShowToast(true);
       persistAnalysis(analyzed);
     } catch (caught) {
+      if (isAbortError(caught)) {
+        if (operationId === operationIdRef.current) {
+          setStage("idle");
+          setStatusMessage("");
+        }
+        return;
+      }
+      if (operationId !== operationIdRef.current) return;
       setError(caught instanceof Error ? caught.message : "Analysis failed. Try again.");
       setStage("error");
     } finally {
-      setLoading(false);
+      if (operationId === operationIdRef.current) {
+        setLoading(false);
+        analysisControllerRef.current = null;
+      }
     }
   }, [
     canUseFree,
@@ -616,6 +657,7 @@ export function AppShell({
           frameThumbs={frameThumbs}
           framesLength={frames.length}
           loading={loading}
+          onCancelAnalysis={() => analysisControllerRef.current?.abort()}
           onAnalyze={handleAnalyze}
           onDragLeave={onDragLeave}
           onDragOver={onDragOver}
@@ -783,9 +825,11 @@ function AnalyzeStudioLoading() {
 async function analyzeViaApi({
   frames,
   planTier,
+  signal,
 }: {
   frames: string[];
   planTier: PlanTier;
+  signal?: AbortSignal;
 }) {
   const response = await fetch("/api/analyze", {
     body: JSON.stringify({
@@ -794,6 +838,7 @@ async function analyzeViaApi({
     }),
     headers: { "Content-Type": "application/json" },
     method: "POST",
+    signal,
   });
   const contentType = response.headers.get("content-type") ?? "";
   const payload = contentType.includes("application/json")
@@ -811,6 +856,10 @@ async function analyzeViaApi({
   }
 
   return payload.data;
+}
+
+function isAbortError(value: unknown) {
+  return value instanceof Error && value.name === "AbortError";
 }
 
 function getStoredTab(): CodeTab | null {

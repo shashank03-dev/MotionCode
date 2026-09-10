@@ -23,6 +23,7 @@ type UploadPanelProps = {
   framesLength: number;
   loading: boolean;
   onAnalyze: () => void;
+  onCancelAnalysis: () => void;
   onDragLeave: (event: DragEvent<HTMLDivElement>) => void;
   onDragOver: (event: DragEvent<HTMLDivElement>) => void;
   onDrop: (event: DragEvent<HTMLDivElement>) => void;
@@ -48,6 +49,7 @@ export function UploadPanel({
   framesLength,
   loading,
   onAnalyze,
+  onCancelAnalysis,
   onDragLeave,
   onDragOver,
   onDrop,
@@ -192,6 +194,11 @@ export function UploadPanel({
         <button disabled={analyzeDisabled} onClick={onAnalyze} type="button">
           {loading ? "Analyzing..." : stage === "extracting" ? "Extracting..." : "Analyze"}
         </button>
+        {loading && (
+          <button onClick={onCancelAnalysis} type="button">
+            Cancel
+          </button>
+        )}
       </div>
     </aside>
   );

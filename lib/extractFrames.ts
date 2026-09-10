@@ -17,9 +17,11 @@ const DEFAULT_SEEK_TIMEOUT_MS = 3000
 const DEFAULT_METADATA_TIMEOUT_MS = 5000
 
 export type ExtractFramesOptions = {
+  onProgress?: (completed: number, total: number) => void
   maxBytes?: number
   maxFrames?: number
   metadataTimeoutMs?: number
+  signal?: AbortSignal
   seekTimeoutMs?: number
 }
 
@@ -42,11 +44,13 @@ export async function extractFrames(
     )
   }
 
+  throwIfAborted(options.signal)
+
   if (!Number.isInteger(count) || count < 1 || count > maxFrames) {
     throw new Error(`Frame count must be between 1 and ${maxFrames}.`)
   }
 
-  if (kind === "gif") return extractGifFrame(file)
+  if (kind === "gif") return extractGifFrame(file, options.signal)
   return extractVideoFrames(file, count, options)
 }
 
@@ -54,14 +58,27 @@ export function isSupportedMediaFile(file: File) {
   return getSupportedMediaKind(file) !== null
 }
 
-async function extractGifFrame(file: File): Promise<string[]> {
+async function extractGifFrame(file: File, signal?: AbortSignal): Promise<string[]> {
   return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(createAbortError())
+      return
+    }
     const url = URL.createObjectURL(file)
     const img = new Image()
-    const cleanup = () => URL.revokeObjectURL(url)
+    const onAbort = () => {
+      cleanup()
+      reject(createAbortError())
+    }
+    const cleanup = () => {
+      signal?.removeEventListener("abort", onAbort)
+      URL.revokeObjectURL(url)
+    }
+    signal?.addEventListener("abort", onAbort, { once: true })
 
     img.onload = () => {
       try {
+        throwIfAborted(signal)
         const canvas = document.createElement("canvas")
         const dimensions = fitDimensions(img.naturalWidth, img.naturalHeight)
         canvas.width = dimensions.width
@@ -100,6 +117,7 @@ async function extractVideoFrames(
     let metadataTimer: ReturnType<typeof setTimeout> | null = null
     let seekTimer: ReturnType<typeof setTimeout> | null = null
     let settled = false
+    const onAbort = () => fail(createAbortError())
 
     const cleanup = () => {
       if (metadataTimer) clearTimeout(metadataTimer)
@@ -107,6 +125,7 @@ async function extractVideoFrames(
       video.removeEventListener("loadedmetadata", onLoadedMetadata)
       video.removeEventListener("seeked", onSeeked)
       video.removeEventListener("error", onError)
+      options.signal?.removeEventListener("abort", onAbort)
       URL.revokeObjectURL(url)
     }
 
@@ -131,6 +150,10 @@ async function extractVideoFrames(
     let times: number[] = []
 
     function onLoadedMetadata() {
+      if (options.signal?.aborted) {
+        fail(createAbortError())
+        return
+      }
       if (metadataTimer) clearTimeout(metadataTimer)
 
       const duration = video.duration
@@ -147,6 +170,10 @@ async function extractVideoFrames(
     }
 
     function onSeeked() {
+      if (options.signal?.aborted) {
+        fail(createAbortError())
+        return
+      }
       if (seekTimer) clearTimeout(seekTimer)
 
       try {
@@ -156,6 +183,7 @@ async function extractVideoFrames(
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
         frames.push(getJpegBase64(canvas, 0.8))
         current++
+        options.onProgress?.(current, times.length)
         captureNext()
       } catch (error) {
         fail(error instanceof Error ? error : new Error("Failed to capture frame."))
@@ -167,6 +195,10 @@ async function extractVideoFrames(
     }
 
     function captureNext() {
+      if (options.signal?.aborted) {
+        fail(createAbortError())
+        return
+      }
       if (current >= times.length) {
         succeed(frames)
         return
@@ -190,6 +222,7 @@ async function extractVideoFrames(
     video.addEventListener("loadedmetadata", onLoadedMetadata)
     video.addEventListener("seeked", onSeeked)
     video.addEventListener("error", onError)
+    options.signal?.addEventListener("abort", onAbort, { once: true })
 
     metadataTimer = setTimeout(() => {
       fail(new Error("Timed out loading video metadata."))
@@ -197,6 +230,16 @@ async function extractVideoFrames(
 
     video.load()
   })
+}
+
+function throwIfAborted(signal?: AbortSignal) {
+  if (signal?.aborted) throw createAbortError()
+}
+
+function createAbortError() {
+  const error = new Error("Frame extraction was canceled.")
+  error.name = "AbortError"
+  return error
 }
 
 function getSupportedMediaKind(file: File): "gif" | "video" | null {

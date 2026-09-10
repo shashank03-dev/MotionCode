@@ -20,7 +20,7 @@ describe("request-scoped server memoization", () => {
         cache: <T extends (...args: never[]) => unknown>(fn: T) => {
           let promise: ReturnType<T> | undefined;
           const cached = ((...args: never[]) => {
-            promise ??= fn(...args);
+            promise ??= fn(...args) as ReturnType<T>;
             return promise;
           }) as T;
           cachedFunctions.push(cached);

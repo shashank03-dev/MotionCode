@@ -108,7 +108,9 @@ const ACTIVE_SUBSCRIPTION_STATUSES = new Set([
 ]);
 const INTERNAL_BETA_FREE_DAILY_ANALYSES = 3;
 
-type ReactServerCache = <T extends (...args: any[]) => any>(fn: T) => T;
+type ReactServerCache = <Args extends unknown[], Result>(
+  fn: (...args: Args) => Result,
+) => (...args: Args) => Result;
 
 const requestCache =
   (React as typeof React & { cache?: ReactServerCache }).cache ??
