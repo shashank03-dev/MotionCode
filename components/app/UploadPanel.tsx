@@ -195,7 +195,11 @@ export function UploadPanel({
           {loading ? "Analyzing..." : stage === "extracting" ? "Extracting..." : "Analyze"}
         </button>
         {loading && (
-          <button onClick={onCancelAnalysis} type="button">
+          <button
+            className={styles.smallButton}
+            onClick={onCancelAnalysis}
+            type="button"
+          >
             Cancel
           </button>
         )}

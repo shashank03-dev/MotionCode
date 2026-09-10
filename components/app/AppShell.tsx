@@ -222,6 +222,9 @@ export function AppShell({
 
       setValidationError(null);
       extractionControllerRef.current?.abort();
+      if (analysisControllerRef.current) {
+        analysisControllerRef.current.abort();
+      }
       const controller = new AbortController();
       extractionControllerRef.current = controller;
       const operationId = operationIdRef.current + 1;
@@ -254,6 +257,10 @@ export function AppShell({
           caught instanceof Error ? caught.message : "Failed to extract frames.";
         setStage("error");
         setError(message);
+      } finally {
+        if (operationId === operationIdRef.current) {
+          extractionControllerRef.current = null;
+        }
       }
     },
     [

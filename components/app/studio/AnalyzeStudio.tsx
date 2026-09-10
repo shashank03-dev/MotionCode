@@ -86,7 +86,9 @@ export function AnalyzeStudio({
   const [status, setStatus] = useState<PreviewStatus>("idle");
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
   const [consoleEntries, setConsoleEntries] = useState<ConsoleEntry[]>([]);
-  const [isNarrow, setIsNarrow] = useState(false);
+  const [isNarrow, setIsNarrow] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches,
+  );
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const runIdRef = useRef(0);
@@ -157,7 +159,16 @@ export function AnalyzeStudio({
       const data = event.data;
       if (!isPreviewMessage(data)) return;
       if (data.runId !== runIdRef.current) return;
-      if (event.source !== iframeRef.current?.contentWindow) return;
+      const currentWindow = iframeRef.current?.contentWindow;
+      if (event.source !== currentWindow) {
+        // The iframe remounts on each run (srcDoc change), so its contentWindow
+        // can be null mid-remount when a legit "ready" arrives. Accept the
+        // message when the runId matches and the source is non-null; only drop
+        // when a non-null source positively differs from a non-null window
+        // (or when the source itself is null and unverifiable).
+        if (event.source == null) return;
+        if (currentWindow != null) return;
+      }
 
       if (data.type === "ready") {
         if (previewTimeoutRef.current !== null) {
@@ -293,7 +304,11 @@ export function AnalyzeStudio({
       <div className="min-h-0 flex-1">
         <PanelGroup
           direction={isNarrow ? "vertical" : "horizontal"}
-          autoSaveId="motioncode-studio-split"
+          autoSaveId={
+            isNarrow
+              ? "motioncode-studio-split-vertical"
+              : "motioncode-studio-split-horizontal"
+          }
         >
           <Panel defaultSize={50} minSize={28} className="min-w-0">
             <EditorPane
@@ -313,8 +328,19 @@ export function AnalyzeStudio({
               onDownload={handleDownload}
             />
           </Panel>
-          <PanelResizeHandle className="group relative w-px bg-[var(--border)] outline-none data-[resize-handle-state=hover]:bg-accent data-[resize-handle-state=drag]:bg-accent">
-            <span className="absolute inset-y-0 -left-1 -right-1 z-10" />
+          <PanelResizeHandle
+            className={cn(
+              "group relative bg-[var(--border)] outline-none data-[resize-handle-state=hover]:bg-accent data-[resize-handle-state=drag]:bg-accent",
+              isNarrow ? "h-px w-full" : "w-px",
+            )}
+          >
+            <span
+              className={
+                isNarrow
+                  ? "absolute inset-x-0 -top-1 -bottom-1 z-10"
+                  : "absolute inset-y-0 -left-1 -right-1 z-10"
+              }
+            />
           </PanelResizeHandle>
           <Panel defaultSize={50} minSize={28} className="min-w-0">
             <PreviewPane

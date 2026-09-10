@@ -108,12 +108,31 @@ test.describe("application performance baseline", () => {
       });
       previewReadiness = Date.now() - navigationStart;
     } catch (error) {
-      if (error instanceof errors.TimeoutError) {
-        previewTimeout = Date.now() - navigationStart;
-      } else {
+      if (!(error instanceof errors.TimeoutError)) {
         throw error;
       }
+      previewTimeout = Date.now() - navigationStart;
+      // A preview that never reports READY must fail loudly instead of staying
+      // green: the timeout status has to be surfaced with a working retry that
+      // leaves the generated editor code untouched.
+      await expect(page.getByText("TIMED OUT", { exact: false })).toBeVisible();
+      const replay = page.getByTitle("Re-run preview");
+      await expect(replay).toBeVisible();
+      const editorPane = page.getByRole("region", {
+        name: "Generated code editor",
+      });
+      const editorBefore = await editorPane.textContent();
+      expect(editorBefore?.length).toBeGreaterThan(0);
+      await replay.click();
+      await expect(
+        page
+          .getByText("RUNNING", { exact: false })
+          .or(page.getByText("READY ·", { exact: false }))
+          .or(page.getByText("TIMED OUT", { exact: false })),
+      ).toBeVisible({ timeout: 8_000 });
+      expect(await editorPane.textContent()).toBe(editorBefore);
     }
+    expect(previewReadiness ?? previewTimeout).not.toBeNull();
 
     await assertAppDiagnostics(page, diagnostics);
     console.log(

@@ -234,6 +234,25 @@ describe("Supabase auth helpers", () => {
     expect(response.status).toBe(200);
     expect(createServerClient).not.toHaveBeenCalled();
   });
+
+  it.each(["/", "/contact", "/privacy", "/refunds", "/shipping", "/terms"])(
+    "skips the auth refresh round-trip for static public route %s",
+    async (path) => {
+      process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "public-anon-key";
+
+      const createServerClient = vi.fn();
+      vi.doMock("@supabase/ssr", () => ({ createServerClient }));
+
+      const { proxy } = await import("@/proxy");
+      const response = await proxy(
+        new NextRequest(`https://motioncode.test${path}`),
+      );
+
+      expect(response.status).toBe(200);
+      expect(createServerClient).not.toHaveBeenCalled();
+    },
+  );
 });
 
 describe("Supabase generated-style public write types", () => {

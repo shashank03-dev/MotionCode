@@ -72,6 +72,9 @@ async function extractGifFrame(file: File, signal?: AbortSignal): Promise<string
     }
     const cleanup = () => {
       signal?.removeEventListener("abort", onAbort)
+      img.onload = null
+      img.onerror = null
+      img.src = ""
       URL.revokeObjectURL(url)
     }
     signal?.addEventListener("abort", onAbort, { once: true })
@@ -126,6 +129,8 @@ async function extractVideoFrames(
       video.removeEventListener("seeked", onSeeked)
       video.removeEventListener("error", onError)
       options.signal?.removeEventListener("abort", onAbort)
+      if (typeof video.pause === "function") video.pause()
+      video.src = ""
       URL.revokeObjectURL(url)
     }
 

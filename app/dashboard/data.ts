@@ -30,9 +30,18 @@ export type DashboardData = {
   workspaces: WorkspaceRow[];
 };
 
+export type WorkbenchTreeWorkspace = Pick<
+  WorkspaceRow,
+  "id" | "name" | "updated_at"
+>;
+export type WorkbenchTreeProject = Pick<
+  ProjectRow,
+  "id" | "title" | "updated_at" | "workspace_id"
+>;
+
 export type WorkbenchTreeData = {
-  projects: Project[];
-  workspaces: Workspace[];
+  projects: WorkbenchTreeProject[];
+  workspaces: WorkbenchTreeWorkspace[];
 };
 
 export type WorkspacePageData = {
@@ -151,12 +160,13 @@ export async function getWorkbenchTreeData(
   const [workspaces, projects] = await Promise.all([
     supabase
       .from("workspaces")
-      .select("*")
+      .select("id, name, updated_at")
       .order("updated_at", { ascending: false }),
     supabase
       .from("projects")
-      .select("*")
-      .order("updated_at", { ascending: false }),
+      .select("id, title, updated_at, workspace_id")
+      .order("updated_at", { ascending: false })
+      .limit(100),
   ]);
 
   if (workspaces.error || projects.error) {

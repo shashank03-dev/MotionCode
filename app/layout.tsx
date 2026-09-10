@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
 import localFont from "next/font/local";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { INTRO_GATE_SCRIPT } from "@/lib/intro-gate";
 import "./globals.css";
 
@@ -20,12 +21,11 @@ const neueMontreal = localFont({
   variable: "--font-ppnm",
   display: "swap",
   src: [
-    { path: "./fonts/ppnm/ppneuemontreal-thin.otf", weight: "100", style: "normal" },
-    { path: "./fonts/ppnm/ppneuemontreal-book.otf", weight: "400", style: "normal" },
-    { path: "./fonts/ppnm/ppneuemontreal-italic.otf", weight: "400", style: "italic" },
-    { path: "./fonts/ppnm/ppneuemontreal-medium.otf", weight: "500", style: "normal" },
-    { path: "./fonts/ppnm/ppneuemontreal-semibolditalic.otf", weight: "600", style: "italic" },
-    { path: "./fonts/ppnm/ppneuemontreal-bold.otf", weight: "700", style: "normal" },
+    { path: "./fonts/ppnm/ppneuemontreal-book.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/ppnm/ppneuemontreal-italic.woff2", weight: "400", style: "italic" },
+    { path: "./fonts/ppnm/ppneuemontreal-medium.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/ppnm/ppneuemontreal-semibolditalic.woff2", weight: "600", style: "italic" },
+    { path: "./fonts/ppnm/ppneuemontreal-bold.woff2", weight: "700", style: "normal" },
   ],
 });
 
@@ -100,6 +100,7 @@ export default function RootLayout({
       <body className="antialiased" style={{ fontOpticalSizing: "auto" }}>
         {children}
         {modal}
+        <SpeedInsights />
       </body>
     </html>
   );

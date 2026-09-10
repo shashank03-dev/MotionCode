@@ -37,6 +37,15 @@ describe("Next.js security headers", () => {
     expect(csp).toContain("wss://motioncode.supabase.co");
     expect(csp).toContain("https://checkout.razorpay.com");
     expect(csp).toContain("https://api.razorpay.com");
+    expect(csp).toContain("https://va.vercel-scripts.com");
+    const scriptSrc = csp
+      .split("; ")
+      .find((directive) => directive.startsWith("script-src "));
+    const connectSrc = csp
+      .split("; ")
+      .find((directive) => directive.startsWith("connect-src "));
+    expect(scriptSrc).toContain("https://va.vercel-scripts.com");
+    expect(connectSrc).toContain("https://va.vercel-scripts.com");
     expect(csp).not.toMatch(/gemini|generativelanguage|openai/i);
     expect(csp).not.toMatch(/stripe/i);
   });

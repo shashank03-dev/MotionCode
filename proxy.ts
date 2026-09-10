@@ -4,11 +4,28 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getOptionalSupabasePublicConfig } from "@/lib/supabase/config";
 import type { Database } from "@/types/database";
 
+// These routes are fully static and have no server-side user state. Skipping
+// the Supabase refresh here keeps the CDN-cached HTML on the fast path instead
+// of adding an auth network round-trip to every public page request.
+const PUBLIC_STATIC_PATHS = new Set([
+  "/",
+  "/contact",
+  "/privacy",
+  "/refunds",
+  "/shipping",
+  "/terms",
+]);
+
 export async function proxy(request: NextRequest) {
-  const supabaseConfig = getOptionalSupabasePublicConfig();
   let supabaseResponse = NextResponse.next({
     request,
   });
+
+  if (PUBLIC_STATIC_PATHS.has(request.nextUrl.pathname)) {
+    return supabaseResponse;
+  }
+
+  const supabaseConfig = getOptionalSupabasePublicConfig();
 
   if (!supabaseConfig) {
     return supabaseResponse;
