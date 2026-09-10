@@ -13,8 +13,8 @@ Implemented Task 2 in the scoped files.
 
 - `git diff --check` — passed.
 - `npx eslint components/app/AppShell.tsx components/app/MotionParticleField.tsx` — passed.
-- `npm run typecheck` — blocked by generated `.next/dev/types/validator.ts` syntax errors at lines 63–67 (`TS1109`), unrelated to the Task 2 source changes.
-- Build, route-chunk artifact inspection, and E2E were not run per the request to stop long-running validation.
+- `npm run typecheck` — the earlier standalone run was blocked by generated `.next/dev/types/validator.ts` syntax errors at lines 63–67 (`TS1109`); the later production build completed its TypeScript phase successfully.
+- Production build, route-chunk artifact inspection, and focused E2E were completed in the validation round below; the E2E outcomes are environment-limited as documented.
 
 ## Concerns
 
@@ -25,3 +25,11 @@ Implemented Task 2 in the scoped files.
 - `npm run build` passed: Next.js 16.2.7 compiled, typechecked, generated 21 static pages, and finalized route optimization.
 - `npx eslint tests/e2e/app-performance.spec.ts` and `git diff --check` passed.
 - `graphify update .` was attempted but interrupted after it hit a Python 3.14 `pathlib` traceback while scanning the repository; no ledger was edited.
+
+## Validation round (this run)
+
+- `npm run build` compiled successfully in 61s and completed TypeScript in 46s, then exited 1 during page-data collection with `ENOENT: no such file or directory, open '/home/user/motioncode/.next/server/pages-manifest.json'`.
+- The generated `/app` entry manifest listed six initial JS chunks: `3g6ufk8yn_pu3.js`, `0u3bel5ig3b5i.js`, `3lkmibt2cbuum.js`, `1zw2zt8p-4kl0.js`, `1sfg2ekbdxk47.js`, and `0ud4gx5m5g0f3.js`. They contained no AnalyzeStudio implementation, CodeMirror implementation, or `react-resizable-panels` code. `0ud4gx5m5g0f3.js` contains only the expected dynamic-loader symbol reference. Deferred module `78272` maps to `0pr1zk7d_4bz_.js`, which contains AnalyzeStudio, CodeMirror, and react-resizable-panels.
+- `npm run test:e2e -- tests/e2e/app-process.spec.ts tests/e2e/app-performance.spec.ts` ran 5 tests: 4 failed before Task 2 assertions because the sign-in overlay intercepted the save-consent modal’s Continue button; 1 particle visibility test was skipped because Chromium exposed no WebGL canvas.
+- The revised offscreen assertion now waits for explicit IntersectionObserver false/true callbacks and a quiet RAF probe with an unchanged count before asserting pause/resume. It checks the canvas count remains unchanged after resume as the practical continuity signal; shader internals remain private and no API was added.
+- A second `graphify update .` reached 100% AST extraction but was interrupted during JavaScript symbol-resolution parsing; no ledger was edited.
