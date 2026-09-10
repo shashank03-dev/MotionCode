@@ -50,7 +50,11 @@ test.describe("application performance baseline", () => {
     await mockSupabaseBrowserRequests(page);
     await page.goto("/app");
     await expect(page.getByRole("dialog", { name: /sign in to start/i })).toBeVisible();
-    await expect(page.locator("[inert]#app-root")).toBeVisible();
+    // The inert presentation wrapper and the analyzer root are distinct
+    // elements: the gate overlay sits over `div[inert]`, inside which the
+    // shell renders as `#app-root`. Assert both halves, not one selector.
+    await expect(page.locator("div[inert]")).toBeVisible();
+    await expect(page.locator("#app-root")).toBeVisible();
     const firstVisibleWorkbenchShell = Date.now();
     await assertAppDiagnostics(page, diagnostics);
 

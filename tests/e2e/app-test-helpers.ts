@@ -58,6 +58,12 @@ export async function openInteractiveApp(page: Page) {
   await page.goto("/app");
   await expect(page.getByRole("dialog", { name: /sign in to start/i })).toBeVisible();
 
+  // Wait for React hydration before touching the DOM: AppAuthGate's client
+  // effect locks body scroll on mount, so a hidden overflow proves effects
+  // have run. Operating earlier lets hydration restore everything we remove
+  // (the gate comes back and the shell goes inert again).
+  await page.waitForFunction(() => document.body.style.overflow === "hidden");
+
   // The server-rendered anonymous path already contains the same analyzer
   // shell used by the authenticated path. Removing only the gate and its inert
   // presentation lets process tests exercise that shell without signing into a
@@ -70,6 +76,10 @@ export async function openInteractiveApp(page: Page) {
     shell?.classList.remove("pointer-events-none", "select-none", "blur-sm");
     document.body.style.overflow = "";
   });
+
+  // The gate must stay gone: if hydration (or a re-render) restores it, every
+  // click below would be intercepted by the sign-in overlay.
+  await expect(page.getByRole("dialog", { name: /sign in to start/i })).toHaveCount(0);
 
   await expect(page.getByTestId("upload-dropzone")).toBeVisible();
   const firstVisibleWorkbenchShell = Date.now();

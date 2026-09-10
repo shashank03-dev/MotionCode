@@ -300,10 +300,15 @@ export function AnalyzeStudio({
         </div>
       </header>
 
-      {/* Split body */}
+      {/* Split body. In narrow mode the vertical group needs a definite
+          height: it renders height:100% and each panel resolves against it,
+          so an indefinite flex ancestor collapses both panels to zero area.
+          min-height does NOT fix this (percentages ignore it) - pass height
+          via style, which overrides the library's own inline height. */}
       <div className="min-h-0 flex-1">
         <PanelGroup
           direction={isNarrow ? "vertical" : "horizontal"}
+          style={isNarrow ? { height: "70vh" } : undefined}
           autoSaveId={
             isNarrow
               ? "motioncode-studio-split-vertical"

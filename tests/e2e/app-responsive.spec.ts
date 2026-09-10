@@ -92,12 +92,18 @@ test.describe("application responsive baseline", () => {
     await expect(page.getByRole("heading", { name: "motion target" })).toBeVisible();
 
     // Below 768px the studio split switches from horizontal to vertical.
-    await expect(page.locator('[data-panel-group-direction="vertical"]')).toBeVisible();
-
+    // Assert pane visibility first: the group only reports a laid-out box
+    // once its children have rendered.
     const editorPane = page.getByRole("region", { name: "Generated code editor" });
     const previewPane = page.getByRole("region", { name: "Live preview" });
     await expect(editorPane).toBeVisible();
     await expect(previewPane).toBeVisible();
+
+    // The resize handle carries the same direction attribute, so scope to
+    // the group element itself.
+    await expect(
+      page.locator('[data-panel-group][data-panel-group-direction="vertical"]'),
+    ).toBeVisible();
 
     const overlap = await page.evaluate(() => {
       const editor = document.querySelector('section[aria-label="Generated code editor"]');

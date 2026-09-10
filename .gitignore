@@ -55,9 +55,15 @@ next-env.d.ts
 # agent / local dev tooling (not part of the product)
 /.codex/
 /.agents/
+/.opencode/
 /.codex-*.png
 /build_log.txt
 .env*
 
 # Local MCP server config (machine-specific absolute paths).
 .mcp.json
+
+# Local docs and agent session state (not part of the product).
+/docs/
+/demo/
+/.superpowers/
