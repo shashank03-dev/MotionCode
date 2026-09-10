@@ -1,9 +1,12 @@
-import { expect, type Page, type Request, type Route, test } from "@playwright/test";
+import { expect, type Page, type Route, test } from "@playwright/test";
 
-const tinyGif = Buffer.from(
-  "R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==",
-  "base64",
-);
+import {
+  assertAppDiagnostics,
+  installAppDiagnostics,
+  isAnalyzeRequest,
+  openInteractiveApp,
+  tinyGif,
+} from "./app-test-helpers";
 
 const analysisResult = {
   assetId: "asset_e2e",
@@ -66,6 +69,7 @@ test.describe("application processing states", () => {
   test("shows the processing visualizer during analysis and then renders results", async ({
     page,
   }) => {
+    const diagnostics = installAppDiagnostics(page);
     const releaseAnalyze = createDeferred();
 
     await page.route("**/api/analyze", async (route) => {
@@ -73,7 +77,7 @@ test.describe("application processing states", () => {
       await fulfillJson(route, 200, { data: analysisResult, ok: true });
     });
 
-    await page.goto("/app");
+    await openInteractiveApp(page);
     await uploadTinyGif(page, "tiny-motion.gif");
 
     await expect(page.getByRole("button", { name: /^Analyze$/ })).toBeEnabled();
@@ -125,9 +129,11 @@ test.describe("application processing states", () => {
         .getByText("The element enters with a short upward settle.")
         .first(),
     ).toBeVisible();
+    await assertAppDiagnostics(page, diagnostics);
   });
 
   test("surfaces quota failures from the analyze API", async ({ page }) => {
+    const diagnostics = installAppDiagnostics(page);
     await page.route("**/api/analyze", async (route) => {
       await fulfillJson(route, 429, {
         code: "RATE_LIMITED",
@@ -136,7 +142,7 @@ test.describe("application processing states", () => {
       });
     });
 
-    await page.goto("/app");
+    await openInteractiveApp(page);
     await uploadTinyGif(page, "quota-motion.gif");
 
     const requestPromise = page.waitForRequest(isAnalyzeRequest);
@@ -164,6 +170,7 @@ test.describe("application processing states", () => {
     await expect(
       page.getByRole("heading", { name: "Motion spec" }),
     ).toHaveCount(0);
+    await assertAppDiagnostics(page, diagnostics);
   });
 });
 
@@ -187,13 +194,6 @@ async function uploadTinyGif(page: Page, name: string) {
   await consentContinue.click();
 
   await expect(page.getByTestId("frame-strip")).toContainText("1 frame");
-}
-
-function isAnalyzeRequest(request: Request) {
-  return (
-    request.method() === "POST" &&
-    new URL(request.url()).pathname === "/api/analyze"
-  );
 }
 
 function expectAnalyzeRequest(request: Request) {

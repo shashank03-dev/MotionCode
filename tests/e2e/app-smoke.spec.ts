@@ -1,6 +1,37 @@
 import { expect, type Page, test } from "@playwright/test";
 
+import {
+  assertAppDiagnostics,
+  installAppDiagnostics,
+  mockSupabaseBrowserRequests,
+} from "./app-test-helpers";
+
 test.describe("application smoke", () => {
+  test("anonymous /app shows the auth gate over an inert analyzer", async ({
+    page,
+  }) => {
+    const diagnostics = installAppDiagnostics(page);
+    const navigationStart = Date.now();
+
+    await mockSupabaseBrowserRequests(page);
+    await page.goto("/app");
+    await expect(
+      page.getByRole("dialog", { name: /sign in to start/i }),
+    ).toBeVisible();
+    const firstVisibleWorkbenchShell = Date.now();
+    await expect(page.locator("[inert]#app-root")).toBeVisible();
+    await assertAppDiagnostics(page, diagnostics);
+
+    console.log(
+      "[app-baseline] smoke",
+      JSON.stringify({
+        navigationStart: 0,
+        firstVisibleWorkbenchShell: firstVisibleWorkbenchShell - navigationStart,
+        authGateVisible: true,
+      }),
+    );
+  });
+
   test("public routes render and navigation reaches the app shell", async ({
     page,
   }) => {
