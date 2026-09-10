@@ -136,6 +136,27 @@ test.describe("application performance baseline", () => {
 
   test("pauses the particle RAF while hidden or outside the viewport", async ({ page }) => {
     await mockSupabaseBrowserRequests(page);
+    await page.addInitScript(() => {
+      const NativeIntersectionObserver = window.IntersectionObserver;
+      if (!NativeIntersectionObserver) return;
+
+      window.IntersectionObserver = function (
+        callback: IntersectionObserverCallback,
+        options?: IntersectionObserverInit,
+      ) {
+        return new NativeIntersectionObserver((entries, observer) => {
+          for (const entry of entries) {
+            if (entry.target instanceof HTMLElement) {
+              Object.defineProperty(window, "__motioncodeIntersectionState", {
+                configurable: true,
+                value: entry.isIntersecting,
+              });
+            }
+          }
+          callback(entries, observer);
+        }, options);
+      } as unknown as typeof IntersectionObserver;
+    });
     await openInteractiveApp(page);
 
     const field = page.getByTestId("process-field");
@@ -144,17 +165,24 @@ test.describe("application performance baseline", () => {
       (await field.locator("canvas").count()) === 0,
       "WebGL is unavailable in this browser",
     );
+    const initialCanvasCount = await field.locator("canvas").count();
 
     await page.evaluate(() => {
       let count = 0;
+      let lastAt = performance.now();
       const nativeRequestAnimationFrame = window.requestAnimationFrame.bind(window);
       window.requestAnimationFrame = (callback) => {
         count += 1;
+        lastAt = performance.now();
         return nativeRequestAnimationFrame(callback);
       };
       Object.defineProperty(window, "__motioncodeRafCount", {
         configurable: true,
         get: () => count,
+      });
+      Object.defineProperty(window, "__motioncodeLastRafAt", {
+        configurable: true,
+        get: () => lastAt,
       });
     });
 
@@ -172,10 +200,20 @@ test.describe("application performance baseline", () => {
     const hiddenCount = await page.evaluate(
       () => (window as Window & { __motioncodeRafCount?: number }).__motioncodeRafCount ?? 0,
     );
-    await page.waitForTimeout(180);
     await expect
-      .poll(() => page.evaluate(() => (window as Window & { __motioncodeRafCount?: number }).__motioncodeRafCount ?? 0))
-      .toBe(hiddenCount);
+      .poll(() =>
+        page.evaluate(() => {
+          const probe = window as Window & {
+            __motioncodeLastRafAt?: number;
+            __motioncodeRafCount?: number;
+          };
+          return {
+            count: probe.__motioncodeRafCount ?? 0,
+            quiet: performance.now() - (probe.__motioncodeLastRafAt ?? performance.now()) > 120,
+          };
+        }),
+      )
+      .toEqual({ count: hiddenCount, quiet: true });
 
     await page.evaluate(() => {
       const processField = document.querySelector<HTMLElement>('[data-testid="process-field"]');
@@ -187,10 +225,30 @@ test.describe("application performance baseline", () => {
       });
       document.dispatchEvent(new Event("visibilitychange"));
     });
-    await page.waitForTimeout(180);
     await expect
-      .poll(() => page.evaluate(() => (window as Window & { __motioncodeRafCount?: number }).__motioncodeRafCount ?? 0))
-      .toBe(hiddenCount);
+      .poll(() =>
+        page.evaluate(
+          () => (window as Window & { __motioncodeIntersectionState?: boolean }).__motioncodeIntersectionState,
+        ),
+      )
+      .toBe(false);
+    const offscreenCount = await page.evaluate(
+      () => (window as Window & { __motioncodeRafCount?: number }).__motioncodeRafCount ?? 0,
+    );
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const probe = window as Window & {
+            __motioncodeLastRafAt?: number;
+            __motioncodeRafCount?: number;
+          };
+          return {
+            count: probe.__motioncodeRafCount ?? 0,
+            quiet: performance.now() - (probe.__motioncodeLastRafAt ?? performance.now()) > 120,
+          };
+        }),
+      )
+      .toEqual({ count: offscreenCount, quiet: true });
 
     await page.evaluate(() => {
       const processField = document.querySelector<HTMLElement>('[data-testid="process-field"]');
@@ -198,7 +256,15 @@ test.describe("application performance baseline", () => {
       processField.style.transform = "";
     });
     await expect
+      .poll(() =>
+        page.evaluate(
+          () => (window as Window & { __motioncodeIntersectionState?: boolean }).__motioncodeIntersectionState,
+        ),
+      )
+      .toBe(true);
+    await expect
       .poll(() => page.evaluate(() => (window as Window & { __motioncodeRafCount?: number }).__motioncodeRafCount ?? 0))
-      .toBeGreaterThan(hiddenCount);
+      .toBeGreaterThan(offscreenCount);
+    await expect(field.locator("canvas")).toHaveCount(initialCanvasCount);
   });
 });
