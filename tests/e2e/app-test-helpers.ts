@@ -72,7 +72,10 @@ export async function openInteractiveApp(page: Page) {
   });
 
   await expect(page.getByTestId("upload-dropzone")).toBeVisible();
+  const firstVisibleWorkbenchShell = Date.now();
   await expect(page.getByTestId("process-canvas")).toBeVisible();
+
+  return { firstVisibleWorkbenchShell };
 }
 
 export async function mockSupabaseBrowserRequests(page: Page) {
@@ -91,4 +94,3 @@ export function isAnalyzeRequest(request: Request) {
     new URL(request.url()).pathname === "/api/analyze"
   );
 }
-

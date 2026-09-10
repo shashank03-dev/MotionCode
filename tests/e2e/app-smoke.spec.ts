@@ -18,8 +18,8 @@ test.describe("application smoke", () => {
     await expect(
       page.getByRole("dialog", { name: /sign in to start/i }),
     ).toBeVisible();
-    const firstVisibleWorkbenchShell = Date.now();
     await expect(page.locator("[inert]#app-root")).toBeVisible();
+    const firstVisibleWorkbenchShell = Date.now();
     await assertAppDiagnostics(page, diagnostics);
 
     console.log(

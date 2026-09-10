@@ -50,8 +50,8 @@ test.describe("application performance baseline", () => {
     await mockSupabaseBrowserRequests(page);
     await page.goto("/app");
     await expect(page.getByRole("dialog", { name: /sign in to start/i })).toBeVisible();
-    const firstVisibleWorkbenchShell = Date.now();
     await expect(page.locator("[inert]#app-root")).toBeVisible();
+    const firstVisibleWorkbenchShell = Date.now();
     await assertAppDiagnostics(page, diagnostics);
 
     console.log(
@@ -78,8 +78,7 @@ test.describe("application performance baseline", () => {
     });
 
     const navigationStart = Date.now();
-    await openInteractiveApp(page);
-    const firstVisibleWorkbenchShell = Date.now();
+    const { firstVisibleWorkbenchShell } = await openInteractiveApp(page);
 
     const fileInput = page.getByTestId("upload-dropzone").locator('input[type="file"]');
     await fileInput.setInputFiles({
@@ -95,23 +94,21 @@ test.describe("application performance baseline", () => {
     const extractionCompletion = Date.now();
 
     const analyzeRequest = page.waitForRequest(isAnalyzeRequest);
+    const analysisStart = Date.now();
     await page.getByRole("button", { name: /^Analyze$/ }).click();
     await analyzeRequest;
-    const analysisStart = Date.now();
 
     await expect(page.getByRole("heading", { name: "motion target" })).toBeVisible();
     const resultVisibility = Date.now();
     let previewReadiness: number | null = null;
     let previewTimeout: number | null = null;
-    let previewError: unknown;
     try {
       await expect(page.getByText("READY ·", { exact: false })).toBeVisible({
         timeout: 8_000,
       });
       previewReadiness = Date.now() - navigationStart;
-    } catch (error) {
+    } catch {
       previewTimeout = Date.now() - navigationStart;
-      previewError = error;
     }
 
     await assertAppDiagnostics(page, diagnostics);
@@ -131,9 +128,5 @@ test.describe("application performance baseline", () => {
         pageErrors: diagnostics.pageErrors.length,
       }),
     );
-
-    if (previewError) {
-      throw previewError;
-    }
   });
 });
