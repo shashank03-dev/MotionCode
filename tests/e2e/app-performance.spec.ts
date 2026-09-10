@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { errors, expect, test } from "@playwright/test";
 
 import {
   assertAppDiagnostics,
@@ -107,8 +107,12 @@ test.describe("application performance baseline", () => {
         timeout: 8_000,
       });
       previewReadiness = Date.now() - navigationStart;
-    } catch {
-      previewTimeout = Date.now() - navigationStart;
+    } catch (error) {
+      if (error instanceof errors.TimeoutError) {
+        previewTimeout = Date.now() - navigationStart;
+      } else {
+        throw error;
+      }
     }
 
     await assertAppDiagnostics(page, diagnostics);
