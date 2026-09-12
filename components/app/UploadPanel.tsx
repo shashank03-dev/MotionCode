@@ -69,7 +69,7 @@ export function UploadPanel({
     (userPlan === "free" && !canUseFree);
 
   return (
-    <aside className={styles.panel} id="left-panel">
+    <aside className={`${styles.panel} scroll-mt-16`} id="left-panel">
       <div className={styles.header}>
         <span>Input</span>
       </div>

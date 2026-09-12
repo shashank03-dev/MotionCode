@@ -53,7 +53,7 @@ export function Footer() {
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-[14px] text-ink-2 transition-colors hover:text-ink"
+                      className="inline-block py-2 text-[14px] text-ink-2 transition-colors hover:text-ink"
                     >
                       {link.label}
                     </Link>
@@ -83,13 +83,22 @@ export function Footer() {
             © {new Date().getFullYear()} MotionCode · Made for motion
           </span>
           <div className="flex items-center gap-5 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-3">
-            <Link href="/pricing" className="transition-colors hover:text-ink">
+            <Link
+              href="/pricing"
+              className="inline-block py-2 transition-colors hover:text-ink"
+            >
               Pricing
             </Link>
-            <Link href="/support" className="transition-colors hover:text-ink">
+            <Link
+              href="/support"
+              className="inline-block py-2 transition-colors hover:text-ink"
+            >
               Support
             </Link>
-            <Link href="/login" className="transition-colors hover:text-ink">
+            <Link
+              href="/login"
+              className="inline-block py-2 transition-colors hover:text-ink"
+            >
               Sign in
             </Link>
           </div>

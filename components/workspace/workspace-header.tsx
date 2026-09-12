@@ -18,19 +18,33 @@ export function WorkspaceHeader({ data }: WorkspaceHeaderProps) {
             {data.role}
           </Pill>
         </div>
-        <h1 className="mt-3 truncate font-display text-3xl font-medium leading-[1.05] tracking-tightest text-ink sm:text-[2.6rem]">
+        <h1
+          title={data.workspace.name}
+          className="mt-3 line-clamp-2 break-words font-display text-3xl font-medium leading-[1.05] tracking-tightest text-ink sm:text-[2.6rem]"
+        >
           {data.workspace.name}
         </h1>
-        <p className="mt-2.5 font-mono text-[13px] text-ink-3">
+        <p className="mt-2.5 break-words font-mono text-[13px] text-ink-3">
           {data.workspace.slug}
         </p>
       </div>
       <div className="grid grid-cols-2 gap-3 lg:w-80">
-        <StatTile label="Plan" value={data.workspace.plan_tier} />
+        <StatTile
+          label="Plan"
+          className="p-4 sm:p-5"
+          value={
+            <span className="text-xl sm:text-3xl">
+              {data.workspace.plan_tier}
+            </span>
+          }
+        />
         <StatTile
           label="Updated"
+          className="p-4 sm:p-5"
           value={
-            <span className="text-xl">{formatDate(data.workspace.updated_at)}</span>
+            <span className="text-xl sm:text-3xl">
+              {formatDate(data.workspace.updated_at)}
+            </span>
           }
         />
       </div>

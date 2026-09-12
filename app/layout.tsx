@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -47,11 +47,22 @@ export const metadata: Metadata = {
   },
   description:
     "Upload a video. Get CSS, GSAP, and Framer Motion code instantly.",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
   openGraph: {
     title: "MotionCode",
     description:
       "Turn animations into production code with MotionCode.",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#000000",
 };
 
 export default function RootLayout({
@@ -97,8 +108,14 @@ export default function RootLayout({
           <style>{`.mc-preloader{display:none !important}`}</style>
         </noscript>
       </head>
-      <body className="antialiased" style={{ fontOpticalSizing: "auto" }}>
-        {children}
+      <body className="min-h-dvh overflow-x-clip antialiased" style={{ fontOpticalSizing: "auto" }}>
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-accent focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-black"
+        >
+          Skip to content
+        </a>
+        <div id="main" tabIndex={-1}>{children}</div>
         {modal}
         <SpeedInsights />
       </body>

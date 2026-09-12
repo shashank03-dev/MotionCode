@@ -146,7 +146,7 @@ export function ShareLinkManager({
         <label className="text-sm text-ink-2">
           Mode
           <select
-            className="mt-1 h-9 w-full rounded-md border border-hairline bg-panel px-2 text-sm text-ink"
+            className="mt-1 h-11 min-h-[44px] w-full min-w-0 rounded-md border border-hairline bg-panel px-2 text-base text-ink"
             disabled={planTier !== "studio"}
             onChange={(event) => setAccessMode(event.target.value as ShareAccessMode)}
             value={planTier === "studio" ? accessMode : "read"}
@@ -158,7 +158,7 @@ export function ShareLinkManager({
         <label className="text-sm text-ink-2">
           Expiration
           <input
-            className="mt-1 h-9 w-full rounded-md border border-hairline bg-panel px-2 text-sm text-ink"
+            className="mt-1 h-11 min-h-[44px] w-full min-w-0 rounded-md border border-hairline bg-panel px-2 text-base text-ink"
             onChange={(event) => setExpiresAt(event.target.value)}
             type="datetime-local"
             value={expiresAt}
@@ -167,7 +167,7 @@ export function ShareLinkManager({
         <label className="flex items-end gap-2 text-sm text-ink-2">
           <input
             checked={includeComments && planTier === "studio"}
-            className="mb-2 size-4"
+            className="mb-2 size-6 min-h-[24px] min-w-[24px]"
             disabled={planTier !== "studio"}
             onChange={(event) => setIncludeComments(event.target.checked)}
             type="checkbox"

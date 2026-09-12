@@ -10,6 +10,15 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      screens: {
+        xs: "360px",
+      },
+      minHeight: {
+        touch: "44px",
+      },
+      minWidth: {
+        touch: "44px",
+      },
       fontFamily: {
         display: ["var(--font-display)"],
         sans: ["var(--font-body)", "var(--font-inter)", "sans-serif"],

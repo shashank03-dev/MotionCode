@@ -75,7 +75,7 @@ export function ArtifactPanel() {
         </div>
 
         {/* spec readout */}
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        <div className="mt-3 grid grid-cols-3 gap-1.5 sm:gap-2">
           {[
             { k: "duration", v: "420ms" },
             { k: "easing", v: "expo-out" },
@@ -83,9 +83,9 @@ export function ArtifactPanel() {
           ].map((s) => (
             <div
               key={s.k}
-              className="rounded-lg border border-hairline bg-black/40 px-3 py-2"
+              className="rounded-lg border border-hairline bg-black/40 p-2 sm:p-3"
             >
-              <div className="font-mono text-[9px] uppercase tracking-[0.16em] text-ink-3">
+              <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-ink-3">
                 {s.k}
               </div>
               <div className="font-mono text-[13px] text-ink">{s.v}</div>

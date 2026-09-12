@@ -33,13 +33,26 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <nav aria-label="Breadcrumb" className="font-mono text-xs text-ink-3">
-          <Link href="/workspaces" className="transition-colors hover:text-ink">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
+        <nav
+          aria-label="Breadcrumb"
+          className="flex min-w-0 max-w-full items-center font-mono text-xs text-ink-3"
+        >
+          <Link
+            href="/workspaces"
+            className="shrink-0 transition-colors hover:text-ink"
+          >
             Workspaces
           </Link>
-          <span className="px-1.5 text-ink-3">/</span>
-          <span className="text-ink">{data.workspace.name}</span>
+          <span className="shrink-0 px-1.5 text-ink-3" aria-hidden="true">
+            /
+          </span>
+          <span
+            title={data.workspace.name}
+            className="min-w-0 max-w-full truncate text-ink"
+          >
+            {data.workspace.name}
+          </span>
         </nav>
         <ButtonLink href={newAnalysisHref} variant="primary" size="sm">
           <Sparkles className="size-4" aria-hidden="true" />

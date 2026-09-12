@@ -22,7 +22,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
 
   if (!user) {
     return (
-      <main className="relative min-h-screen bg-canvas px-4 py-16 text-ink sm:px-6">
+      <main className="relative min-h-dvh bg-canvas px-4 py-16 text-ink sm:px-6">
         <AppBackground />
         <div className="relative z-10 mx-auto max-w-xl">
           <EmptyState
@@ -67,7 +67,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   );
 
   return (
-    <main className="relative min-h-screen bg-canvas px-4 py-10 text-ink sm:px-6 lg:px-8">
+    <main className="relative min-h-dvh bg-canvas px-4 py-10 text-ink sm:px-6 lg:px-8">
       <AppBackground />
       <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-9">
         <PageHeader
@@ -76,15 +76,15 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
           description="Review what your plan unlocks, manage billing, and control your data."
           actions={
             <>
-              <ButtonLink href="/pricing" variant="ghost" size="sm">
+              <ButtonLink href="/pricing" variant="ghost" size="md">
                 Plans
                 <ArrowUpRight className="size-4" aria-hidden="true" />
               </ButtonLink>
-              <ButtonLink href="/billing" variant="frosted" size="sm">
+              <ButtonLink href="/billing" variant="frosted" size="md">
                 <CreditCard className="size-4" aria-hidden="true" />
                 Billing
               </ButtonLink>
-              <SignOutButton className="h-9 rounded-full border-hairline px-4 text-[13px] text-ink-2 hover:border-accent-border hover:text-ink" />
+              <SignOutButton className="h-11 min-h-[44px] rounded-full border-hairline px-4 text-[13px] text-ink-2 hover:border-accent-border hover:text-ink" />
             </>
           }
         />

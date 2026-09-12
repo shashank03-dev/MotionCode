@@ -207,6 +207,15 @@ export function AuraCursor() {
     if (!el) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
+    // Scaled-down (not disabled) on coarse pointers: smaller sim buffers and
+    // fewer pressure solves keep the fluid alive on mobile GPUs.
+    const isCoarse =
+      window.matchMedia("(pointer: coarse)").matches ||
+      window.matchMedia("(pointer:coarse)").matches;
+    const simRes = isCoarse ? 64 : SIM_RESOLUTION;
+    const dyeRes = isCoarse ? 256 : DYE_RESOLUTION;
+    const pressureIters = isCoarse ? 10 : PRESSURE_ITERATIONS;
+
     let renderer: Renderer;
     try {
       renderer = new Renderer({
@@ -215,7 +224,8 @@ export function AuraCursor() {
         stencil: false,
         dpr: 1, // sim runs in its own low-res buffers; display is upsampled
       });
-    } catch {
+    } catch (err) {
+      console.warn("[webgl] renderer init failed, using static fallback", err);
       return;
     }
 
@@ -339,8 +349,8 @@ export function AuraCursor() {
       disposeFBO(divergence);
       disposeFBO(curl);
 
-      const sim = dims(SIM_RESOLUTION);
-      const dyeD = dims(DYE_RESOLUTION);
+      const sim = dims(simRes);
+      const dyeD = dims(dyeRes);
       const L = gl.LINEAR;
       const N = gl.NEAREST;
       velocity = makeDoubleFBO(sim.w, sim.h, FMT.rg, L);
@@ -457,7 +467,7 @@ export function AuraCursor() {
     ro.observe(el);
 
     // Pointer → queued splats.
-    type Splat = { x: number; y: number; dx: number; dy: number };
+    type Splat = { x: number; y: number; dx: number; dy: number; touch: boolean };
     const queue: Splat[] = [];
     let lastX = -1;
     let lastY = -1;
@@ -486,7 +496,7 @@ export function AuraCursor() {
       const dy = (y - lastY) * SPLAT_FORCE;
       lastX = x;
       lastY = y;
-      queue.push({ x, y, dx, dy });
+      queue.push({ x, y, dx, dy, touch: e.pointerType === "touch" });
     }
     window.addEventListener("pointermove", onMove, { passive: true });
 
@@ -504,6 +514,11 @@ export function AuraCursor() {
       splatProg.uniforms.radius.value = radius;
       pass(splatProg, velocity.write.rt);
       velocity.swap();
+
+      // Skip dye on touch scroll: a touch pointermove usually means the page
+      // is scrolling, and smearing dye across the hero reads as a glitch.
+      // Velocity still advects so the sim stays alive (never fully disabled).
+      if (s.touch) return;
 
       // dye splat — electric blue, strength scaled by pointer speed
       const speed = Math.hypot(s.dx, s.dy) / SPLAT_FORCE;
@@ -545,7 +560,7 @@ export function AuraCursor() {
       // pressure Jacobi iterations
       pressureProg.uniforms.uDivergence.value = divergence.rt.texture;
       pressureProg.uniforms.texelSize.value.copy(vTexel);
-      for (let i = 0; i < PRESSURE_ITERATIONS; i++) {
+      for (let i = 0; i < pressureIters; i++) {
         pressureProg.uniforms.uPressure.value = pressure.read.rt.texture;
         pass(pressureProg, pressure.write.rt);
         pressure.swap();
@@ -628,7 +643,7 @@ export function AuraCursor() {
   return (
     <div
       ref={ref}
-      className="pointer-events-none absolute inset-0 opacity-[0.62] [mix-blend-mode:screen]"
+      className="pointer-events-none absolute inset-0 opacity-40 [mix-blend-mode:screen] sm:opacity-[0.62]"
       aria-hidden
     />
   );

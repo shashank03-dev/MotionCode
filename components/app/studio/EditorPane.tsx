@@ -87,10 +87,10 @@ export function EditorPane({
               <button
                 type="button"
                 onClick={onRun}
-                className="ml-1 inline-flex h-7 items-center gap-1.5 rounded-md border border-[var(--accent-border)] bg-[var(--accent-dim)] px-2.5 font-mono text-[11px] text-ink transition hover:border-accent hover:bg-accent/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+                className="ml-1 inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 rounded-md border border-[var(--accent-border)] bg-[var(--accent-dim)] px-2.5 font-mono text-[11px] text-ink transition hover:border-accent hover:bg-accent/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
                 title="Run (Cmd/Ctrl+Enter)"
               >
-                <Play className="size-3.5" />
+                <Play className="size-4" aria-hidden="true" />
                 Run
               </button>
             </>
@@ -98,7 +98,7 @@ export function EditorPane({
             <>
               <Link
                 href="/pricing"
-                className="inline-flex h-7 items-center gap-1.5 rounded-md border border-transparent px-2 font-mono text-[11px] text-ink-3 transition hover:text-ink"
+                className="inline-flex min-h-[44px] items-center gap-1.5 rounded-md border border-transparent px-2 font-mono text-[11px] text-ink-3 transition hover:text-ink"
                 title="Upgrade to edit & export"
               >
                 Upgrade to edit
@@ -130,7 +130,7 @@ export function EditorPane({
               aria-selected={isActive}
               onClick={() => onTabChange(tab)}
               className={cn(
-                "relative shrink-0 px-3 py-2 font-mono text-[11px] transition-colors",
+                "relative min-h-[44px] shrink-0 px-3 py-2 font-mono text-[11px] transition-colors",
                 isActive
                   ? "text-ink"
                   : "text-ink-3 hover:text-ink",
@@ -179,14 +179,14 @@ function ToolbarButton({
       disabled={disabled}
       title={label}
       className={cn(
-        "inline-flex h-7 items-center gap-1.5 rounded-md border border-transparent px-2 font-mono text-[11px] transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]",
+        "inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 rounded-md border border-transparent px-2 font-mono text-[11px] transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]",
         active
           ? "text-accent"
           : "text-ink-3 hover:border-hairline hover:text-ink",
         disabled ? "cursor-not-allowed opacity-40 hover:border-transparent hover:text-ink-3" : "",
       )}
     >
-      <Icon className="size-3.5" />
+      <Icon className="size-4" aria-hidden="true" />
       <span className="hidden sm:inline">{label}</span>
     </button>
   );

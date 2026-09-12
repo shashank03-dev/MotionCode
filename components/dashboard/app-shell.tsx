@@ -91,7 +91,7 @@ const utilityItems = [
 // Shared nav-item styling. Accent is reserved for the *active* item and focus
 // rings only — idle items rest at ink-2 so the sidebar stays quiet.
 const navItemBase =
-  "group inline-flex h-9 shrink-0 items-center gap-2.5 rounded-lg border px-3 text-[13.5px] transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]";
+  "group inline-flex min-h-[44px] shrink-0 items-center gap-2.5 rounded-lg border px-3 py-2 text-[13.5px] transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]";
 const navItemIdle =
   "border-transparent text-ink-2 hover:border-hairline hover:bg-white/[0.03] hover:text-ink";
 const navItemActive =
@@ -118,7 +118,7 @@ export function AppShell({
   return (
     <div
       className={cn(
-        "relative min-h-screen bg-canvas text-ink transition-[grid-template-columns] duration-200 ease-out motion-reduce:transition-none lg:grid",
+        "relative min-h-dvh bg-canvas text-ink transition-[grid-template-columns] duration-200 ease-out motion-reduce:transition-none lg:grid",
         collapsed
           ? "lg:grid-cols-[3.75rem_minmax(0,1fr)]"
           : "lg:grid-cols-[15.5rem_minmax(0,1fr)]",
@@ -127,7 +127,7 @@ export function AppShell({
       <PlanSync userId={userId} />
       <AppBackground />
 
-      <aside className="relative z-20 border-b border-hairline bg-panel/80 backdrop-blur-xl lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r">
+      <aside className="relative z-20 border-b border-hairline bg-panel/80 backdrop-blur-xl max-lg:backdrop-blur-none lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r">
         <div
           className={cn(
             "flex h-full flex-col gap-7 px-3 py-4 lg:py-6",
@@ -201,6 +201,7 @@ export function AppShell({
                   key={item.key}
                   href={item.href}
                   aria-current={isActive ? "page" : undefined}
+                  aria-label={item.label}
                   title={
                     collapsed
                       ? item.label
@@ -316,7 +317,7 @@ export function AppShell({
                   href={item.href}
                   aria-label={item.label}
                   title={item.label}
-                  className="inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-ink-2 transition hover:border-hairline hover:text-ink"
+                  className="inline-flex size-11 items-center justify-center rounded-lg border border-transparent text-ink-2 transition hover:border-hairline hover:text-ink"
                 >
                   <Icon className="size-4" />
                 </Link>
@@ -327,7 +328,7 @@ export function AppShell({
                 href="/pricing"
                 title="Upgrade your plan"
                 aria-label="Upgrade your plan"
-                className="inline-flex size-9 items-center justify-center rounded-lg bg-accent text-black shadow-glow"
+                className="inline-flex size-11 items-center justify-center rounded-lg bg-accent text-black shadow-glow"
               >
                 <Sparkles className="size-4" />
               </Link>
@@ -336,14 +337,14 @@ export function AppShell({
                 href="/onboarding"
                 title="New workspace"
                 aria-label="New workspace"
-                className="inline-flex size-9 items-center justify-center rounded-lg border border-accent-border bg-accent-dim text-ink"
+                className="inline-flex size-11 items-center justify-center rounded-lg border border-accent-border bg-accent-dim text-ink"
               >
                 <Plus className="size-4" />
               </Link>
             )}
             {userEmail ? (
               <SignOutButton
-                className="h-9 rounded-lg border-hairline px-3 text-[13px] text-ink-2"
+                className="h-11 rounded-lg border-hairline px-3 text-[13px] text-ink-2"
                 label="Out"
               />
             ) : null}

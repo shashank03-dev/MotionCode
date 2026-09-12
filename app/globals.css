@@ -69,7 +69,7 @@
     width: 100%;
     max-width: 1200px;
     margin-inline: auto;
-    padding-inline: 24px;
+    padding-inline: clamp(16px, 5vw, 32px);
   }
 
   .eyebrow {
@@ -158,6 +158,12 @@
 
 @layer base {
   :root {
+    color-scheme: dark;
+    /* Phase 0 mobile foundation: safe-area vars (usage lands in Phase 5). */
+    --sat: env(safe-area-inset-top);
+    --sar: env(safe-area-inset-right);
+    --sab: env(safe-area-inset-bottom);
+    --sal: env(safe-area-inset-left);
     /* Unified with the marketing site: near-black canvas, single electric-blue
        accent, hairline borders, cool near-white ink. */
     --bg: #000000;
@@ -194,6 +200,7 @@
     margin: 0;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -203,13 +210,33 @@
   * {
     border-color: var(--border);
   }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent-border);
+    outline-offset: 2px;
+  }
+}
+
+html,
+body {
+  overflow-x: clip;
+  overscroll-behavior-x: none;
 }
 
 body {
-  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html {
+  color-scheme: dark;
   position: relative;
   /* NO `scroll-behavior: smooth` here. It animates every programmatic scroll
      correction GSAP ScrollTrigger makes while pinning/refreshing the Features
@@ -7167,5 +7194,16 @@ html[data-intro="play"] .mc-preloader {
 @media (prefers-reduced-motion: reduce) {
   .login-dialog {
     animation: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Phase 0 mobile foundation: neutralize pure :hover lifts on touch pointers
+   so tap targets never stick in a lifted state. Keep to trivial transforms;
+   JS-driven [data-hovered] states are intentionally untouched.
+   -------------------------------------------------------------------------- */
+@media (hover: none) {
+  .motioncode-logo-mark:hover {
+    transform: none;
   }
 }

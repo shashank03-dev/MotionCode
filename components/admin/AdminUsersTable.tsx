@@ -132,7 +132,7 @@ export function AdminUsersTable({ initialUsers }: AdminUsersTableProps) {
         <table className="w-full min-w-[1080px] border-collapse text-left text-sm">
           <thead className="bg-[#0f1115] text-xs uppercase text-ink-2">
             <tr>
-              <th className="px-4 py-3 font-medium">User</th>
+              <th className="sticky left-0 z-10 bg-[#0f1115] px-4 py-3 font-medium">User</th>
               <th className="px-4 py-3 font-medium">Current Plan</th>
               <th className="px-4 py-3 font-medium">Latest Override</th>
               <th className="px-4 py-3 font-medium">Override Plan</th>
@@ -151,7 +151,7 @@ export function AdminUsersTable({ initialUsers }: AdminUsersTableProps) {
                   className="border-t border-hairline align-top"
                   key={user.id}
                 >
-                  <td className="px-4 py-3">
+                  <td className="sticky left-0 bg-elevated px-4 py-3">
                     <div className="flex items-start gap-2">
                       {user.isInternalAdmin ? (
                         <ShieldCheck
@@ -187,7 +187,7 @@ export function AdminUsersTable({ initialUsers }: AdminUsersTableProps) {
                   </td>
                   <td className="px-4 py-3">
                     <select
-                      className="h-8 rounded-lg border border-hairline bg-[#0f1115] px-2 text-sm text-ink"
+                      className="h-11 min-h-[44px] w-full min-w-0 rounded-lg border border-hairline bg-[#0f1115] px-2 text-base text-ink"
                       disabled={disabled}
                       onChange={(event) =>
                         updateDraft(user, {
@@ -205,7 +205,7 @@ export function AdminUsersTable({ initialUsers }: AdminUsersTableProps) {
                   </td>
                   <td className="px-4 py-3">
                     <input
-                      className="h-8 w-64 rounded-lg border border-hairline bg-[#0f1115] px-2 text-sm text-ink placeholder:text-ink-3"
+                      className="h-11 min-h-[44px] w-64 min-w-0 rounded-lg border border-hairline bg-[#0f1115] px-2 text-base text-ink placeholder:text-ink-3"
                       disabled={disabled}
                       onChange={(event) =>
                         updateDraft(user, { reason: event.target.value })
@@ -216,7 +216,7 @@ export function AdminUsersTable({ initialUsers }: AdminUsersTableProps) {
                   </td>
                   <td className="px-4 py-3">
                     <input
-                      className="h-8 w-48 rounded-lg border border-hairline bg-[#0f1115] px-2 text-sm text-ink"
+                      className="h-11 min-h-[44px] w-48 min-w-0 rounded-lg border border-hairline bg-[#0f1115] px-2 text-base text-ink"
                       disabled={disabled}
                       onChange={(event) =>
                         updateDraft(user, { expiresAt: event.target.value })
@@ -228,7 +228,7 @@ export function AdminUsersTable({ initialUsers }: AdminUsersTableProps) {
                   <td className="px-4 py-3">
                     <button
                       aria-label={`Apply plan override for ${user.email}`}
-                      className="inline-flex size-8 items-center justify-center rounded-lg border border-hairline text-ink hover:border-accent/50 hover:text-accent disabled:opacity-50"
+                      className="inline-flex size-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-hairline text-ink hover:border-accent/50 hover:text-accent disabled:opacity-50"
                       disabled={disabled}
                       onClick={() => submitOverride(user)}
                       title="Apply override"

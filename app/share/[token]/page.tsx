@@ -24,7 +24,7 @@ export default async function SharedProjectPage({ params }: SharePageProps) {
   }
 
   return (
-    <main className="relative min-h-screen bg-canvas text-ink">
+    <main className="relative min-h-dvh bg-canvas text-ink">
       <AppBackground />
       <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-8 px-5 py-10 sm:px-8">
         <header className="grid gap-5 border-b border-hairline pb-7 sm:grid-cols-[1fr_auto] sm:items-end">
@@ -50,12 +50,12 @@ export default async function SharedProjectPage({ params }: SharePageProps) {
           <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <StatTile
               label="Intent"
-              value={<span className="text-xl">{shared.analysis.spec.intent}</span>}
+              value={<span className="break-words text-xl line-clamp-4">{shared.analysis.spec.intent}</span>}
               accent
             />
             <StatTile
               label="Element"
-              value={<span className="text-xl">{shared.analysis.spec.element}</span>}
+              value={<span className="break-words text-xl line-clamp-4">{shared.analysis.spec.element}</span>}
             />
             <StatTile
               label="Duration"
@@ -94,7 +94,7 @@ export default async function SharedProjectPage({ params }: SharePageProps) {
 
 function BrandedNotFound() {
   return (
-    <main className="relative flex min-h-screen items-center justify-center bg-canvas px-5 text-ink">
+    <main className="relative flex min-h-dvh items-center justify-center bg-canvas px-5 text-ink">
       <AppBackground />
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-6 flex justify-center">

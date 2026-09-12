@@ -48,7 +48,7 @@ export function AdminPageShell({
               <Users className="size-4" aria-hidden="true" />
               Users
             </AdminNavLink>
-            <SignOutButton className="h-9 rounded-full border-hairline px-4 text-[13px] text-ink-2 hover:border-accent-border hover:text-ink" />
+            <SignOutButton className="h-11 min-h-[44px] rounded-full border-hairline px-4 text-[13px] text-ink-2 hover:border-accent-border hover:text-ink" />
           </nav>
         </header>
         {children}
@@ -69,7 +69,7 @@ function AdminNavLink({
   return (
     <Link
       className={cn(
-        "inline-flex h-9 items-center gap-2 rounded-full border px-4 text-[13px] transition-colors",
+        "inline-flex h-11 min-h-[44px] items-center gap-2 rounded-full border px-4 text-[13px] transition-colors",
         active
           ? "border-accent-border bg-accent-dim font-medium text-ink"
           : "border-hairline text-ink-2 hover:border-accent-border hover:text-ink",

@@ -16,13 +16,14 @@ export function WorkspaceList({ workspaces }: WorkspaceListProps) {
           <div className="flex items-center gap-3">
             <Link
               href="/workspaces"
-              className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-3 transition-colors hover:text-ink"
+              className="inline-block py-2 font-mono text-xs uppercase tracking-[0.14em] text-ink-3 transition-colors hover:text-ink"
             >
               View index →
             </Link>
             <Link
               href="/onboarding"
-              className="inline-flex size-7 items-center justify-center rounded-lg border border-hairline text-ink-2 transition hover:border-accent-border hover:bg-accent-dim hover:text-ink"
+              aria-label="New workspace"
+              className="inline-flex size-11 items-center justify-center rounded-lg border border-hairline text-ink-2 transition hover:border-accent-border hover:bg-accent-dim hover:text-ink"
               title="New workspace"
             >
               <Plus className="size-4" />

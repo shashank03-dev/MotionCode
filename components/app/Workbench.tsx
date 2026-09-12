@@ -138,6 +138,41 @@ function RailLink({
   );
 }
 
+function WorkbenchSectionTab({
+  label,
+  target,
+  testid,
+}: {
+  label: string;
+  target: string;
+  testid?: string;
+}) {
+  const scrollToSection = () => {
+    if (typeof document === "undefined") return;
+    // Prefer the live WebGL canvas hook when present so Canvas lands on the
+    // particle field; otherwise fall back to the panel id. Hooks stay intact.
+    const byTestid = testid
+      ? document.querySelector(`[data-testid="${testid}"]`)
+      : null;
+    const el = byTestid ?? document.getElementById(target);
+    if (!el) {
+      console.warn("[workbench] section target missing", { target, testid });
+      return;
+    }
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  return (
+    <button
+      type="button"
+      onClick={scrollToSection}
+      aria-label={`Go to ${label} section`}
+      className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-lg px-3 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-2 transition hover:bg-white/[0.03] hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]"
+    >
+      {label}
+    </button>
+  );
+}
+
 function SidebarLink({
   href,
   icon: Icon,
@@ -263,23 +298,76 @@ export function Workbench({
     pathname === match || pathname.startsWith(`${match}/`);
 
   return (
-    <div className="relative min-h-screen bg-canvas text-ink">
+    <div className="relative min-h-dvh bg-canvas text-ink">
       <PlanSync userId={userId} />
       <AppBackground />
 
+      {/* Mobile top tab bar — replaces the icon rail below lg. Stack+tabs:
+          the /app panes stack vertically and these 44px tabs jump to each
+          section. Other routes get the product sections instead. */}
+      <div className="sticky top-0 z-20 flex items-center gap-1 border-b border-hairline bg-panel/90 px-2 backdrop-blur-xl lg:hidden">
+        <button
+          type="button"
+          onClick={() => setMobileOpen(true)}
+          aria-label="Open sidebar"
+          title="Open sidebar"
+          className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-ink-2 transition hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]"
+        >
+          <PanelLeftOpen className="size-5" aria-hidden="true" />
+        </button>
+        {isBleed ? (
+          <nav
+            aria-label="Workbench sections"
+            className="flex flex-1 items-center gap-1"
+          >
+            <WorkbenchSectionTab
+              label="Upload"
+              target="left-panel"
+            />
+            <WorkbenchSectionTab
+              label="Canvas"
+              target="studio-preview"
+              testid="process-canvas"
+            />
+            <WorkbenchSectionTab label="Code" target="studio-code" />
+          </nav>
+        ) : (
+          <nav
+            aria-label="Product sections"
+            className="flex flex-1 items-center gap-1"
+          >
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={isActive(item.match) ? "page" : undefined}
+                className={cn(
+                  "inline-flex min-h-[44px] flex-1 items-center justify-center rounded-lg px-3 font-mono text-[11px] uppercase tracking-[0.16em] transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]",
+                  isActive(item.match)
+                    ? "bg-[var(--accent-dim)] text-ink"
+                    : "text-ink-2 hover:text-ink",
+                )}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        )}
+      </div>
+
       <div
         className={cn(
-          "relative z-10 grid min-h-screen",
+          "relative z-10 grid min-h-dvh grid-cols-1",
           collapsed
-            ? "grid-cols-[3.5rem_minmax(0,1fr)]"
-            : "grid-cols-[3.5rem_minmax(0,1fr)] lg:grid-cols-[17.5rem_minmax(0,1fr)]",
+            ? "lg:grid-cols-[3.5rem_minmax(0,1fr)]"
+            : "lg:grid-cols-[17.5rem_minmax(0,1fr)]",
         )}
       >
-        {/* Icon rail — the collapsed sidebar on lg+, and the permanent
-            launcher column on smaller screens. */}
+        {/* Icon rail — collapsed sidebar on lg+ only; hidden on mobile where
+            the top tab bar above takes over. */}
         <aside
           className={cn(
-            "sticky top-0 z-20 flex h-screen flex-col items-center gap-3 border-r border-hairline bg-panel/85 py-4 backdrop-blur-xl",
+            "sticky top-0 z-20 hidden h-dvh flex-col items-center gap-3 border-r border-hairline bg-panel/85 py-4 backdrop-blur-xl lg:flex",
             !collapsed && "lg:hidden",
           )}
           aria-label="Sidebar (collapsed)"
@@ -342,13 +430,13 @@ export function Workbench({
           </div>
         </aside>
 
-        {/* Backdrop behind the mobile slide-over. */}
+        {/* Backdrop behind the mobile slide-over. No blur on mobile. */}
         {mobileOpen ? (
           <button
             type="button"
             aria-label="Close sidebar"
             onClick={() => setMobileOpen(false)}
-            className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 z-30 bg-black/60 lg:hidden"
           />
         ) : null}
 
@@ -358,7 +446,7 @@ export function Workbench({
         <aside
           onClick={closeOnNavigate}
           className={cn(
-            "inset-y-0 left-0 z-40 h-screen w-[17.5rem] flex-col border-r border-hairline bg-panel",
+            "inset-y-0 left-0 z-40 h-dvh w-[17.5rem] max-w-[85vw] flex-col border-r border-hairline bg-panel",
             mobileOpen ? "fixed flex shadow-[24px_0_60px_rgba(0,0,0,0.55)]" : "hidden",
             !collapsed
               ? "lg:sticky lg:top-0 lg:z-10 lg:flex lg:shadow-none"
@@ -454,13 +542,14 @@ export function Workbench({
           </div>
         </aside>
 
-        {/* Main pane */}
+        {/* Main pane — bleed owns the viewport height only on lg+ so the
+            stacked mobile panes scroll naturally (mirrors app-shell.tsx). */}
         <main
           className={cn(
             "relative z-10 min-w-0",
             isBleed
-              ? "h-screen overflow-hidden"
-              : "h-screen overflow-y-auto px-4 py-6 sm:px-6 lg:px-8",
+              ? "lg:h-screen lg:overflow-hidden"
+              : "h-dvh overflow-y-auto px-4 py-6 sm:px-6 lg:px-8",
           )}
         >
           {children}

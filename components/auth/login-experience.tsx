@@ -60,13 +60,13 @@ export function LoginExperience({
       </div>
 
       {/* right — the form */}
-      <div className="relative flex min-h-[560px] flex-col bg-[#0a0b0d] p-6 sm:p-8 lg:p-10">
+      <div className="relative flex min-h-0 flex-col bg-[#0a0b0d] p-6 sm:p-8 lg:p-10">
         {onClose ? (
           <button
             type="button"
             onClick={onClose}
             aria-label="Close sign in"
-            className="absolute top-4 right-4 grid size-9 place-items-center rounded-full border border-ink-2/14 text-[#8a9099] transition-colors hover:border-accent/40 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className="absolute top-4 right-4 grid size-11 place-items-center rounded-full border border-ink-2/14 text-[#8a9099] transition-colors hover:border-accent/40 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
             <X className="size-4" />
           </button>
@@ -97,7 +97,7 @@ export function LoginExperience({
           </p>
           <h1
             id="login-title"
-            className="mt-3 text-4xl font-semibold leading-tight text-ink"
+            className="mt-3 text-3xl font-semibold leading-tight text-ink sm:text-4xl"
             style={displayFont}
           >
             Sign in
@@ -106,7 +106,7 @@ export function LoginExperience({
             Access your workspaces, projects, and generated motion versions.
           </p>
 
-          <div className="my-7 h-px w-full bg-[linear-gradient(90deg,rgba(0, 153, 255, 0.55),rgba(255,255,255,0.12),transparent)]" />
+          <div className="my-5 h-px w-full bg-[linear-gradient(90deg,rgba(0, 153, 255, 0.55),rgba(255,255,255,0.12),transparent)]" />
 
           {signedOut ? (
             <p

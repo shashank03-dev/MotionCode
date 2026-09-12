@@ -262,7 +262,7 @@
 
 .frameButtons button {
   min-width: 44px;
-  min-height: 34px;
+  min-height: 44px;
   border: 1px solid color-mix(in srgb, var(--input-line) 78%, transparent);
   border-radius: 6px;
   background:

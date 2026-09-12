@@ -46,7 +46,7 @@ export function LoginModal({
   if (!open || typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 sm:p-6">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center overflow-y-auto p-4 sm:p-6">
       <button
         type="button"
         aria-label="Close sign in"
@@ -58,7 +58,7 @@ export function LoginModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="login-title"
-        className="login-dialog relative z-10 w-full max-w-[940px]"
+        className="login-dialog relative z-10 my-auto max-h-[90dvh] w-[calc(100vw-2rem)] max-w-[940px] overflow-y-auto"
       >
         <LoginExperience nextPath={nextPath} onClose={onClose} />
       </div>

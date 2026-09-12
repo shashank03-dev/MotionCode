@@ -10,7 +10,16 @@ const sections = [
   {
     title: "Email",
     body: [
-      "For support, billing, and account questions, email motioncode.auth@gmail.com. We aim to respond within 1–2 business days.",
+      <>
+        For support, billing, and account questions, email{" "}
+        <a
+          href="mailto:motioncode.auth@gmail.com"
+          className="inline-flex min-h-[44px] items-center text-accent underline underline-offset-4"
+        >
+          motioncode.auth@gmail.com
+        </a>
+        . We aim to respond within 1–2 business days.
+      </>,
     ],
   },
   {

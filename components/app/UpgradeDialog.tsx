@@ -2,7 +2,7 @@
 
 import { ArrowUpRight, Check, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 type UpgradeDialogProps = {
@@ -32,35 +32,76 @@ export function UpgradeDialog({
   feature = "workspaces",
   message,
 }: UpgradeDialogProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (!open) return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") {
+        onClose();
+        return;
+      }
+      // Tab trap: keep focus cycling inside the dialog.
+      if (event.key === "Tab") {
+        const container = dialogRef.current;
+        if (!container) return;
+        const focusables = Array.from(
+          container.querySelectorAll<HTMLElement>(
+            'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])',
+          ),
+        ).filter((el) => el.getClientRects().length > 0);
+        if (focusables.length === 0) {
+          return;
+        }
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
     };
     document.addEventListener("keydown", onKeyDown);
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    const focusTimer = window.setTimeout(() => {
+      const container = dialogRef.current;
+      const first = container?.querySelector<HTMLElement>(
+        'a[href], button:not([disabled])',
+      );
+      (first ?? container)?.focus();
+    }, 60);
     return () => {
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
+      window.clearTimeout(focusTimer);
+      // Return focus to whatever opened the dialog.
+      previouslyFocused?.focus?.();
     };
   }, [open, onClose]);
 
   if (!open || typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[160] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[160] flex items-center justify-center overflow-y-auto p-4">
       <button
         type="button"
         aria-label="Dismiss upgrade prompt"
         onClick={onClose}
-        className="fixed inset-0 cursor-default bg-black/70 backdrop-blur-md"
+        tabIndex={-1}
+        className="fixed inset-0 cursor-default bg-black/70 backdrop-blur-md max-sm:bg-black/80 max-sm:backdrop-blur-none"
       />
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={`Upgrade to unlock ${feature}`}
-        className="glass-card relative z-10 w-full max-w-md rounded-3xl p-6 sm:p-7"
+        tabIndex={-1}
+        className="glass-card relative z-10 my-auto max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-3xl p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] focus:outline-none sm:p-7 sm:pb-[calc(1.75rem+env(safe-area-inset-bottom))]"
       >
         <span className="accent-underglow inline-flex size-11 items-center justify-center rounded-2xl border border-accent-border bg-accent-dim text-accent shadow-glow">
           <Sparkles className="size-5" aria-hidden="true" />
@@ -86,10 +127,10 @@ export function UpgradeDialog({
           ))}
         </ul>
 
-        <div className="mt-7 flex items-center gap-3">
+        <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
           <Link
             href="/pricing"
-            className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-lg border border-accent-border bg-accent px-5 text-sm font-medium text-black shadow-glow transition hover:brightness-110 active:scale-[0.98]"
+            className="inline-flex h-11 min-h-[44px] w-full flex-1 items-center justify-center gap-2 rounded-lg border border-accent-border bg-accent px-5 text-sm font-medium text-black shadow-glow transition hover:brightness-110 active:scale-[0.98]"
           >
             View plans
             <ArrowUpRight className="size-4" aria-hidden="true" />
@@ -97,7 +138,7 @@ export function UpgradeDialog({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-10 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-medium text-ink-2 transition hover:border-accent-border hover:text-ink"
+            className="inline-flex h-11 min-h-[44px] w-full items-center justify-center rounded-lg border border-hairline px-4 text-sm font-medium text-ink-2 transition hover:border-accent-border hover:text-ink sm:w-auto"
           >
             Maybe later
           </button>

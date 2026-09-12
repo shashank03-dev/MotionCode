@@ -33,7 +33,7 @@ export function Hero() {
       <AuraCursor />
 
       <div className="container-page relative">
-        <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_1fr] lg:gap-10">
+        <div className="grid items-center gap-8 sm:gap-12 lg:grid-cols-[1.05fr_1fr] lg:gap-10">
           {/* copy */}
           <div className="max-w-xl">
             <motion.div
@@ -46,7 +46,7 @@ export function Hero() {
               </Badge>
             </motion.div>
 
-            <h1 className="text-[15vw] leading-[0.9] tracking-tightest sm:text-7xl lg:text-[5.4rem]">
+            <h1 className="text-[clamp(2.25rem,8vw,4rem)] leading-[0.9] tracking-tightest sm:text-7xl lg:text-[5.4rem]">
               {words.map((w, i) => (
                 <span key={w} className="block overflow-hidden">
                   <motion.span

@@ -56,7 +56,7 @@ const TIERS: PlanTier[] = ["free", "pro", "studio"];
 
 export default function PricingPage() {
   return (
-    <div className="min-h-screen bg-canvas text-ink">
+    <div className="min-h-dvh bg-canvas text-ink">
       <SiteHeader />
       <main>
         <section className="container-page py-20 sm:py-24">

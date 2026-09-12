@@ -29,7 +29,7 @@ export function SignOutButton({
         type={confirm ? "button" : "submit"}
         onClick={confirm ? () => setConfirming(true) : undefined}
         className={cn(
-          "inline-flex h-9 items-center justify-center gap-2 border px-3 text-sm transition",
+          "inline-flex h-11 min-h-[44px] items-center justify-center gap-2 border px-3 text-sm transition",
           className,
         )}
       >
@@ -58,12 +58,38 @@ function SignOutConfirmDialog({
   onConfirm: () => void;
 }) {
   const confirmRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
 
+    const previouslyFocused = document.activeElement as HTMLElement | null;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onCancel();
+      if (event.key === "Escape") {
+        onCancel();
+        return;
+      }
+      if (event.key === "Tab") {
+        const container = dialogRef.current;
+        if (!container) return;
+        const focusables = Array.from(
+          container.querySelectorAll<HTMLElement>(
+            'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])',
+          ),
+        ).filter((el) => el.getClientRects().length > 0);
+        if (focusables.length === 0) {
+          return;
+        }
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
     };
     document.addEventListener("keydown", onKeyDown);
 
@@ -75,25 +101,29 @@ function SignOutConfirmDialog({
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
       window.clearTimeout(focusTimer);
+      previouslyFocused?.focus?.();
     };
   }, [open, onCancel]);
 
   if (!open || typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6">
+    <div className="fixed inset-0 z-[150] flex items-center justify-center overflow-y-auto p-4 sm:p-6">
       <button
         type="button"
         aria-label="Cancel sign out"
         onClick={onCancel}
+        tabIndex={-1}
         className="absolute inset-0 cursor-default bg-black/72 backdrop-blur-sm"
       />
       <div
+        ref={dialogRef}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="signout-title"
         aria-describedby="signout-body"
-        className="glass-card relative z-10 w-full max-w-[400px] rounded-2xl p-6"
+        tabIndex={-1}
+        className="glass-card relative z-10 my-auto max-h-[90dvh] w-full max-w-[400px] overflow-y-auto rounded-2xl p-6 focus:outline-none"
       >
         <div className="flex items-start gap-3.5">
           <span
@@ -122,7 +152,7 @@ function SignOutConfirmDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg border border-hairline px-3.5 py-2 font-mono text-[0.74rem] uppercase tracking-[0.12em] text-ink-2 transition-colors hover:border-accent-border hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]"
+            className="rounded-lg border border-hairline px-4 py-3 min-h-[44px] font-mono text-[0.74rem] uppercase tracking-[0.12em] text-ink-2 transition-colors hover:border-accent-border hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]"
           >
             Cancel
           </button>
@@ -130,7 +160,7 @@ function SignOutConfirmDialog({
             ref={confirmRef}
             type="button"
             onClick={onConfirm}
-            className="rounded-lg bg-accent px-3.5 py-2 font-mono text-[0.74rem] font-medium uppercase tracking-[0.12em] text-black shadow-glow transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--text)]"
+            className="rounded-lg bg-accent px-4 py-3 min-h-[44px] font-mono text-[0.74rem] font-medium uppercase tracking-[0.12em] text-black shadow-glow transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--text)]"
           >
             Sign out
           </button>

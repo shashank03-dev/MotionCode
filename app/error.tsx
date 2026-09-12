@@ -10,7 +10,7 @@ type ErrorPageProps = {
 
 export default function ErrorPage({ error, reset }: ErrorPageProps) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-canvas px-4 py-16 text-ink">
+    <main className="flex min-h-dvh items-center justify-center bg-canvas px-4 py-16 text-ink">
       <section className="glass-card w-full max-w-2xl rounded-2xl p-8 text-center">
         <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-[var(--danger)]/10 text-[var(--danger)]">
           <RefreshCcw className="size-6" aria-hidden="true" />

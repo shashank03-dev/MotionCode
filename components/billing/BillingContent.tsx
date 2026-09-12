@@ -147,7 +147,7 @@ export async function BillingContent({
               : " with no expiry date"}
             . No payment is required.
           </p>
-          <ButtonLink href="/pricing" variant="frosted" size="sm" className="mt-6">
+          <ButtonLink href="/pricing" variant="frosted" size="md" className="mt-6 w-full sm:w-auto">
             <CreditCard className="size-4" aria-hidden="true" />
             View paid plans
           </ButtonLink>
@@ -208,7 +208,7 @@ export async function BillingContent({
             You are on the free plan. Choose Pro or Team to unlock more analyses,
             seats, and workspaces.
           </p>
-          <ButtonLink href="/pricing" variant="primary" size="sm" className="mt-6">
+          <ButtonLink href="/pricing" variant="primary" size="md" className="mt-6 w-full sm:w-auto">
             <CreditCard className="size-4" aria-hidden="true" />
             View paid plans
           </ButtonLink>
@@ -266,7 +266,7 @@ function Section({
   badge?: ReactNode;
 }) {
   return (
-    <Panel as="section" variant="glass" inset="none" radius="2xl" className="p-6">
+    <Panel as="section" variant="glass" inset="none" radius="2xl" className="p-5 sm:p-6">
       <div className="mb-5 flex items-center gap-2.5">
         <span className="grid size-7 place-items-center rounded-lg border border-hairline bg-white/[0.03] text-ink-3">
           {icon}

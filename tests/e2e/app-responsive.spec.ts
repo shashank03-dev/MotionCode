@@ -52,15 +52,23 @@ test.describe("application responsive baseline", () => {
       await openInteractiveApp(page);
       await assertAppDiagnostics(page, diagnostics);
 
-      const metrics = await page.evaluate(() => ({
-        scrollWidth: document.documentElement.scrollWidth,
-        viewportWidth: window.innerWidth,
-      }));
-      console.log("[app-baseline] responsive", JSON.stringify({ width, ...metrics }));
+      // Geometry reads go through expect().toPass(): on a cold dev server
+      // the first paint can report a transient overflow before styles settle.
+      await page.waitForLoadState("networkidle").catch(() => {});
+      await expect(async () => {
+        const metrics = await page.evaluate(() => ({
+          scrollWidth: document.documentElement.scrollWidth,
+          viewportWidth: window.innerWidth,
+        }));
+        expect(
+          metrics.scrollWidth,
+          `horizontal overflow at ${width}px: ${metrics.scrollWidth}px > ${metrics.viewportWidth}px`,
+        ).toBeLessThanOrEqual(metrics.viewportWidth);
+      }).toPass({ timeout: 5000, intervals: [250, 500, 1000] });
     });
   }
 
-  test("stacks the result studio vertically at 375px without pane overlap", async ({
+  test("uses code/preview tabs at 375px with only one pane mounted", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 375, height: 900 });
@@ -91,35 +99,26 @@ test.describe("application responsive baseline", () => {
 
     await expect(page.getByRole("heading", { name: "motion target" })).toBeVisible();
 
-    // Below 768px the studio split switches from horizontal to vertical.
-    // Assert pane visibility first: the group only reports a laid-out box
-    // once its children have rendered.
+    // Below 768px the studio switches from the resizable split to
+    // Code/Preview tabs (AnalyzeStudio isNarrow): only the active pane is
+    // mounted, so panes cannot overlap by construction. Assert pane
+    // visibility first: the region only reports a laid-out box once its tab
+    // has rendered.
+    const studioView = page.getByRole("tablist", { name: "Studio view" });
+    await expect(studioView).toBeVisible();
+    const codeTab = studioView.getByRole("tab", { name: "Code" });
+    const previewTab = studioView.getByRole("tab", { name: "Preview" });
+    await expect(codeTab).toHaveAttribute("aria-selected", "true");
+
     const editorPane = page.getByRole("region", { name: "Generated code editor" });
     const previewPane = page.getByRole("region", { name: "Live preview" });
     await expect(editorPane).toBeVisible();
+    await expect(previewPane).toHaveCount(0);
+
+    await previewTab.click();
+    await expect(previewTab).toHaveAttribute("aria-selected", "true");
     await expect(previewPane).toBeVisible();
-
-    // The resize handle carries the same direction attribute, so scope to
-    // the group element itself.
-    await expect(
-      page.locator('[data-panel-group][data-panel-group-direction="vertical"]'),
-    ).toBeVisible();
-
-    const overlap = await page.evaluate(() => {
-      const editor = document.querySelector('section[aria-label="Generated code editor"]');
-      const preview = document.querySelector('section[aria-label="Live preview"]');
-      if (!(editor instanceof HTMLElement) || !(preview instanceof HTMLElement)) {
-        return "missing-pane";
-      }
-      const a = editor.getBoundingClientRect();
-      const b = preview.getBoundingClientRect();
-      const horizontalOverlap = Math.min(a.right, b.right) - Math.max(a.left, b.left);
-      const verticalOverlap = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
-      return horizontalOverlap > 1 && verticalOverlap > 1
-        ? `overlap ${horizontalOverlap}x${verticalOverlap}`
-        : "no-overlap";
-    });
-    expect(overlap).toBe("no-overlap");
+    await expect(editorPane).toHaveCount(0);
 
     await assertAppDiagnostics(page, diagnostics);
   });

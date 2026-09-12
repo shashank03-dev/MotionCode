@@ -92,15 +92,15 @@ export async function AccountContent({ notices }: AccountContentProps = {}) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5">
             <PlanBadge tier={summary.planTier} />
             {isFree ? (
-              <ButtonLink href="/pricing" variant="primary" size="sm">
+              <ButtonLink href="/pricing" variant="primary" size="md" className="w-full sm:w-auto">
                 Upgrade
                 <ArrowUpRight className="size-4" aria-hidden="true" />
               </ButtonLink>
             ) : (
-              <ButtonLink href="/billing" variant="frosted" size="sm">
+              <ButtonLink href="/billing" variant="frosted" size="md" className="w-full sm:w-auto">
                 <CreditCard className="size-4" aria-hidden="true" />
                 Billing
               </ButtonLink>
@@ -175,7 +175,7 @@ export async function AccountContent({ notices }: AccountContentProps = {}) {
               <ButtonLink
                 href="/pricing"
                 variant="primary"
-                size="sm"
+                size="md"
                 className="mt-5 w-full"
               >
                 View paid plans
@@ -212,7 +212,7 @@ export async function AccountContent({ notices }: AccountContentProps = {}) {
               <ButtonLink
                 href="/billing"
                 variant="frosted"
-                size="sm"
+                size="md"
                 className="mt-5 w-full"
               >
                 <CreditCard className="size-4" aria-hidden="true" />
@@ -230,13 +230,13 @@ export async function AccountContent({ notices }: AccountContentProps = {}) {
           </p>
           <div className="mt-5 flex flex-col gap-2.5">
             <form action={requestDataExportAction}>
-              <button className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-hairline bg-white/[0.03] px-4 text-[13px] text-ink-2 transition hover:border-accent-border hover:text-ink">
+              <button className="inline-flex h-11 min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-hairline bg-white/[0.03] px-4 text-[13px] text-ink-2 transition hover:border-accent-border hover:text-ink">
                 <Download className="size-4" aria-hidden="true" />
                 Request data export
               </button>
             </form>
             <form action={requestAccountDeletionAction}>
-              <button className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-[var(--danger-border)] px-4 text-[13px] text-[var(--danger)] transition hover:bg-[rgba(232,112,95,0.08)]">
+              <button className="inline-flex h-11 min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-[var(--danger-border)] px-4 text-[13px] text-[var(--danger)] transition hover:bg-[rgba(232,112,95,0.08)]">
                 <Trash2 className="size-4" aria-hidden="true" />
                 Request account deletion
               </button>

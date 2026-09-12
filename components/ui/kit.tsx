@@ -161,13 +161,13 @@ export function StatTile({
       </p>
       <p
         className={cn(
-          "mt-2.5 font-mono text-3xl leading-none tracking-tight tabular-nums",
+          "mt-2.5 break-words font-mono text-3xl leading-none tracking-tight tabular-nums",
           accent ? "text-accent" : "text-ink",
         )}
       >
         {value}
       </p>
-      {hint ? <p className="mt-2 text-[13px] leading-5 text-ink-2">{hint}</p> : null}
+      {hint ? <p className="mt-2 break-words text-[13px] leading-5 text-ink-2">{hint}</p> : null}
     </Panel>
   );
 }
@@ -177,13 +177,13 @@ export function StatTile({
  * wells that light their border to accent on focus.
  * --------------------------------------------------------------------------- */
 const controlBase =
-  "w-full rounded-lg border border-hairline bg-[#0d0e11] px-3.5 text-[14px] text-ink placeholder:text-ink-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] outline-none transition-colors duration-200 focus:border-accent-border focus:ring-2 focus:ring-[var(--accent-dim)] disabled:opacity-50";
+  "w-full rounded-lg border border-hairline bg-[#0d0e11] px-3.5 text-base text-ink placeholder:text-ink-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] outline-none transition-colors duration-200 focus:border-accent-border focus:ring-2 focus:ring-[var(--accent-dim)] disabled:opacity-50";
 
 export const Input = React.forwardRef<
   HTMLInputElement,
   React.InputHTMLAttributes<HTMLInputElement>
 >(({ className, ...props }, ref) => (
-  <input ref={ref} className={cn(controlBase, "h-10", className)} {...props} />
+  <input ref={ref} className={cn(controlBase, "h-11 min-h-[44px]", className)} {...props} />
 ));
 Input.displayName = "Input";
 

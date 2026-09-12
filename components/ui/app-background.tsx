@@ -14,7 +14,7 @@ export function AppBackground() {
       aria-hidden="true"
     >
       {/* blueprint grid, masked to a soft ellipse so it never reaches the edges */}
-      <div className="absolute inset-0 grid-fade opacity-70" />
+      <div className="absolute inset-0 grid-fade opacity-40 sm:opacity-70" />
       {/* single accent bloom, upper-right — the only color in the room */}
       <div className="absolute right-[-20rem] top-[-22rem] size-[44rem] rounded-full bg-[radial-gradient(circle,var(--accent-dim),transparent_70%)] blur-2xl" />
       {/* cool floor gradient for depth */}

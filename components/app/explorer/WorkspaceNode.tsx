@@ -35,7 +35,7 @@ export function WorkspaceNode({
     <li>
       <div
         className={cn(
-          "group flex h-9 items-center gap-1 pr-1 transition",
+          "group flex min-h-[44px] items-center gap-1 pr-1 transition",
           isActive
             ? "bg-[var(--accent-dim)] text-ink"
             : "text-ink-2 hover:bg-[var(--accent-dim)]/60",
@@ -46,7 +46,7 @@ export function WorkspaceNode({
           onClick={onToggle}
           aria-expanded={expanded}
           aria-label={expanded ? "Collapse workspace" : "Expand workspace"}
-          className="flex size-6 shrink-0 items-center justify-center text-ink-3 hover:text-ink"
+          className="flex size-11 shrink-0 items-center justify-center text-ink-3 hover:text-ink"
         >
           <ChevronRight
             className={cn(
@@ -69,9 +69,9 @@ export function WorkspaceNode({
           onClick={onAddProject}
           aria-label={`New project in ${workspace.name}`}
           title="New project"
-          className="flex size-6 shrink-0 items-center justify-center text-ink-3 opacity-0 transition hover:text-ink focus-visible:opacity-100 group-hover:opacity-100"
+          className="flex size-11 shrink-0 items-center justify-center text-ink-3 opacity-0 transition hover:text-ink focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
         >
-          <Plus className="size-3.5" />
+          <Plus className="size-3.5" aria-hidden="true" />
         </button>
       </div>
 

@@ -46,7 +46,7 @@ export function CancelSubscriptionButton({
   if (!confirming) {
     return (
       <button
-        className="inline-flex h-10 items-center justify-center gap-2 border border-red-400/40 px-4 font-mono text-sm text-red-200"
+        className="inline-flex h-11 min-h-[44px] w-full items-center justify-center gap-2 border border-red-400/40 px-4 font-mono text-sm text-red-200 sm:w-auto"
         onClick={() => setConfirming(true)}
         type="button"
       >
@@ -64,7 +64,7 @@ export function CancelSubscriptionButton({
       </p>
       <div className="flex flex-wrap gap-2">
         <button
-          className="inline-flex h-10 items-center justify-center gap-2 border border-red-400/40 px-4 font-mono text-sm text-red-200 disabled:opacity-60"
+          className="inline-flex h-11 min-h-[44px] items-center justify-center gap-2 border border-red-400/40 px-4 font-mono text-sm text-red-200 disabled:opacity-60"
           disabled={loading}
           onClick={cancelSubscription}
           type="button"
@@ -77,7 +77,7 @@ export function CancelSubscriptionButton({
           Confirm cancellation
         </button>
         <button
-          className="inline-flex h-10 items-center justify-center gap-2 border border-hairline px-4 font-mono text-sm text-ink-2 disabled:opacity-60"
+          className="inline-flex h-11 min-h-[44px] items-center justify-center gap-2 border border-hairline px-4 font-mono text-sm text-ink-2 disabled:opacity-60"
           disabled={loading}
           onClick={() => setConfirming(false)}
           type="button"
@@ -85,7 +85,7 @@ export function CancelSubscriptionButton({
           Keep subscription
         </button>
       </div>
-      {error ? <p className="text-xs leading-5 text-red-200">{error}</p> : null}
+      {error ? <p className="text-sm leading-5 text-red-200">{error}</p> : null}
     </div>
   );
 }

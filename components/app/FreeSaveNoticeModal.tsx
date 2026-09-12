@@ -44,7 +44,7 @@ export function FreeSaveNoticeModal({
   if (!open || typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 sm:p-6">
+    <div className="fixed inset-0 z-[130] flex items-center justify-center overflow-y-auto p-4 sm:p-6">
       <button
         type="button"
         aria-label="Cancel upload"
@@ -56,7 +56,7 @@ export function FreeSaveNoticeModal({
         aria-modal="true"
         aria-labelledby="free-save-title"
         aria-describedby="free-save-body"
-        className="relative z-10 w-full max-w-[420px] rounded-2xl border border-hairline bg-[#0a0b0d] p-6 shadow-[0_30px_80px_rgba(0,0,0,0.6)]"
+        className="relative z-10 my-auto max-h-[90dvh] w-full max-w-[420px] overflow-y-auto rounded-2xl border border-hairline bg-[#0a0b0d] p-6 shadow-[0_30px_80px_rgba(0,0,0,0.6)]"
       >
         <div className="flex items-start gap-3.5">
           <span

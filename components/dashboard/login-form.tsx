@@ -233,7 +233,7 @@ export function LoginForm({
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink-3"
+            className="min-w-0 flex-1 bg-transparent text-base text-ink outline-none placeholder:text-ink-3"
             placeholder="you@example.com"
           />
         </div>
@@ -253,14 +253,14 @@ export function LoginForm({
             autoComplete="current-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink-3"
+            className="min-w-0 flex-1 bg-transparent text-base text-ink outline-none placeholder:text-ink-3"
             placeholder="Your password"
           />
           <button
             type="button"
             onClick={() => setShowPassword((value) => !value)}
             aria-label={showPassword ? "Hide password" : "Show password"}
-            className="ml-2 text-[#8a9099] transition-colors hover:text-ink"
+            className="ml-2 flex min-h-[44px] min-w-[44px] items-center justify-center p-2 text-[#8a9099] transition-colors hover:text-ink"
           >
             {showPassword ? (
               <EyeOff className="size-4" />
@@ -293,7 +293,7 @@ export function LoginForm({
             state === "authenticating" ||
             email.trim().length === 0
           }
-          className="inline-flex h-10 w-full items-center justify-center gap-2 border border-ink-2/12 bg-transparent px-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#8a9099] transition-colors duration-200 hover:border-accent/40 hover:text-ink disabled:pointer-events-none disabled:opacity-50"
+          className="inline-flex h-11 w-full items-center justify-center gap-2 border border-ink-2/12 bg-transparent px-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#8a9099] transition-colors duration-200 hover:border-accent/40 hover:text-ink disabled:pointer-events-none disabled:opacity-50"
           style={monoFont}
         >
           <Send className="size-3.5" />

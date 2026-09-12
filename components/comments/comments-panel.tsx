@@ -107,8 +107,15 @@ export function CommentsPanel({
 
       {canSubmit ? (
         <form className="mt-4 space-y-3" onSubmit={submit}>
+          <label
+            htmlFor="comment-body"
+            className="block text-sm font-medium text-ink-2"
+          >
+            Add a comment
+          </label>
           <textarea
-            className="min-h-24 w-full resize-y rounded-lg border border-hairline bg-panel p-3 text-sm text-ink outline-none transition-colors placeholder:text-ink-3 focus:border-accent"
+            id="comment-body"
+            className="min-h-24 w-full resize-y rounded-lg border border-hairline bg-panel p-3 text-base text-ink outline-none transition-colors placeholder:text-ink-3 focus:border-accent"
             maxLength={2000}
             onChange={(event) => setBody(event.target.value)}
             placeholder="Add a scoped workspace comment"

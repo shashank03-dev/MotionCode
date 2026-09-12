@@ -143,7 +143,7 @@ function ContainerScroll({
       ref={containerRef}
       style={{ position: "relative" }}
       className={cn(
-        "relative flex min-h-[220vh] w-full flex-col items-center justify-start overflow-hidden bg-[#0a0b0d] py-20 sm:py-28",
+        "relative flex min-h-[220vh] w-full flex-col items-center justify-start overflow-hidden bg-[#0a0b0d] py-20 max-sm:min-h-0 sm:py-28",
         className
       )}
     >
@@ -152,7 +152,7 @@ function ContainerScroll({
       <div className="relative z-10 w-full">
         <ContainerScrollHeader titleComponent={titleComponent} />
       </div>
-      <div className="motioncode-container-scroll-sticky sticky top-0 z-10 flex min-h-[100dvh] w-full items-center justify-center px-4 py-16 sm:px-6 lg:py-20">
+      <div className="motioncode-container-scroll-sticky relative top-0 z-10 flex min-h-[100dvh] w-full items-center justify-center px-4 py-16 sm:sticky sm:px-6 lg:py-20">
         <ContainerScrollCard
           rotateX={rotateX}
           scale={scale}

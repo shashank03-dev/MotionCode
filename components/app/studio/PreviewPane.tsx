@@ -69,7 +69,7 @@ export function PreviewPane({
           type="button"
           onClick={onReplay}
           title="Re-run preview"
-          className="inline-flex h-7 items-center gap-1.5 px-2 font-mono text-[11px] text-ink-3 transition hover:text-ink"
+          className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 px-2 font-mono text-[11px] text-ink-3 transition hover:text-ink"
         >
           <RotateCw className="size-3.5" />
           <span className="hidden sm:inline">Replay</span>
@@ -93,8 +93,8 @@ export function PreviewPane({
         </div>
       </div>
 
-      {/* Status strip */}
-      <div className="flex items-center justify-between border-t border-hairline px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em]">
+      {/* Status strip — wraps so elapsed/version never collide on narrow. */}
+      <div className="flex flex-wrap items-center justify-between gap-1 border-t border-hairline px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em]">
         <span
           className={cn(
             "inline-flex items-center gap-1.5",
@@ -140,13 +140,13 @@ function PreviewTabButton({
       aria-selected={active}
       onClick={onClick}
       className={cn(
-        "relative px-3 py-2 font-mono text-[11px] transition-colors",
+        "relative min-h-[44px] px-3 py-2 font-mono text-[11px] transition-colors",
         active ? "text-ink" : "text-ink-3 hover:text-ink",
       )}
     >
       {label}
       {badge ? (
-        <span className="ml-1.5 inline-flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[#f58f7c]/20 px-1 text-[9px] text-[#f58f7c]">
+        <span className="ml-1.5 inline-flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[#f58f7c]/20 px-1 text-[11px] text-[#f58f7c]">
           {badge}
         </span>
       ) : null}

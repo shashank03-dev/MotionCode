@@ -18,7 +18,7 @@ export function ProjectNode({ project, isActive }: ProjectNodeProps) {
       aria-current={isActive ? "page" : undefined}
       title={project.title}
       className={cn(
-        "group flex h-8 items-center gap-2 pr-2 font-sans text-[13px] transition",
+        "group flex min-h-[44px] items-center gap-2 pr-2 font-sans text-[13px] transition",
         "pl-8", // align under the workspace folder label
         isActive
           ? "bg-[var(--accent-dim)] text-ink"

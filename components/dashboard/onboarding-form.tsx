@@ -56,12 +56,12 @@ export function OnboardingForm() {
         onChange={(event) => setName(event.target.value)}
         minLength={1}
         maxLength={80}
-        className="h-11 w-full border border-hairline bg-[#0a0b0d] px-3 text-sm text-ink outline-none transition focus:border-[var(--accent-border)] focus:shadow-[0_0_0_3px_rgba(255,255,255,0.08)]"
+        className="h-11 w-full border border-hairline bg-[#0a0b0d] px-3 text-base text-ink outline-none transition focus:border-[var(--accent-border)] focus:shadow-[0_0_0_3px_rgba(255,255,255,0.08)]"
       />
       <button
         type="submit"
         disabled={isSubmitting}
-        className="inline-flex h-10 w-full items-center justify-center gap-2 border border-[var(--accent-border)] bg-[var(--accent)] px-4 text-sm font-semibold text-[#0a0b0d] transition hover:bg-ink active:translate-y-px disabled:opacity-60"
+        className="inline-flex h-11 min-h-[44px] w-full items-center justify-center gap-2 border border-[var(--accent-border)] bg-[var(--accent)] px-4 text-sm font-semibold text-[#0a0b0d] transition hover:bg-ink active:translate-y-px disabled:opacity-60"
       >
         {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}
         Continue

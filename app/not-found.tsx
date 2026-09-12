@@ -4,7 +4,7 @@ import { SiteFooter, SiteHeader } from "@/components/marketing";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-canvas text-ink">
+    <div className="min-h-dvh bg-canvas text-ink">
       <SiteHeader />
       <main className="container-page flex min-h-[70vh] flex-col justify-center py-16 text-center">
         <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-accent-dim text-accent shadow-ring">

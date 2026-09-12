@@ -71,7 +71,7 @@ export function SupportCenter({ initialTickets, userEmail }: SupportCenterProps)
             Signed in as <span className="text-ink">{userEmail}</span>. Your tickets
             stay scoped to your account.
           </p>
-          <SignOutButton className="mt-4 h-9 rounded-full border-hairline px-4 text-[13px] text-ink-2 hover:border-accent-border hover:text-ink" />
+          <SignOutButton className="mt-4 h-11 min-h-[44px] rounded-full border-hairline px-4 text-[13px] text-ink-2 hover:border-accent-border hover:text-ink" />
         </div>
 
         <form className="grid gap-4" onSubmit={submitTicket}>
@@ -99,7 +99,7 @@ export function SupportCenter({ initialTickets, userEmail }: SupportCenterProps)
             />
           </Field>
           <button
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-accent px-5 text-sm font-medium text-black shadow-glow transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
+            className="inline-flex h-11 min-h-[44px] items-center justify-center gap-2 rounded-full bg-accent px-5 text-sm font-medium text-black shadow-glow transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
             disabled={submitting}
             type="submit"
           >

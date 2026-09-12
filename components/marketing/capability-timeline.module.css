@@ -643,7 +643,7 @@
    finished state. JS upgrades to the pinned horizontal scrubber only on
    desktop with motion enabled, by setting data-mode="pinned". */
 .section[data-mode="pinned"] {
-  height: 100vh;
+  height: 100dvh;
 }
 
 .section:not([data-mode="pinned"]) .viewport {

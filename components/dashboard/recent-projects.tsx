@@ -16,7 +16,7 @@ export function RecentProjects({ projects }: RecentProjectsProps) {
         actions={
           <Link
             href="/workspaces"
-            className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-3 transition-colors hover:text-ink"
+            className="inline-block py-2 font-mono text-xs uppercase tracking-[0.14em] text-ink-3 transition-colors hover:text-ink"
           >
             Browse workspaces →
           </Link>
@@ -27,7 +27,8 @@ export function RecentProjects({ projects }: RecentProjectsProps) {
 
       {projects.length ? (
         <Panel variant="glass" inset="none" radius="2xl" className="overflow-hidden">
-          <table className="w-full border-collapse text-left text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[520px] border-collapse text-left text-sm">
             <thead className="border-b border-hairline font-mono text-[10.5px] uppercase tracking-[0.16em] text-ink-3">
               <tr>
                 <th className="px-5 py-3.5 font-normal">Name</th>
@@ -64,6 +65,7 @@ export function RecentProjects({ projects }: RecentProjectsProps) {
               ))}
             </tbody>
           </table>
+          </div>
         </Panel>
       ) : (
         <EmptyState

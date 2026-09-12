@@ -50,9 +50,17 @@ export const securityHeaders = [
   },
 ];
 
+const immutableCacheHeader = {
+  key: "Cache-Control",
+  value: "public, max-age=31536000, immutable",
+};
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
+  images: {
+    formats: ["image/avif", "image/webp"],
+  },
   // Escape hatch for measurement builds: `NEXT_DIST_DIR=.next-measure npm run
   // build` writes to an isolated directory so a running `next dev` (which owns
   // .next and rewrites it on demand) can't clobber the artifacts mid-analysis.
@@ -89,6 +97,14 @@ const nextConfig = {
       {
         source: "/(.*)",
         headers: securityHeaders,
+      },
+      {
+        source: "/_next/static/:path*",
+        headers: [immutableCacheHeader],
+      },
+      {
+        source: "/:path*.woff2",
+        headers: [immutableCacheHeader],
       },
     ];
   },

@@ -32,7 +32,7 @@ export function DashboardSummary({ data }: DashboardSummaryProps) {
             className="group p-5"
           >
             <div className="flex items-center justify-between">
-              <span className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-ink-3">
+              <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-ink-3">
                 {metric.label}
               </span>
               <Icon className="size-4 text-ink-3 transition-colors group-hover:text-accent" />

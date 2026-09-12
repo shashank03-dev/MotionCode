@@ -16,7 +16,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps = {}) {
   const nextPath = normalizeAuthNextPath(resolvedSearchParams?.next);
 
   return (
-    <main className="relative flex min-h-[100dvh] items-center justify-center overflow-hidden bg-canvas px-4 py-6 text-ink sm:px-6">
+    <main className="relative flex min-h-[100dvh] items-center justify-center overflow-y-auto bg-canvas px-4 py-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] text-ink sm:px-6">
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
         <div className="absolute inset-0 grid-fade opacity-70" />
         {/* single accent hairline at the top edge — the only color in the room */}

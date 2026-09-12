@@ -121,7 +121,7 @@ export function ExplorerTree({ tree }: ExplorerTreeProps) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-9 items-center justify-between px-3">
+      <div className="flex min-h-[44px] items-center justify-between px-3">
         <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-3">
           Explorer
         </span>
@@ -130,9 +130,9 @@ export function ExplorerTree({ tree }: ExplorerTreeProps) {
           onClick={() => setCreatingWorkspace(true)}
           aria-label="New workspace"
           title="New workspace"
-          className="flex size-6 items-center justify-center border border-[var(--accent-border)] bg-[var(--accent-dim)] text-ink transition hover:border-[var(--accent)]"
+          className="flex size-11 items-center justify-center border border-[var(--accent-border)] bg-[var(--accent-dim)] text-ink transition hover:border-[var(--accent)]"
         >
-          <Plus className="size-3.5" />
+          <Plus className="size-3.5" aria-hidden="true" />
         </button>
       </div>
 

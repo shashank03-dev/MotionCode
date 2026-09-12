@@ -102,12 +102,13 @@ export function ExportPanel({
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2" role="tablist">
+      <div className="mt-4 flex flex-wrap gap-2" role="tablist" aria-label="Export formats">
         {artifacts.map((artifact) => (
           <button
             aria-selected={selected.framework === artifact.framework}
+            aria-label={`${artifactLabel(artifact)} export format`}
             className={cn(
-              "h-8 rounded-md border px-3 text-sm transition-colors",
+              "h-11 min-h-[44px] rounded-md border px-3 text-sm transition-colors",
               selected.framework === artifact.framework
                 ? "border-accent bg-accent-dim text-ink"
                 : "border-hairline text-ink-2 hover:border-[var(--border-strong)] hover:text-ink",

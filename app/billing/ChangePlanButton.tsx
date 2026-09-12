@@ -52,7 +52,7 @@ export function ChangePlanButton({ label, targetPlanTier }: ChangePlanButtonProp
   return (
     <div className="flex flex-col gap-2">
       <button
-        className="inline-flex h-10 items-center justify-center gap-2 border border-[var(--accent-border)] bg-[var(--accent-dim)] px-4 font-mono text-sm text-ink disabled:opacity-60"
+        className="inline-flex h-11 min-h-[44px] w-full items-center justify-center gap-2 border border-[var(--accent-border)] bg-[var(--accent-dim)] px-4 font-mono text-sm text-ink disabled:opacity-60 sm:w-auto"
         disabled={loading}
         onClick={changePlan}
         type="button"
@@ -64,7 +64,7 @@ export function ChangePlanButton({ label, targetPlanTier }: ChangePlanButtonProp
         )}
         <span className="truncate">{label}</span>
       </button>
-      {error ? <p className="text-xs leading-5 text-red-200">{error}</p> : null}
+      {error ? <p className="text-sm leading-5 text-red-200">{error}</p> : null}
     </div>
   );
 }

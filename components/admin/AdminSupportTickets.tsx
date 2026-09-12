@@ -87,7 +87,7 @@ export function AdminSupportTickets({
         <table className="w-full min-w-[920px] border-collapse text-left text-sm">
           <thead className="bg-[#0f1115] text-xs uppercase text-ink-2">
             <tr>
-              <th className="px-4 py-3 font-medium">Ticket</th>
+              <th className="sticky left-0 z-10 bg-[#0f1115] px-4 py-3 font-medium">Ticket</th>
               <th className="px-4 py-3 font-medium">Requester</th>
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium">Priority</th>
@@ -104,7 +104,7 @@ export function AdminSupportTickets({
                   className="border-t border-hairline align-top"
                   key={ticket.id}
                 >
-                  <td className="max-w-[320px] px-4 py-3">
+                  <td className="sticky left-0 max-w-[320px] bg-elevated px-4 py-3">
                     <div className="font-medium text-ink">
                       {ticket.subject}
                     </div>
@@ -120,7 +120,7 @@ export function AdminSupportTickets({
                   </td>
                   <td className="px-4 py-3">
                     <select
-                      className="h-8 rounded-lg border border-hairline bg-[#0f1115] px-2 text-sm text-ink"
+                      className="h-11 min-h-[44px] w-full min-w-0 rounded-lg border border-hairline bg-[#0f1115] px-2 text-base text-ink"
                       disabled={disabled}
                       onChange={(event) =>
                         updateTicket(ticket.id, {
@@ -138,7 +138,7 @@ export function AdminSupportTickets({
                   </td>
                   <td className="px-4 py-3">
                     <select
-                      className="h-8 rounded-lg border border-hairline bg-[#0f1115] px-2 text-sm text-ink"
+                      className="h-11 min-h-[44px] w-full min-w-0 rounded-lg border border-hairline bg-[#0f1115] px-2 text-base text-ink"
                       disabled={disabled}
                       onChange={(event) =>
                         updateTicket(ticket.id, {
@@ -171,7 +171,7 @@ export function AdminSupportTickets({
                     <div className="flex gap-2">
                       <button
                         aria-label="Assign ticket to me"
-                        className="inline-flex size-8 items-center justify-center rounded-lg border border-hairline text-ink hover:border-accent/50 hover:text-accent disabled:opacity-50"
+                        className="inline-flex size-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-hairline text-ink hover:border-accent/50 hover:text-accent disabled:opacity-50"
                         disabled={disabled}
                         onClick={() =>
                           updateTicket(ticket.id, {
@@ -189,7 +189,7 @@ export function AdminSupportTickets({
                       </button>
                       <button
                         aria-label="Unassign ticket"
-                        className="inline-flex size-8 items-center justify-center rounded-lg border border-hairline text-ink hover:border-accent/50 hover:text-accent disabled:opacity-50"
+                        className="inline-flex size-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-hairline text-ink hover:border-accent/50 hover:text-accent disabled:opacity-50"
                         disabled={disabled}
                         onClick={() =>
                           updateTicket(ticket.id, { assignedAdminId: null })

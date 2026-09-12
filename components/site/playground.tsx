@@ -29,7 +29,7 @@ export function Playground() {
 
   return (
     <section id="playground" className="container-page scroll-mt-24 py-16">
-      <Reveal className="overflow-hidden rounded-3xl border border-hairline bg-panel/50 p-8 sm:p-10">
+      <Reveal className="overflow-hidden rounded-3xl border border-hairline bg-panel/50 p-5 sm:p-10">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <div className="eyebrow mb-3">Playground</div>
@@ -67,7 +67,7 @@ export function Playground() {
             if (e.buttons > 0) setFromEvent(e.clientX);
           }}
           onMouseMove={(e) => setFromEvent(e.clientX)}
-          className="relative mt-5 h-10 cursor-ew-resize touch-none"
+          className="relative mt-5 h-11 min-h-[44px] cursor-ew-resize touch-none"
         >
           <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-hairline" />
           <motion.div
@@ -76,7 +76,7 @@ export function Playground() {
           />
           <motion.div
             style={{ left: thumbLeft }}
-            className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[var(--accent-border)] bg-black shadow-glow"
+            className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[var(--accent-border)] bg-black shadow-glow after:absolute after:-inset-[14px] after:content-['']"
           />
         </div>
       </Reveal>

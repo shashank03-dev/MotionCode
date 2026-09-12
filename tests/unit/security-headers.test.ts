@@ -21,6 +21,24 @@ describe("Next.js security headers", () => {
         source: "/(.*)",
         headers: securityHeaders,
       },
+      {
+        source: "/_next/static/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/:path*.woff2",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
     ]);
     expect(headerValue("X-Content-Type-Options")).toBe("nosniff");
     expect(headerValue("Referrer-Policy")).toBe("strict-origin-when-cross-origin");

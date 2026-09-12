@@ -79,6 +79,9 @@ export function AnalyzeStudio({
   const [copied, setCopied] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [hoveredScore, setHoveredScore] = useState<ScoreKey | null>(null);
+  // Narrow (stacked) mode shows one pane at a time behind Code/Preview tabs
+  // instead of a fixed-height vertical split, so the container stays auto.
+  const [mobilePane, setMobilePane] = useState<"code" | "preview">("code");
 
   // Preview runtime state.
   const [srcDoc, setSrcDoc] = useState("");
@@ -257,8 +260,9 @@ export function AnalyzeStudio({
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
-      {/* Studio header */}
-      <header className="flex items-center justify-between gap-3 border-b border-hairline bg-[#0a0b0d]/80 px-4 py-2.5">
+      {/* Studio header — wraps on small screens; labels collapse to icons
+          below sm so the cluster never pushes the title out. */}
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline bg-[#0a0b0d]/80 px-4 py-2.5">
         <div className="flex min-w-0 items-center gap-3">
           <span
             className="inline-flex size-2 shrink-0 rounded-full"
@@ -279,101 +283,164 @@ export function AnalyzeStudio({
           <button
             type="button"
             onClick={() => setDrawerOpen((open) => !open)}
+            aria-label="Toggle spec and audit panel"
+            aria-expanded={drawerOpen}
+            aria-controls="spec-audit-drawer"
             className={cn(
-              "inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 font-mono text-[11px] transition",
+              "inline-flex min-h-[44px] items-center gap-1.5 rounded-md border px-2.5 font-mono text-[11px] transition sm:min-h-0 sm:h-8",
               drawerOpen
                 ? "border-[var(--accent-border)] bg-[var(--accent-dim)] text-ink"
                 : "border-hairline text-ink-2 hover:text-ink",
             )}
           >
-            <SlidersHorizontal className="size-3.5" />
-            Spec &amp; audit
+            <SlidersHorizontal className="size-3.5" aria-hidden="true" />
+            <span className="hidden sm:inline">Spec &amp; audit</span>
           </button>
           <button
             type="button"
             onClick={onNewAnalysis}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-hairline px-2.5 font-mono text-[11px] text-ink-2 transition hover:border-[var(--accent-border)] hover:text-ink"
+            aria-label="Start new analysis"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-md border border-hairline px-2.5 font-mono text-[11px] text-ink-2 transition hover:border-[var(--accent-border)] hover:text-ink sm:min-h-0 sm:h-8"
           >
-            <PanelLeftClose className="size-3.5" />
-            New analysis
+            <PanelLeftClose className="size-3.5" aria-hidden="true" />
+            <span className="hidden sm:inline">New analysis</span>
           </button>
         </div>
       </header>
 
-      {/* Split body. In narrow mode the vertical group needs a definite
-          height: it renders height:100% and each panel resolves against it,
-          so an indefinite flex ancestor collapses both panels to zero area.
-          min-height does NOT fix this (percentages ignore it) - pass height
-          via style, which overrides the library's own inline height. */}
+      {/* Split body. Desktop keeps the resizable horizontal split. Narrow
+          stacks via Code/Preview tabs with auto height so each pane sizes to
+          its content instead of a fixed 70vh vertical split. */}
       <div className="min-h-0 flex-1">
-        <PanelGroup
-          direction={isNarrow ? "vertical" : "horizontal"}
-          style={isNarrow ? { height: "70vh" } : undefined}
-          autoSaveId={
-            isNarrow
-              ? "motioncode-studio-split-vertical"
-              : "motioncode-studio-split-horizontal"
-          }
-        >
-          <Panel defaultSize={50} minSize={28} className="min-w-0">
-            <EditorPane
-              tabs={CODE_TABS}
-              activeTab={activeTab}
-              onTabChange={onTabChange}
-              value={activeCode}
-              language={languageForTab(activeTab)}
-              dirty={dirty}
-              copied={copied}
-              editable={editable}
-              onChange={handleChange}
-              onRun={handleRun}
-              onFormat={handleFormat}
-              onReset={handleReset}
-              onCopy={handleCopy}
-              onDownload={handleDownload}
-            />
-          </Panel>
-          <PanelResizeHandle
-            className={cn(
-              "group relative bg-[var(--border)] outline-none data-[resize-handle-state=hover]:bg-accent data-[resize-handle-state=drag]:bg-accent",
-              isNarrow ? "h-px w-full" : "w-px",
-            )}
+        {isNarrow ? (
+          <div className="flex flex-col">
+            <div
+              role="tablist"
+              aria-label="Studio view"
+              className="flex items-center gap-1 border-b border-hairline px-2"
+            >
+              {(
+                [
+                  { key: "code", label: "Code" },
+                  { key: "preview", label: "Preview" },
+                ] as const
+              ).map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={mobilePane === tab.key}
+                  onClick={() => setMobilePane(tab.key)}
+                  className={cn(
+                    "relative min-h-[44px] shrink-0 px-4 font-mono text-[11px] transition-colors",
+                    mobilePane === tab.key
+                      ? "text-ink"
+                      : "text-ink-3 hover:text-ink",
+                  )}
+                >
+                  {tab.label}
+                  {mobilePane === tab.key ? (
+                    <span
+                      className="absolute inset-x-2 bottom-0 h-px bg-accent"
+                      aria-hidden="true"
+                    />
+                  ) : null}
+                </button>
+              ))}
+            </div>
+            <div className="min-h-[320px]">
+              {mobilePane === "code" ? (
+                <div id="studio-code" className="min-h-[320px] scroll-mt-16">
+                  <EditorPane
+                    tabs={CODE_TABS}
+                    activeTab={activeTab}
+                    onTabChange={onTabChange}
+                    value={activeCode}
+                    language={languageForTab(activeTab)}
+                    dirty={dirty}
+                    copied={copied}
+                    editable={editable}
+                    onChange={handleChange}
+                    onRun={handleRun}
+                    onFormat={handleFormat}
+                    onReset={handleReset}
+                    onCopy={handleCopy}
+                    onDownload={handleDownload}
+                  />
+                </div>
+              ) : (
+                <div id="studio-preview" className="min-h-[320px] scroll-mt-16">
+                  <PreviewPane
+                    srcDoc={srcDoc}
+                    runId={runId}
+                    status={status}
+                    elapsedMs={elapsedMs}
+                    consoleEntries={consoleEntries}
+                    errorCount={errorCount}
+                    onClearConsole={() => setConsoleEntries([])}
+                    onReplay={handleRun}
+                    iframeRef={iframeRef}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <PanelGroup
+            direction="horizontal"
+            autoSaveId="motioncode-studio-split-horizontal"
           >
-            <span
-              className={
-                isNarrow
-                  ? "absolute inset-x-0 -top-1 -bottom-1 z-10"
-                  : "absolute inset-y-0 -left-1 -right-1 z-10"
-              }
-            />
-          </PanelResizeHandle>
-          <Panel defaultSize={50} minSize={28} className="min-w-0">
-            <PreviewPane
-              srcDoc={srcDoc}
-              runId={runId}
-              status={status}
-              elapsedMs={elapsedMs}
-              consoleEntries={consoleEntries}
-              errorCount={errorCount}
-              onClearConsole={() => setConsoleEntries([])}
-              onReplay={handleRun}
-              iframeRef={iframeRef}
-            />
-          </Panel>
-        </PanelGroup>
+            <Panel defaultSize={50} minSize={28} className="min-w-0">
+              <EditorPane
+                tabs={CODE_TABS}
+                activeTab={activeTab}
+                onTabChange={onTabChange}
+                value={activeCode}
+                language={languageForTab(activeTab)}
+                dirty={dirty}
+                copied={copied}
+                editable={editable}
+                onChange={handleChange}
+                onRun={handleRun}
+                onFormat={handleFormat}
+                onReset={handleReset}
+                onCopy={handleCopy}
+                onDownload={handleDownload}
+              />
+            </Panel>
+            <PanelResizeHandle className="group relative w-px bg-[var(--border)] outline-none data-[resize-handle-state=hover]:bg-accent data-[resize-handle-state=drag]:bg-accent">
+              {/* 24px+ grab area: -left-3/-right-3 keeps the 1px visual. */}
+              <span className="absolute inset-y-0 -left-3 -right-3 z-10" />
+            </PanelResizeHandle>
+            <Panel defaultSize={50} minSize={28} className="min-w-0">
+              <PreviewPane
+                srcDoc={srcDoc}
+                runId={runId}
+                status={status}
+                elapsedMs={elapsedMs}
+                consoleEntries={consoleEntries}
+                errorCount={errorCount}
+                onClearConsole={() => setConsoleEntries([])}
+                onReplay={handleRun}
+                iframeRef={iframeRef}
+              />
+            </Panel>
+          </PanelGroup>
+        )}
       </div>
 
-      {/* Spec & audit drawer */}
+      {/* Spec & audit drawer — full-screen fixed sheet on mobile with
+          safe-area padding, docked absolute panel on sm+. */}
       {drawerOpen ? (
-        <div className="absolute inset-y-0 right-0 z-30 flex w-full max-w-md flex-col border-l border-hairline bg-[#0a0b0d] shadow-[0_0_60px_rgba(0,0,0,0.5)]">
-          <div className="flex items-center justify-between border-b border-hairline px-4 py-2.5">
+        <div id="spec-audit-drawer" role="dialog" aria-label="Spec and audit" className="fixed inset-0 z-30 flex w-full flex-col overflow-y-auto border-hairline bg-[#0a0b0d] pb-[env(safe-area-inset-bottom)] shadow-[0_0_60px_rgba(0,0,0,0.5)] sm:absolute sm:inset-y-0 sm:right-0 sm:left-auto sm:w-full sm:max-w-md sm:border-l sm:pb-0">
+          <div className="flex min-h-[44px] items-center justify-between border-b border-hairline px-4 py-2.5">
             <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-3">
               Spec &amp; audit
             </span>
             <button
               type="button"
               onClick={() => setDrawerOpen(false)}
-              className="font-mono text-[11px] text-ink-2 hover:text-ink"
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center font-mono text-[11px] text-ink-2 hover:text-ink"
             >
               Close
             </button>

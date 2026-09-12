@@ -24,7 +24,7 @@ export default async function SupportPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-canvas text-ink">
+      <div className="min-h-dvh bg-canvas text-ink">
         <SiteHeader />
         <SupportHero />
         <div className="container-page py-14">
@@ -56,7 +56,7 @@ function SupportHero() {
   return (
     <section className="relative border-b border-hairline">
       <div className="pointer-events-none absolute inset-0 grid-fade opacity-60" aria-hidden="true" />
-      <div className="container-page relative py-16 sm:py-20">
+      <div className="container-page relative py-10 sm:py-20">
         <Eyebrow dot>Support</Eyebrow>
         <h1 className="mt-4 max-w-3xl font-display text-4xl font-medium leading-[1.05] tracking-tightest text-balance sm:text-5xl">
           Account-scoped help for MotionCode.

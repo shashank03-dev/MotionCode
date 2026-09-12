@@ -49,7 +49,7 @@ export function MotionSpecPreview() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3 border-t border-white/10 bg-[#0f1115] px-4 py-3 text-sm text-ink-2/70">
+      <div className="flex flex-wrap items-center gap-3 border-t border-white/10 bg-[#0f1115] px-4 py-3 text-sm text-ink-2/70">
         <span className="size-2 rounded-full bg-accent" aria-hidden="true" />
         Review the spec, adjust the code, then paste it into your project.
         <ArrowRight className="ml-auto size-4 text-accent" aria-hidden="true" />

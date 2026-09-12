@@ -230,13 +230,24 @@ export function MotionParticleField({
     if (!el) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
+    // Scaled-down (not disabled) on mobile / Save-Data: fewer particles and
+    // DPR capped to 1.0. Keeps the morph readable on small GPUs.
+    const isMobileWidth = window.innerWidth < 768;
+    const saveData =
+      (navigator as Navigator & { connection?: { saveData?: boolean } })
+        .connection?.saveData === true;
+    const count = isMobileWidth || saveData ? 1500 : COUNT;
+    const dprCap = isMobileWidth ? 1.0 : 1.75;
+    const dpr = Math.min(window.devicePixelRatio || 1, dprCap);
+
     let renderer: Renderer;
     try {
       renderer = new Renderer({
         alpha: true,
-        dpr: Math.min(window.devicePixelRatio || 1, 1.75),
+        dpr,
       });
-    } catch {
+    } catch (err) {
+      console.warn("[webgl] renderer init failed, using static fallback", err);
       return; // static fallback stays visible
     }
 
@@ -250,13 +261,13 @@ export function MotionParticleField({
     gl.canvas.style.height = "100%";
     gl.canvas.style.display = "block";
 
-    const positions = new Float32Array(COUNT * 3);
-    const randoms = new Float32Array(COUNT * 4);
-    const ids = new Float32Array(COUNT);
+    const positions = new Float32Array(count * 3);
+    const randoms = new Float32Array(count * 4);
+    const ids = new Float32Array(count);
     // Per-particle glyph target, filled on demand from the active word. Starts
     // zeroed; uTextValid gates the pull so particles don't collapse to origin.
-    const textTargets = new Float32Array(COUNT * 2);
-    for (let i = 0; i < COUNT; i++) {
+    const textTargets = new Float32Array(count * 2);
+    for (let i = 0; i < count; i++) {
       // seed scatter inside an ellipse so stage 0 reads as a soft cloud
       const a = Math.random() * Math.PI * 2;
       const rad = Math.sqrt(Math.random());
@@ -290,8 +301,8 @@ export function MotionParticleField({
         uTime: { value: 0 },
         uMorph: { value: 0 },
         uAspect: { value: 1 },
-        uCount: { value: COUNT },
-        uDpr: { value: Math.min(window.devicePixelRatio || 1, 1.75) },
+        uCount: { value: count },
+        uDpr: { value: dpr },
         uTextBlend: { value: 0 },
         uTextValid: { value: 0 },
       },
@@ -314,10 +325,11 @@ export function MotionParticleField({
     function applyWord(word: string) {
       const pts = sampleWordPoints(word);
       if (pts.length === 0) {
+        console.warn("[particles] word rasterized to zero points", word);
         program.uniforms.uTextValid.value = 0;
         return;
       }
-      for (let i = 0; i < COUNT; i++) {
+      for (let i = 0; i < count; i++) {
         if (randoms[i * 4 + 2] > 0.52) {
           const point = pts[(Math.random() * pts.length) | 0];
           textTargets[i * 2] = point[0];

@@ -3,13 +3,7 @@ import Link from "next/link";
 import { Logo } from "@/components/site/logo";
 import { MetalText } from "@/components/motion/metal-text-lazy";
 
-import { MarketingAuthNavActions } from "./auth-nav-actions";
-
-const primaryLinks = [
-  { href: "/#features", label: "Features" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/support", label: "Support" },
-];
+export { SiteHeader } from "./site-header";
 
 const footerGroups = [
   {
@@ -40,39 +34,6 @@ const footerGroups = [
     ],
   },
 ];
-
-export function SiteHeader() {
-  return (
-    <header className="sticky top-0 z-50 flex justify-center px-4 pt-4">
-      <nav
-        aria-label="Primary navigation"
-        className="glass-pill relative flex w-full max-w-[1120px] items-center justify-between overflow-hidden rounded-full px-2.5 py-2 pl-4"
-      >
-        <span aria-hidden className="glass-sheen" />
-
-        <Link href="/" aria-label="MotionCode home" className="relative z-[1]">
-          <Logo />
-        </Link>
-
-        <div className="relative z-[1] hidden items-center gap-1 md:flex">
-          {primaryLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="rounded-full px-3.5 py-1.5 text-[14px] text-ink-2 transition-colors duration-200 hover:text-ink"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </div>
-
-        <div className="relative z-[1] flex items-center gap-2">
-          <MarketingAuthNavActions variant="site" />
-        </div>
-      </nav>
-    </header>
-  );
-}
 
 export function SiteFooter() {
   return (
@@ -106,7 +67,7 @@ export function SiteFooter() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-[14px] text-ink-2 transition-colors hover:text-ink"
+                      className="inline-block py-2 text-[14px] text-ink-2 transition-colors hover:text-ink"
                     >
                       {link.label}
                     </Link>
@@ -117,13 +78,14 @@ export function SiteFooter() {
           ))}
         </div>
 
-        {/* Oversized interactive brand mark — liquid metal reacts to the cursor */}
-        <div className="mt-16 select-none">
+        {/* Oversized interactive brand mark — liquid metal reacts to the cursor.
+            Sized against this container (cqw), not the viewport. */}
+        <div className="mt-16 select-none [container-type:inline-size]">
           <MetalText
             text="MotionCode"
             interactive
             blue={0.5}
-            className="block cursor-default font-display text-[19vw] font-medium leading-[0.85] tracking-tighter lg:text-[15rem]"
+            className="block cursor-default font-display text-[20.3cqw] font-medium leading-[0.85] tracking-tighter"
           />
         </div>
 
@@ -132,13 +94,22 @@ export function SiteFooter() {
             © {new Date().getFullYear()} MotionCode · Made for motion
           </span>
           <div className="flex items-center gap-5 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-3">
-            <Link href="/privacy" className="transition-colors hover:text-ink">
+            <Link
+              href="/privacy"
+              className="inline-block py-2 transition-colors hover:text-ink"
+            >
               Privacy
             </Link>
-            <Link href="/terms" className="transition-colors hover:text-ink">
+            <Link
+              href="/terms"
+              className="inline-block py-2 transition-colors hover:text-ink"
+            >
               Terms
             </Link>
-            <Link href="/refunds" className="transition-colors hover:text-ink">
+            <Link
+              href="/refunds"
+              className="inline-block py-2 transition-colors hover:text-ink"
+            >
               Refunds
             </Link>
           </div>

@@ -14,6 +14,7 @@ import { AccountMenu } from "./account-menu";
 
 type MarketingAuthNavActionsProps = {
   variant: "landing" | "site";
+  layout?: "inline" | "menu";
 };
 
 type AuthState = "loading" | "signed-out" | "signed-in";
@@ -25,10 +26,11 @@ type AuthState = "loading" | "signed-out" | "signed-in";
 const NAV_LINK =
   "rounded-full px-3.5 py-1.5 text-[14px] text-ink-2 transition-colors duration-200 hover:text-ink";
 const SIGN_OUT_LINK =
-  "rounded-full border-transparent bg-transparent px-3.5 text-[14px] font-normal text-ink-2 transition-colors hover:text-ink";
+  "rounded-full border-transparent bg-transparent px-3.5 text-[14px] font-normal text-ink-2 transition-colors hover:text-ink inline-flex min-h-[44px] items-center justify-center";
 
 export function MarketingAuthNavActions({
   variant,
+  layout = "inline",
 }: MarketingAuthNavActionsProps) {
   const [authState, setAuthState] = useState<AuthState>("loading");
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -74,6 +76,68 @@ export function MarketingAuthNavActions({
     }
   }, []);
 
+  if (layout === "menu") {
+    if (authState === "signed-in") {
+      return (
+        <div className="grid gap-1" aria-label="Account actions">
+          <Link
+            href="/dashboard"
+            className="inline-flex min-h-[44px] items-center rounded-xl px-4 py-2 text-[15px] text-ink-2 transition-colors hover:bg-white/[0.04] hover:text-ink"
+          >
+            Dashboard
+          </Link>
+          <Link
+            href="/account"
+            className="inline-flex min-h-[44px] items-center rounded-xl px-4 py-2 text-[15px] text-ink-2 transition-colors hover:bg-white/[0.04] hover:text-ink"
+          >
+            Account
+          </Link>
+          <ButtonLink
+            href="/app"
+            variant="primary"
+            size="md"
+            className="mt-1 w-full"
+          >
+            Open App
+          </ButtonLink>
+          <SignOutButton
+            className="mt-1 min-h-[44px] w-full rounded-xl border-hairline px-4 text-[15px] text-ink-2 hover:border-accent-border hover:text-ink"
+            label="Sign out"
+          />
+        </div>
+      );
+    }
+    if (variant === "landing") {
+      return (
+        <div className="grid gap-1" aria-label="Account actions">
+          <button
+            type="button"
+            onClick={() => setLoginOpen(true)}
+            className="inline-flex min-h-[44px] items-center rounded-xl px-4 py-2 text-left text-[15px] text-ink-2 transition-colors hover:bg-white/[0.04] hover:text-ink"
+          >
+            Sign in
+          </button>
+          <ButtonLink
+            href="/app"
+            variant="primary"
+            size="md"
+            className="mt-1 w-full"
+          >
+            Try Free
+          </ButtonLink>
+          <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+        </div>
+      );
+    }
+    return (
+      <div className="grid gap-1" aria-label="Account actions">
+        <ButtonLink href="/app" variant="primary" size="md" className="w-full">
+          {authState === "loading" ? "Loading…" : "Try Free"}
+        </ButtonLink>
+      </div>
+    );
+  }
+
   if (authState === "signed-in") {
     return variant === "landing" ? (
       <div className="motioncode-nav-actions" aria-label="Account actions">
@@ -86,20 +150,31 @@ export function MarketingAuthNavActions({
         <AccountMenu email={userEmail} />
       </div>
     ) : (
-      <div className="flex items-center gap-1">
-        <Link href="/dashboard" className={NAV_LINK}>
+      <div className="flex flex-wrap items-center gap-1">
+        <Link
+          href="/dashboard"
+          className={cn(
+            NAV_LINK,
+            "hidden min-h-[44px] items-center sm:inline-flex",
+          )}
+        >
           Dashboard
         </Link>
         <Link
           href="/account"
-          className={cn(NAV_LINK, "hidden sm:inline-block")}
+          className={cn(
+            NAV_LINK,
+            "hidden min-h-[44px] items-center sm:inline-flex",
+          )}
         >
           Account
         </Link>
-        <ButtonLink href="/app" variant="primary" size="sm" className="ml-1">
+        <ButtonLink href="/app" variant="primary" size="md" className="ml-1">
           Open App
         </ButtonLink>
-        <SignOutButton className={SIGN_OUT_LINK} label="Sign out" />
+        <span className="hidden sm:inline">
+          <SignOutButton className={SIGN_OUT_LINK} label="Sign out" />
+        </span>
       </div>
     );
   }
@@ -123,7 +198,7 @@ export function MarketingAuthNavActions({
   }
 
   return (
-    <ButtonLink href="/app" variant="primary" size="sm">
+    <ButtonLink href="/app" variant="primary" size="md">
       {authState === "loading" ? "Loading…" : "Try Free"}
     </ButtonLink>
   );

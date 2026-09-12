@@ -31,13 +31,20 @@ type RazorpayCheckoutOptions = {
   handler: (response: RazorpayCheckoutResponse) => void;
   key: string;
   modal: {
+    confirm_close: boolean;
     ondismiss: () => void;
   };
   name: string;
   prefill: {
     email?: string;
   };
+  retry: {
+    enabled: boolean;
+  };
   subscription_id: string;
+  theme: {
+    color: string;
+  };
 };
 
 type RazorpayInstance = {
@@ -60,10 +67,15 @@ declare global {
 
 export function CheckoutButton({ planTier }: CheckoutButtonProps) {
   const [error, setError] = useState<string | null>(null);
+  const [dismissed, setDismissed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [pendingVerification, setPendingVerification] =
+    useState<RazorpayCheckoutResponse | null>(null);
 
   async function startRazorpayCheckout() {
     setError(null);
+    setDismissed(false);
+    setPendingVerification(null);
     setLoading(true);
 
     try {
@@ -89,17 +101,26 @@ export function CheckoutButton({ planTier }: CheckoutButtonProps) {
       const razorpay = new Razorpay({
         description: json.data.description,
         handler: async (checkoutResponse) => {
+          setPendingVerification(checkoutResponse);
           await verifyRazorpayCheckout(checkoutResponse);
         },
         key: json.data.keyId,
         modal: {
+          confirm_close: true,
           ondismiss: () => {
+            setDismissed(true);
             setLoading(false);
           },
         },
         name: json.data.name,
         prefill: json.data.prefill,
+        retry: {
+          enabled: true,
+        },
         subscription_id: json.data.subscriptionId,
+        theme: {
+          color: "#0099ff",
+        },
       });
 
       razorpay.on("payment.failed", (failure) => {
@@ -107,8 +128,19 @@ export function CheckoutButton({ planTier }: CheckoutButtonProps) {
         setLoading(false);
       });
       razorpay.open();
-    } catch {
-      setError("Razorpay checkout could not be started.");
+    } catch (err) {
+      console.error("[razorpay] checkout start failed", { planTier, err });
+      if (typeof navigator !== "undefined" && navigator.onLine === false) {
+        setError("You appear to be offline. Check your connection and try again.");
+      } else if (err instanceof SyntaxError) {
+        setError(
+          "Checkout service returned unexpected response. Please try again.",
+        );
+      } else {
+        setError(
+          "Razorpay checkout could not be started. Disable any ad blocker for checkout.razorpay.com and try again.",
+        );
+      }
       setLoading(false);
     }
   }
@@ -132,9 +164,13 @@ export function CheckoutButton({ planTier }: CheckoutButtonProps) {
         return;
       }
 
+      setPendingVerification(null);
       window.location.assign("/account?checkout=success");
-    } catch {
-      setError("Razorpay checkout could not be verified.");
+    } catch (err) {
+      console.error("[razorpay] verify failed", { err, checkoutResponse });
+      setError(
+        `Razorpay payment ${checkoutResponse.razorpay_payment_id} could not be verified. Do not pay again - contact support with this ID.`,
+      );
     } finally {
       setLoading(false);
     }
@@ -150,7 +186,40 @@ export function CheckoutButton({ planTier }: CheckoutButtonProps) {
         onClick={startRazorpayCheckout}
       />
       {error ? (
-        <p className="text-xs leading-5 text-[var(--danger)]">{error}</p>
+        <p className="text-sm leading-5 text-[var(--danger)]">{error}</p>
+      ) : null}
+      {pendingVerification && error ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <a
+            href="/support"
+            className="text-sm text-accent underline underline-offset-4 transition hover:brightness-125"
+          >
+            Contact support
+          </a>
+          <button
+            className="text-sm font-medium text-accent underline underline-offset-4 transition hover:brightness-125 disabled:opacity-60"
+            disabled={loading}
+            onClick={() => {
+              setLoading(true);
+              void verifyRazorpayCheckout(pendingVerification);
+            }}
+            type="button"
+          >
+            Retry verification
+          </button>
+        </div>
+      ) : null}
+      {dismissed && !error ? (
+        <p className="text-sm leading-5 text-ink-2">
+          Checkout closed before payment completed.{" "}
+          <a
+            href="/support"
+            className="text-accent underline underline-offset-4 transition hover:brightness-125"
+          >
+            Contact support
+          </a>{" "}
+          if you need help completing payment.
+        </p>
       ) : null}
     </div>
   );
@@ -196,10 +265,21 @@ function loadRazorpayCheckout() {
       'script[src="https://checkout.razorpay.com/v1/checkout.js"]',
     );
     if (existingScript) {
+      if (existingScript.dataset.loadFailed === "1") {
+        reject(new Error("razorpay-script-previously-failed"));
+        return;
+      }
       existingScript.addEventListener("load", () => resolve(), { once: true });
-      existingScript.addEventListener("error", () => reject(new Error()), {
-        once: true,
-      });
+      existingScript.addEventListener(
+        "error",
+        () => {
+          existingScript.dataset.loadFailed = "1";
+          reject(new Error("razorpay-script-load-failed"));
+        },
+        {
+          once: true,
+        },
+      );
       return;
     }
 
@@ -207,7 +287,10 @@ function loadRazorpayCheckout() {
     script.async = true;
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error());
+    script.onerror = () => {
+      script.dataset.loadFailed = "1";
+      reject(new Error("razorpay-script-load-failed"));
+    };
     document.body.appendChild(script);
   });
 }

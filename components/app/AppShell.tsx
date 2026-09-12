@@ -658,7 +658,7 @@ export function AppShell({
           validationError={validationError}
         />
 
-        <div className={styles.rightPanel} id="right-panel">
+        <div className={`${styles.rightPanel} scroll-mt-16`} id="right-panel">
           <div
             className={`${styles.topProgress} ${
               stage === "analyzing" ? styles.topProgressVisible : ""
