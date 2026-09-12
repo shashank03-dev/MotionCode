@@ -15,6 +15,7 @@ import { AccountMenu } from "./account-menu";
 type MarketingAuthNavActionsProps = {
   variant: "landing" | "site";
   layout?: "inline" | "menu";
+  onNavigate?: () => void;
 };
 
 type AuthState = "loading" | "signed-out" | "signed-in";
@@ -24,13 +25,14 @@ type AuthState = "loading" | "signed-out" | "signed-in";
 // ghost pills that match those links, with the accent ButtonLink as the one
 // CTA — instead of the square uppercase chips that clashed with the header.
 const NAV_LINK =
-  "rounded-full px-3.5 py-1.5 text-[14px] text-ink-2 transition-colors duration-200 hover:text-ink";
+  "rounded-full px-3.5 text-[14px] text-ink-2 transition-colors duration-200 hover:text-ink";
 const SIGN_OUT_LINK =
-  "rounded-full border-transparent bg-transparent px-3.5 text-[14px] font-normal text-ink-2 transition-colors hover:text-ink inline-flex min-h-[44px] items-center justify-center";
+  "rounded-full border-transparent bg-transparent px-3.5 text-[14px] font-normal text-ink-2 transition-colors hover:text-ink";
 
 export function MarketingAuthNavActions({
   variant,
   layout = "inline",
+  onNavigate,
 }: MarketingAuthNavActionsProps) {
   const [authState, setAuthState] = useState<AuthState>("loading");
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -79,15 +81,17 @@ export function MarketingAuthNavActions({
   if (layout === "menu") {
     if (authState === "signed-in") {
       return (
-        <div className="grid gap-1" aria-label="Account actions">
+        <div className="grid gap-1" role="group" aria-label="Account actions">
           <Link
             href="/dashboard"
+            onClick={onNavigate}
             className="inline-flex min-h-[44px] items-center rounded-xl px-4 py-2 text-[15px] text-ink-2 transition-colors hover:bg-white/[0.04] hover:text-ink"
           >
             Dashboard
           </Link>
           <Link
             href="/account"
+            onClick={onNavigate}
             className="inline-flex min-h-[44px] items-center rounded-xl px-4 py-2 text-[15px] text-ink-2 transition-colors hover:bg-white/[0.04] hover:text-ink"
           >
             Account
@@ -95,21 +99,24 @@ export function MarketingAuthNavActions({
           <ButtonLink
             href="/app"
             variant="primary"
-            size="md"
+            size="sm"
             className="mt-1 w-full"
+            onClick={onNavigate}
           >
             Open App
           </ButtonLink>
-          <SignOutButton
-            className="mt-1 min-h-[44px] w-full rounded-xl border-hairline px-4 text-[15px] text-ink-2 hover:border-accent-border hover:text-ink"
-            label="Sign out"
-          />
+          <div onClick={(event) => event.stopPropagation()}>
+            <SignOutButton
+              className="mt-1 min-h-[44px] w-full rounded-xl border-hairline px-4 text-[15px] text-ink-2 hover:border-accent-border hover:text-ink"
+              label="Sign out"
+            />
+          </div>
         </div>
       );
     }
     if (variant === "landing") {
       return (
-        <div className="grid gap-1" aria-label="Account actions">
+        <div className="grid gap-1" role="group" aria-label="Account actions">
           <button
             type="button"
             onClick={() => setLoginOpen(true)}
@@ -120,8 +127,9 @@ export function MarketingAuthNavActions({
           <ButtonLink
             href="/app"
             variant="primary"
-            size="md"
+            size="sm"
             className="mt-1 w-full"
+            onClick={onNavigate}
           >
             Try Free
           </ButtonLink>
@@ -130,8 +138,14 @@ export function MarketingAuthNavActions({
       );
     }
     return (
-      <div className="grid gap-1" aria-label="Account actions">
-        <ButtonLink href="/app" variant="primary" size="md" className="w-full">
+      <div className="grid gap-1" role="group" aria-label="Account actions">
+        <ButtonLink
+          href="/app"
+          variant="primary"
+          size="sm"
+          className="w-full"
+          onClick={onNavigate}
+        >
           {authState === "loading" ? "Loading…" : "Try Free"}
         </ButtonLink>
       </div>
@@ -150,31 +164,33 @@ export function MarketingAuthNavActions({
         <AccountMenu email={userEmail} />
       </div>
     ) : (
-      <div className="flex flex-wrap items-center gap-1">
+      <div className="flex items-center gap-1 whitespace-nowrap">
         <Link
           href="/dashboard"
+          onClick={onNavigate}
           className={cn(
             NAV_LINK,
-            "hidden min-h-[44px] items-center sm:inline-flex",
+            "hidden min-h-[44px] items-center md:inline-flex",
           )}
         >
           Dashboard
         </Link>
         <Link
           href="/account"
+          onClick={onNavigate}
           className={cn(
             NAV_LINK,
-            "hidden min-h-[44px] items-center sm:inline-flex",
+            "hidden min-h-[44px] items-center md:inline-flex",
           )}
         >
           Account
         </Link>
-        <ButtonLink href="/app" variant="primary" size="md" className="ml-1">
+        <ButtonLink href="/app" variant="primary" size="sm" className="ml-1">
           Open App
         </ButtonLink>
-        <span className="hidden sm:inline">
+        <div className="hidden md:inline">
           <SignOutButton className={SIGN_OUT_LINK} label="Sign out" />
-        </span>
+        </div>
       </div>
     );
   }
@@ -198,7 +214,7 @@ export function MarketingAuthNavActions({
   }
 
   return (
-    <ButtonLink href="/app" variant="primary" size="md">
+    <ButtonLink href="/app" variant="primary" size="sm">
       {authState === "loading" ? "Loading…" : "Try Free"}
     </ButtonLink>
   );

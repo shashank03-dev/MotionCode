@@ -51,7 +51,8 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
             MotionCode could not load this page.
           </h1>
           <p style={{ lineHeight: 1.6, opacity: 0.7 }}>
-            Try loading the route again.
+            Try loading the route again. If it keeps failing, use the support
+            page checklist and include the route where this happened.
           </p>
           {error.digest ? (
             <p
@@ -82,10 +83,24 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
           >
             Try again
           </button>
-          <div style={{ marginTop: "1rem" }}>
+          <div
+            style={{
+              alignItems: "center",
+              display: "flex",
+              gap: "1.5rem",
+              justifyContent: "center",
+              marginTop: "1rem",
+            }}
+          >
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- global-error must stay router-independent */}
             <a href="/" style={{ color: "#0099ff", fontSize: "0.875rem" }}>
               Go to homepage
+            </a>
+            <a
+              href="/support"
+              style={{ color: "#0099ff", fontSize: "0.875rem" }}
+            >
+              Support
             </a>
           </div>
         </main>

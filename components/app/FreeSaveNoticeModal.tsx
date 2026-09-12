@@ -19,25 +19,60 @@ export function FreeSaveNoticeModal({
   onConfirm,
 }: FreeSaveNoticeModalProps) {
   const confirmRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const [dontRemind, setDontRemind] = useState(false);
 
   useEffect(() => {
     if (!open) return;
 
+    const previouslyFocused = document.activeElement as HTMLElement | null;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onCancel();
+      if (event.key === "Escape") {
+        onCancel();
+        return;
+      }
+      if (event.key === "Tab") {
+        const container = dialogRef.current;
+        if (!container) return;
+        const focusables = Array.from(
+          container.querySelectorAll<HTMLElement>(
+            'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])',
+          ),
+        ).filter((el) => el.getClientRects().length > 0);
+        if (focusables.length === 0) {
+          event.preventDefault();
+          container.focus();
+          return;
+        }
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
     };
     document.addEventListener("keydown", onKeyDown);
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
-    const focusTimer = window.setTimeout(() => confirmRef.current?.focus(), 60);
+    const focusTimer = window.setTimeout(() => {
+      const container = dialogRef.current;
+      const first = container?.querySelector<HTMLElement>(
+        'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      ((confirmRef.current ?? first ?? container) as HTMLElement | null)?.focus();
+    }, 60);
 
     return () => {
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
       window.clearTimeout(focusTimer);
+      previouslyFocused?.focus?.();
     };
   }, [open, onCancel]);
 
@@ -52,11 +87,13 @@ export function FreeSaveNoticeModal({
         className="absolute inset-0 cursor-default bg-black/72 backdrop-blur-sm"
       />
       <div
+        ref={dialogRef}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="free-save-title"
         aria-describedby="free-save-body"
-        className="relative z-10 my-auto max-h-[90dvh] w-full max-w-[420px] overflow-y-auto rounded-2xl border border-hairline bg-[#0a0b0d] p-6 shadow-[0_30px_80px_rgba(0,0,0,0.6)]"
+        tabIndex={-1}
+        className="relative z-10 my-auto max-h-[90dvh] w-full max-w-[420px] overflow-y-auto rounded-2xl border border-hairline bg-[#0a0b0d] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-[0_30px_80px_rgba(0,0,0,0.6)]"
       >
         <div className="flex items-start gap-3.5">
           <span

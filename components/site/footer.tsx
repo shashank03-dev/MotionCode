@@ -48,12 +48,12 @@ export function Footer() {
           {COLUMNS.map((col) => (
             <div key={col.title}>
               <div className="eyebrow mb-4">{col.title}</div>
-              <ul className="space-y-3">
+              <ul className="space-y-3 max-sm:space-y-1">
                 {col.links.map((link) => (
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="inline-block py-2 text-[14px] text-ink-2 transition-colors hover:text-ink"
+                      className="text-[14px] text-ink-2 transition-colors hover:text-ink max-sm:inline-flex max-sm:min-h-[44px] max-sm:items-center"
                     >
                       {link.label}
                     </Link>
@@ -82,22 +82,22 @@ export function Footer() {
           <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink-3">
             © {new Date().getFullYear()} MotionCode · Made for motion
           </span>
-          <div className="flex items-center gap-5 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-3">
+          <div className="flex flex-wrap items-center gap-5 gap-y-1 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-3">
             <Link
               href="/pricing"
-              className="inline-block py-2 transition-colors hover:text-ink"
+              className="transition-colors hover:text-ink max-sm:inline-flex max-sm:min-h-[44px] max-sm:items-center"
             >
               Pricing
             </Link>
             <Link
               href="/support"
-              className="inline-block py-2 transition-colors hover:text-ink"
+              className="transition-colors hover:text-ink max-sm:inline-flex max-sm:min-h-[44px] max-sm:items-center"
             >
               Support
             </Link>
             <Link
               href="/login"
-              className="inline-block py-2 transition-colors hover:text-ink"
+              className="transition-colors hover:text-ink max-sm:inline-flex max-sm:min-h-[44px] max-sm:items-center"
             >
               Sign in
             </Link>

@@ -214,6 +214,20 @@ export function MotionParticleField({
   className,
 }: MotionParticleFieldProps) {
   const hostRef = React.useRef<HTMLDivElement>(null);
+  // Rebuild the GL surface when the breakpoint flips so particle count and
+  // DPR track the current viewport instead of the first mount width.
+  const [isMobile, setIsMobile] = React.useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 767px)").matches,
+  );
+  React.useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const update = () => setIsMobile(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
   // Live progress read by the render loop without re-running the GL effect.
   const progressRef = React.useRef(progress);
   React.useEffect(() => {
@@ -232,12 +246,11 @@ export function MotionParticleField({
 
     // Scaled-down (not disabled) on mobile / Save-Data: fewer particles and
     // DPR capped to 1.0. Keeps the morph readable on small GPUs.
-    const isMobileWidth = window.innerWidth < 768;
     const saveData =
       (navigator as Navigator & { connection?: { saveData?: boolean } })
         .connection?.saveData === true;
-    const count = isMobileWidth || saveData ? 1500 : COUNT;
-    const dprCap = isMobileWidth ? 1.0 : 1.75;
+    const count = isMobile || saveData ? 1500 : COUNT;
+    const dprCap = isMobile ? 1.0 : 1.75;
     const dpr = Math.min(window.devicePixelRatio || 1, dprCap);
 
     let renderer: Renderer;
@@ -461,7 +474,7 @@ export function MotionParticleField({
       const ext = gl.getExtension("WEBGL_lose_context");
       ext?.loseContext();
     };
-  }, []);
+  }, [isMobile]);
 
   return (
     <div className={className} aria-hidden="true">

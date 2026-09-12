@@ -14,7 +14,7 @@ const sections = [
         For support, billing, and account questions, email{" "}
         <a
           href="mailto:motioncode.auth@gmail.com"
-          className="inline-flex min-h-[44px] items-center text-accent underline underline-offset-4"
+          className="text-accent underline underline-offset-4"
         >
           motioncode.auth@gmail.com
         </a>

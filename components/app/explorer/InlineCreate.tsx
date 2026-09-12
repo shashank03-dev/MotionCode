@@ -78,7 +78,7 @@ export function InlineCreate({
     <div style={{ paddingLeft: indent }} className="px-2 py-1">
       <div
         className={cn(
-          "flex h-11 items-center gap-2 rounded-[3px] border bg-[#0a0b0d] pl-2 pr-1.5 transition-colors",
+          "flex min-h-[44px] items-center gap-2 rounded-[3px] border bg-[#0a0b0d] pl-2 pr-1.5 transition-colors",
           "focus-within:shadow-[0_0_0_3px_var(--accent-dim)]",
           error
             ? "border-[var(--danger-border)] focus-within:border-[var(--danger)]"
@@ -121,7 +121,7 @@ export function InlineCreate({
             onClick={() => void submit()}
             aria-label={`Create ${placeholder}`}
             title="Create"
-            className="flex size-11 shrink-0 items-center justify-center rounded-[3px] text-ink-2 transition hover:bg-white/[0.04] hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]"
+            className="flex size-9 shrink-0 items-center justify-center rounded-[3px] text-ink-2 transition hover:bg-white/[0.04] hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]"
           >
             <CornerDownLeft className="size-4" aria-hidden="true" />
           </button>

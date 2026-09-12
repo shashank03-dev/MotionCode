@@ -151,7 +151,7 @@ export function AdminUsersTable({ initialUsers }: AdminUsersTableProps) {
                   className="border-t border-hairline align-top"
                   key={user.id}
                 >
-                  <td className="sticky left-0 bg-elevated px-4 py-3">
+                  <td className="sticky left-0 z-[1] border-r border-hairline bg-elevated px-4 py-3">
                     <div className="flex items-start gap-2">
                       {user.isInternalAdmin ? (
                         <ShieldCheck

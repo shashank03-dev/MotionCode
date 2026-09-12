@@ -138,7 +138,7 @@ export function CheckoutButton({ planTier }: CheckoutButtonProps) {
         );
       } else {
         setError(
-          "Razorpay checkout could not be started. Disable any ad blocker for checkout.razorpay.com and try again.",
+          "Checkout could not start. Disable ad blocker for checkout.razorpay.com, then try again.",
         );
       }
       setLoading(false);
@@ -169,7 +169,7 @@ export function CheckoutButton({ planTier }: CheckoutButtonProps) {
     } catch (err) {
       console.error("[razorpay] verify failed", { err, checkoutResponse });
       setError(
-        `Razorpay payment ${checkoutResponse.razorpay_payment_id} could not be verified. Do not pay again - contact support with this ID.`,
+        `Payment ${checkoutResponse.razorpay_payment_id} needs review. Do not pay again - contact support with this ID.`,
       );
     } finally {
       setLoading(false);
@@ -189,15 +189,9 @@ export function CheckoutButton({ planTier }: CheckoutButtonProps) {
         <p className="text-sm leading-5 text-[var(--danger)]">{error}</p>
       ) : null}
       {pendingVerification && error ? (
-        <div className="flex flex-wrap items-center gap-3">
-          <a
-            href="/support"
-            className="text-sm text-accent underline underline-offset-4 transition hover:brightness-125"
-          >
-            Contact support
-          </a>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <button
-            className="text-sm font-medium text-accent underline underline-offset-4 transition hover:brightness-125 disabled:opacity-60"
+            className="inline-flex min-h-[44px] items-center py-2 text-sm font-medium text-accent underline underline-offset-4 transition hover:brightness-125 disabled:opacity-60"
             disabled={loading}
             onClick={() => {
               setLoading(true);
@@ -207,6 +201,12 @@ export function CheckoutButton({ planTier }: CheckoutButtonProps) {
           >
             Retry verification
           </button>
+          <a
+            href="/support"
+            className="inline-flex min-h-[44px] items-center py-2 text-sm text-accent underline underline-offset-4 transition hover:brightness-125"
+          >
+            Contact support
+          </a>
         </div>
       ) : null}
       {dismissed && !error ? (
@@ -214,7 +214,7 @@ export function CheckoutButton({ planTier }: CheckoutButtonProps) {
           Checkout closed before payment completed.{" "}
           <a
             href="/support"
-            className="text-accent underline underline-offset-4 transition hover:brightness-125"
+            className="inline-flex min-h-[44px] items-center py-2 text-accent underline underline-offset-4 transition hover:brightness-125"
           >
             Contact support
           </a>{" "}

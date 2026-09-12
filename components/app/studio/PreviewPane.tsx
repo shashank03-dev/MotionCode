@@ -146,7 +146,7 @@ function PreviewTabButton({
     >
       {label}
       {badge ? (
-        <span className="ml-1.5 inline-flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[#f58f7c]/20 px-1 text-[11px] text-[#f58f7c]">
+        <span className="ml-1.5 inline-flex h-4 min-w-3.5 items-center justify-center rounded-full bg-[#f58f7c]/20 px-1 text-[10px] text-[#f58f7c]">
           {badge}
         </span>
       ) : null}

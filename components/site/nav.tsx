@@ -14,16 +14,36 @@ export function Nav() {
   const [scrolled, setScrolled] = React.useState(false);
   const [open, setOpen] = React.useState(false);
   const menuId = React.useId();
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
+  const menuRef = React.useRef<HTMLDivElement>(null);
   useMotionValueEvent(scrollY, "change", (y) => setScrolled(y > 12));
 
   React.useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open ]);
+
+  React.useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const mq = window.matchMedia("(min-width: 768px)");
+    const onChange = (event: MediaQueryListEvent) => {
+      if (event.matches) setOpen(false);
+    };
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  React.useEffect(() => {
+    if (!open) return;
+    menuRef.current?.querySelector<HTMLElement>("a, button")?.focus();
+  }, [open]);
 
   return (
     <motion.header
@@ -44,9 +64,9 @@ export function Nav() {
         <a
           href="#top"
           aria-label="MotionCode home"
-          className="relative z-[1] flex min-w-0 shrink items-center"
+          className="relative z-[1] flex shrink-0 items-center"
         >
-          <Logo className="min-w-0 [&>span:last-child]:min-w-0 [&>span:last-child]:truncate" />
+          <Logo />
         </a>
 
         <div className="relative z-[1] hidden items-center gap-1 md:flex">
@@ -54,7 +74,7 @@ export function Nav() {
             <a
               key={link.label}
               href={link.href}
-              className="inline-flex min-h-[44px] items-center rounded-full px-3.5 py-1.5 text-[14px] text-ink-2 transition-colors duration-200 hover:text-ink"
+              className="inline-flex min-h-[44px] items-center rounded-full px-3.5 text-[14px] text-ink-2 transition-colors duration-200 hover:text-ink"
             >
               {link.label}
             </a>
@@ -69,15 +89,16 @@ export function Nav() {
             Sign in
           </a>
           <Magnetic strength={0.25}>
-            <ButtonLink href="/app" variant="primary" size="md">
+            <ButtonLink href="/app" variant="primary" size="sm">
               Start analyzing
             </ButtonLink>
           </Magnetic>
           <button
             type="button"
+            ref={triggerRef}
             onClick={() => setOpen((value) => !value)}
             aria-expanded={open}
-            aria-controls={menuId}
+            aria-controls={open ? menuId : undefined}
             aria-label={open ? "Close menu" : "Open menu"}
             className="inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-hairline text-ink-2 transition-colors hover:border-accent-border hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent md:hidden"
           >
@@ -90,10 +111,18 @@ export function Nav() {
         </div>
 
         {open ? (
-          <div
-            id={menuId}
-            className="glass-card absolute inset-x-0 top-[calc(100%+8px)] z-50 rounded-2xl p-2 md:hidden"
-          >
+          <>
+            <button
+              type="button"
+              aria-label="Close menu"
+              onClick={() => setOpen(false)}
+              className="fixed inset-0 z-40 bg-black/40 md:hidden"
+            />
+            <div
+              ref={menuRef}
+              id={menuId}
+              className="glass-card absolute inset-x-0 top-[calc(100%+8px)] z-50 max-h-[calc(100dvh-96px)] overflow-y-auto rounded-2xl p-2 md:hidden"
+            >
             <div className="grid gap-1">
               {NAV_LINKS.map((link) => (
                 <a
@@ -117,14 +146,15 @@ export function Nav() {
               <ButtonLink
                 href="/app"
                 variant="primary"
-                size="md"
+                size="sm"
                 className="w-full"
                 onClick={() => setOpen(false)}
               >
                 Start analyzing
               </ButtonLink>
             </div>
-          </div>
+            </div>
+          </>
         ) : null}
       </nav>
     </motion.header>

@@ -177,13 +177,13 @@ export function StatTile({
  * wells that light their border to accent on focus.
  * --------------------------------------------------------------------------- */
 const controlBase =
-  "w-full rounded-lg border border-hairline bg-[#0d0e11] px-3.5 text-base text-ink placeholder:text-ink-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] outline-none transition-colors duration-200 focus:border-accent-border focus:ring-2 focus:ring-[var(--accent-dim)] disabled:opacity-50";
+  "w-full rounded-lg border border-hairline bg-[#0d0e11] px-3.5 text-[14px] max-sm:text-base text-ink placeholder:text-ink-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] outline-none transition-colors duration-200 focus:border-accent-border focus:ring-2 focus:ring-[var(--accent-dim)] disabled:opacity-50";
 
 export const Input = React.forwardRef<
   HTMLInputElement,
   React.InputHTMLAttributes<HTMLInputElement>
 >(({ className, ...props }, ref) => (
-  <input ref={ref} className={cn(controlBase, "h-11 min-h-[44px]", className)} {...props} />
+  <input ref={ref} className={cn(controlBase, "h-10 max-sm:h-11 max-sm:min-h-[44px]", className)} {...props} />
 ));
 Input.displayName = "Input";
 

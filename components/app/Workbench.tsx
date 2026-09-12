@@ -142,31 +142,52 @@ function WorkbenchSectionTab({
   label,
   target,
   testid,
+  pane,
+  active,
+  onActivate,
 }: {
   label: string;
   target: string;
   testid?: string;
+  pane?: "code" | "preview";
+  active?: boolean;
+  onActivate?: () => void;
 }) {
   const scrollToSection = () => {
     if (typeof document === "undefined") return;
-    // Prefer the live WebGL canvas hook when present so Canvas lands on the
-    // particle field; otherwise fall back to the panel id. Hooks stay intact.
-    const byTestid = testid
-      ? document.querySelector(`[data-testid="${testid}"]`)
-      : null;
-    const el = byTestid ?? document.getElementById(target);
-    if (!el) {
-      console.warn("[workbench] section target missing", { target, testid });
-      return;
+    onActivate?.();
+    // Tell the studio which narrow pane to show before scrolling to it, so
+    // Canvas/Code tabs never land on a hidden (or unmounted) pane.
+    if (pane && typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("workbench:studio-pane", { detail: pane }),
+      );
     }
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    const doScroll = () => {
+      // Prefer the live WebGL canvas hook when present so Canvas lands on the
+      // particle field; otherwise fall back to the panel id. Hooks stay intact.
+      const byTestid = testid
+        ? document.querySelector(`[data-testid="${testid}"]`)
+        : null;
+      const el = byTestid ?? document.getElementById(target);
+      if (!el) {
+        console.warn("[workbench] section target missing", { target, testid });
+        return;
+      }
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+    requestAnimationFrame(() => doScroll());
   };
   return (
     <button
       type="button"
       onClick={scrollToSection}
       aria-label={`Go to ${label} section`}
-      className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-lg px-3 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-2 transition hover:bg-white/[0.03] hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]"
+      aria-pressed={active}
+      className={cn(
+        "inline-flex min-h-[44px] flex-1 items-center justify-center rounded-lg px-3 font-mono text-[11px] uppercase tracking-[0.16em] transition hover:bg-white/[0.03] hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]",
+        active ? "bg-[var(--accent-dim)] text-ink" : "text-ink-2",
+      )}
     >
       {label}
     </button>
@@ -256,6 +277,7 @@ export function Workbench({
     collapseStore.getServerSnapshot,
   );
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("Upload");
 
   const openSidebar = () => {
     if (isDesktopViewport()) {
@@ -323,13 +345,25 @@ export function Workbench({
             <WorkbenchSectionTab
               label="Upload"
               target="left-panel"
+              active={activeSection === "Upload"}
+              onActivate={() => setActiveSection("Upload")}
             />
             <WorkbenchSectionTab
               label="Canvas"
               target="studio-preview"
               testid="process-canvas"
+              pane="preview"
+              active={activeSection === "Canvas"}
+              onActivate={() => setActiveSection("Canvas")}
             />
-            <WorkbenchSectionTab label="Code" target="studio-code" />
+            <WorkbenchSectionTab
+              label="Code"
+              target="studio-code"
+              testid="process-canvas"
+              pane="code"
+              active={activeSection === "Code"}
+              onActivate={() => setActiveSection("Code")}
+            />
           </nav>
         ) : (
           <nav
@@ -549,7 +583,7 @@ export function Workbench({
             "relative z-10 min-w-0",
             isBleed
               ? "lg:h-screen lg:overflow-hidden"
-              : "h-dvh overflow-y-auto px-4 py-6 sm:px-6 lg:px-8",
+              : "h-[calc(100dvh-45px)] overflow-y-auto px-4 py-6 sm:px-6 lg:h-dvh lg:px-8",
           )}
         >
           {children}

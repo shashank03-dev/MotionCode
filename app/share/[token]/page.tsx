@@ -50,12 +50,12 @@ export default async function SharedProjectPage({ params }: SharePageProps) {
           <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <StatTile
               label="Intent"
-              value={<span className="break-words text-xl line-clamp-4">{shared.analysis.spec.intent}</span>}
+              value={<span className="break-words text-xl">{shared.analysis.spec.intent}</span>}
               accent
             />
             <StatTile
               label="Element"
-              value={<span className="break-words text-xl line-clamp-4">{shared.analysis.spec.element}</span>}
+              value={<span className="break-words text-xl">{shared.analysis.spec.element}</span>}
             />
             <StatTile
               label="Duration"

@@ -3,8 +3,6 @@ import Link from "next/link";
 import { Logo } from "@/components/site/logo";
 import { MetalText } from "@/components/motion/metal-text-lazy";
 
-export { SiteHeader } from "./site-header";
-
 const footerGroups = [
   {
     title: "Product",
@@ -62,12 +60,12 @@ export function SiteFooter() {
           {footerGroups.map((group) => (
             <div key={group.title}>
               <div className="eyebrow mb-4">{group.title}</div>
-              <ul className="space-y-3">
+              <ul className="space-y-3 max-sm:space-y-1">
                 {group.links.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="inline-block py-2 text-[14px] text-ink-2 transition-colors hover:text-ink"
+                      className="text-[14px] text-ink-2 transition-colors hover:text-ink max-sm:inline-flex max-sm:min-h-[44px] max-sm:items-center"
                     >
                       {link.label}
                     </Link>
@@ -93,22 +91,22 @@ export function SiteFooter() {
           <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink-3">
             © {new Date().getFullYear()} MotionCode · Made for motion
           </span>
-          <div className="flex items-center gap-5 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-3">
+          <div className="flex flex-wrap items-center gap-5 gap-y-1 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-3">
             <Link
               href="/privacy"
-              className="inline-block py-2 transition-colors hover:text-ink"
+              className="transition-colors hover:text-ink max-sm:inline-flex max-sm:min-h-[44px] max-sm:items-center"
             >
               Privacy
             </Link>
             <Link
               href="/terms"
-              className="inline-block py-2 transition-colors hover:text-ink"
+              className="transition-colors hover:text-ink max-sm:inline-flex max-sm:min-h-[44px] max-sm:items-center"
             >
               Terms
             </Link>
             <Link
               href="/refunds"
-              className="inline-block py-2 transition-colors hover:text-ink"
+              className="transition-colors hover:text-ink max-sm:inline-flex max-sm:min-h-[44px] max-sm:items-center"
             >
               Refunds
             </Link>

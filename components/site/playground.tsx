@@ -67,7 +67,7 @@ export function Playground() {
             if (e.buttons > 0) setFromEvent(e.clientX);
           }}
           onMouseMove={(e) => setFromEvent(e.clientX)}
-          className="relative mt-5 h-11 min-h-[44px] cursor-ew-resize touch-none"
+          className="relative mt-5 h-10 cursor-ew-resize touch-none max-sm:h-11 max-sm:min-h-[44px]"
         >
           <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-hairline" />
           <motion.div

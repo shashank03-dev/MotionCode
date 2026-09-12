@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
 
 import { Logo } from "@/components/site/logo";
@@ -17,14 +17,34 @@ const primaryLinks = [
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const menuId = useId();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const mq = window.matchMedia("(min-width: 768px)");
+    const onChange = (event: MediaQueryListEvent) => {
+      if (event.matches) setOpen(false);
+    };
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    menuRef.current?.querySelector<HTMLElement>("a, button")?.focus();
   }, [open]);
 
   return (
@@ -38,9 +58,9 @@ export function SiteHeader() {
         <Link
           href="/"
           aria-label="MotionCode home"
-          className="relative z-[1] flex min-w-0 shrink items-center"
+          className="relative z-[1] flex shrink-0 items-center"
         >
-          <Logo className="min-w-0 [&>span:last-child]:min-w-0 [&>span:last-child]:truncate" />
+          <Logo />
         </Link>
 
         <div className="relative z-[1] hidden items-center gap-1 md:flex">
@@ -48,7 +68,7 @@ export function SiteHeader() {
             <Link
               key={link.href}
               href={link.href}
-              className="inline-flex min-h-[44px] items-center rounded-full px-3.5 py-1.5 text-[14px] text-ink-2 transition-colors duration-200 hover:text-ink"
+              className="inline-flex min-h-[44px] items-center rounded-full px-3.5 text-[14px] text-ink-2 transition-colors duration-200 hover:text-ink"
             >
               {link.label}
             </Link>
@@ -59,9 +79,10 @@ export function SiteHeader() {
           <MarketingAuthNavActions variant="site" />
           <button
             type="button"
+            ref={triggerRef}
             onClick={() => setOpen((value) => !value)}
             aria-expanded={open}
-            aria-controls={menuId}
+            aria-controls={open ? menuId : undefined}
             aria-label={open ? "Close menu" : "Open menu"}
             className="inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-hairline text-ink-2 transition-colors hover:border-accent-border hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent md:hidden"
           >
@@ -74,10 +95,18 @@ export function SiteHeader() {
         </div>
 
         {open ? (
-          <div
-            id={menuId}
-            className="glass-card absolute inset-x-0 top-[calc(100%+8px)] z-50 rounded-2xl p-2 md:hidden"
-          >
+          <>
+            <button
+              type="button"
+              aria-label="Close menu"
+              onClick={() => setOpen(false)}
+              className="fixed inset-0 z-40 bg-black/40 md:hidden"
+            />
+            <div
+              ref={menuRef}
+              id={menuId}
+              className="glass-card absolute inset-x-0 top-[calc(100%+8px)] z-50 max-h-[calc(100dvh-96px)] overflow-y-auto rounded-2xl p-2 md:hidden"
+            >
             <div className="grid gap-1">
               {primaryLinks.map((link) => (
                 <Link
@@ -90,13 +119,15 @@ export function SiteHeader() {
                 </Link>
               ))}
             </div>
-            <div
-              className="mt-2 border-t border-hairline pt-2"
-              onClick={() => setOpen(false)}
-            >
-              <MarketingAuthNavActions variant="site" layout="menu" />
+            <div className="mt-2 border-t border-hairline pt-2">
+              <MarketingAuthNavActions
+                variant="site"
+                layout="menu"
+                onNavigate={() => setOpen(false)}
+              />
             </div>
-          </div>
+            </div>
+          </>
         ) : null}
       </nav>
     </header>

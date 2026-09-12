@@ -38,7 +38,7 @@ export default async function SupportPage() {
   const tickets = await listOwnSupportTickets(supabase, user.id);
 
   return (
-    <div className="min-h-screen bg-canvas text-ink">
+    <div className="min-h-dvh bg-canvas text-ink">
       <SiteHeader />
       <SupportHero />
       <div className="container-page py-14">

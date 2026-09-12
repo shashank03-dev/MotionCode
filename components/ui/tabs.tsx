@@ -36,7 +36,7 @@ export function Tabs({
             aria-selected={active}
             onClick={() => onValueChange(tab.id)}
             className={cn(
-              "relative min-h-[44px] rounded-full px-3.5 py-2.5 font-mono text-[12px] uppercase tracking-[0.12em] transition-colors duration-200",
+              "relative rounded-full px-3.5 py-1.5 font-mono text-[12px] uppercase tracking-[0.12em] transition-colors duration-200 max-sm:min-h-[44px] max-sm:py-2.5",
               active ? "text-black" : "text-ink-3 hover:text-ink-2",
             )}
           >

@@ -179,7 +179,7 @@ export function ProcessCanvas({
   return (
     <section
       aria-live={stage === "error" ? "assertive" : "polite"}
-      className={styles.canvas}
+      className={`${styles.canvas} scroll-mt-16`}
       data-stage={stage}
       data-testid="process-canvas"
     >

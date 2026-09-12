@@ -46,7 +46,7 @@ export function Hero() {
               </Badge>
             </motion.div>
 
-            <h1 className="text-[clamp(2.25rem,8vw,4rem)] leading-[0.9] tracking-tightest sm:text-7xl lg:text-[5.4rem]">
+            <h1 className="text-[clamp(3rem,15vw,4rem)] leading-[0.9] tracking-tightest sm:text-7xl lg:text-[5.4rem]">
               {words.map((w, i) => (
                 <span key={w} className="block overflow-hidden">
                   <motion.span

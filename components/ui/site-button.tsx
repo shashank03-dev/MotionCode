@@ -19,7 +19,7 @@ const button = cva(
           "bg-transparent text-ink shadow-ring hover:bg-white/[0.04] active:scale-[0.98]",
       },
       size: {
-        sm: "min-h-[44px] px-4 text-[13px]",
+        sm: "h-9 px-4 text-[13px] max-sm:h-auto max-sm:min-h-[44px]",
         md: "h-11 px-5 text-sm",
         lg: "h-12 px-6 text-[15px]",
       },

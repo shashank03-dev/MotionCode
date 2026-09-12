@@ -104,7 +104,7 @@ export function AdminSupportTickets({
                   className="border-t border-hairline align-top"
                   key={ticket.id}
                 >
-                  <td className="sticky left-0 max-w-[320px] bg-elevated px-4 py-3">
+                  <td className="sticky left-0 z-[1] border-r border-hairline max-w-[320px] bg-elevated px-4 py-3">
                     <div className="font-medium text-ink">
                       {ticket.subject}
                     </div>

@@ -25,16 +25,16 @@ export function AppAuthGate() {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[160] flex items-center justify-center overflow-y-auto p-4 sm:p-6">
+    <div className="fixed inset-0 z-[160] flex items-center justify-center overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-6 sm:pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-black/70 backdrop-blur-xl max-sm:bg-black/80 max-sm:backdrop-blur-none"
+        className="fixed inset-0 bg-black/70 backdrop-blur-xl"
       />
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="app-auth-title"
-        className="glass-card relative z-10 my-auto w-full max-w-md rounded-2xl p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:rounded-3xl sm:p-8 sm:pb-[calc(2rem+env(safe-area-inset-bottom))]"
+        className="glass-card relative z-10 my-auto w-full max-w-md rounded-3xl p-6 sm:p-8"
       >
         <div className="flex items-center justify-between">
           <Logo />

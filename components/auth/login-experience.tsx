@@ -66,7 +66,7 @@ export function LoginExperience({
             type="button"
             onClick={onClose}
             aria-label="Close sign in"
-            className="absolute top-4 right-4 grid size-11 place-items-center rounded-full border border-ink-2/14 text-[#8a9099] transition-colors hover:border-accent/40 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className="absolute top-4 right-4 grid size-11 sm:size-9 place-items-center rounded-full border border-ink-2/14 text-[#8a9099] transition-colors hover:border-accent/40 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
             <X className="size-4" />
           </button>

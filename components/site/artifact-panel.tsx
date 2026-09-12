@@ -83,9 +83,9 @@ export function ArtifactPanel() {
           ].map((s) => (
             <div
               key={s.k}
-              className="rounded-lg border border-hairline bg-black/40 p-2 sm:p-3"
+              className="rounded-lg border border-hairline bg-black/40 px-3 py-2 sm:p-3"
             >
-              <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-ink-3">
+              <div className="font-mono text-[9px] uppercase tracking-[0.16em] text-ink-3 max-sm:text-[11px]">
                 {s.k}
               </div>
               <div className="font-mono text-[13px] text-ink">{s.v}</div>

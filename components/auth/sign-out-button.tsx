@@ -78,6 +78,8 @@ function SignOutConfirmDialog({
           ),
         ).filter((el) => el.getClientRects().length > 0);
         if (focusables.length === 0) {
+          event.preventDefault();
+          container.focus();
           return;
         }
         const first = focusables[0];
@@ -123,7 +125,7 @@ function SignOutConfirmDialog({
         aria-labelledby="signout-title"
         aria-describedby="signout-body"
         tabIndex={-1}
-        className="glass-card relative z-10 my-auto max-h-[90dvh] w-full max-w-[400px] overflow-y-auto rounded-2xl p-6 focus:outline-none"
+        className="glass-card relative z-10 my-auto max-h-[90dvh] w-full max-w-[400px] overflow-y-auto rounded-2xl p-6"
       >
         <div className="flex items-start gap-3.5">
           <span
@@ -152,7 +154,7 @@ function SignOutConfirmDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg border border-hairline px-4 py-3 min-h-[44px] font-mono text-[0.74rem] uppercase tracking-[0.12em] text-ink-2 transition-colors hover:border-accent-border hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]"
+            className="rounded-lg border border-hairline px-4 py-2 min-h-[44px] font-mono text-[0.74rem] uppercase tracking-[0.12em] text-ink-2 transition-colors hover:border-accent-border hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]"
           >
             Cancel
           </button>
@@ -160,7 +162,7 @@ function SignOutConfirmDialog({
             ref={confirmRef}
             type="button"
             onClick={onConfirm}
-            className="rounded-lg bg-accent px-4 py-3 min-h-[44px] font-mono text-[0.74rem] font-medium uppercase tracking-[0.12em] text-black shadow-glow transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--text)]"
+            className="rounded-lg bg-accent px-4 py-2 min-h-[44px] font-mono text-[0.74rem] font-medium uppercase tracking-[0.12em] text-black shadow-glow transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--text)]"
           >
             Sign out
           </button>

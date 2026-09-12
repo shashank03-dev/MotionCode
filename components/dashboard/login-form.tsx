@@ -233,7 +233,7 @@ export function LoginForm({
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="min-w-0 flex-1 bg-transparent text-base text-ink outline-none placeholder:text-ink-3"
+            className="min-w-0 flex-1 bg-transparent text-base sm:text-sm text-ink outline-none placeholder:text-ink-3"
             placeholder="you@example.com"
           />
         </div>
@@ -253,7 +253,7 @@ export function LoginForm({
             autoComplete="current-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="min-w-0 flex-1 bg-transparent text-base text-ink outline-none placeholder:text-ink-3"
+            className="min-w-0 flex-1 bg-transparent text-base sm:text-sm text-ink outline-none placeholder:text-ink-3"
             placeholder="Your password"
           />
           <button

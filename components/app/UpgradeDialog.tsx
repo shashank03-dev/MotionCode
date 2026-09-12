@@ -48,10 +48,12 @@ export function UpgradeDialog({
         if (!container) return;
         const focusables = Array.from(
           container.querySelectorAll<HTMLElement>(
-            'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])',
+            'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])',
           ),
         ).filter((el) => el.getClientRects().length > 0);
         if (focusables.length === 0) {
+          event.preventDefault();
+          container.focus();
           return;
         }
         const first = focusables[0];
@@ -71,7 +73,7 @@ export function UpgradeDialog({
     const focusTimer = window.setTimeout(() => {
       const container = dialogRef.current;
       const first = container?.querySelector<HTMLElement>(
-        'a[href], button:not([disabled])',
+        'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])',
       );
       (first ?? container)?.focus();
     }, 60);
@@ -87,13 +89,13 @@ export function UpgradeDialog({
   if (!open || typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[160] flex items-center justify-center overflow-y-auto p-4">
+    <div className="fixed inset-0 z-[160] flex items-start justify-center overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
       <button
         type="button"
         aria-label="Dismiss upgrade prompt"
         onClick={onClose}
         tabIndex={-1}
-        className="fixed inset-0 cursor-default bg-black/70 backdrop-blur-md max-sm:bg-black/80 max-sm:backdrop-blur-none"
+        className="fixed inset-0 cursor-default bg-black/70 backdrop-blur-md"
       />
       <div
         ref={dialogRef}
@@ -101,7 +103,7 @@ export function UpgradeDialog({
         aria-modal="true"
         aria-label={`Upgrade to unlock ${feature}`}
         tabIndex={-1}
-        className="glass-card relative z-10 my-auto max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-3xl p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] focus:outline-none sm:p-7 sm:pb-[calc(1.75rem+env(safe-area-inset-bottom))]"
+        className="glass-card relative z-10 my-auto max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-3xl p-6 sm:p-7"
       >
         <span className="accent-underglow inline-flex size-11 items-center justify-center rounded-2xl border border-accent-border bg-accent-dim text-accent shadow-glow">
           <Sparkles className="size-5" aria-hidden="true" />
@@ -127,10 +129,10 @@ export function UpgradeDialog({
           ))}
         </ul>
 
-        <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
+        <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
           <Link
             href="/pricing"
-            className="inline-flex h-11 min-h-[44px] w-full flex-1 items-center justify-center gap-2 rounded-lg border border-accent-border bg-accent px-5 text-sm font-medium text-black shadow-glow transition hover:brightness-110 active:scale-[0.98]"
+            className="inline-flex h-11 min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-accent-border bg-accent px-5 text-sm font-medium text-black shadow-glow transition hover:brightness-110 active:scale-[0.98] sm:w-auto sm:flex-1"
           >
             View plans
             <ArrowUpRight className="size-4" aria-hidden="true" />

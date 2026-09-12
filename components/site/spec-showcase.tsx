@@ -47,7 +47,7 @@ export function SpecShowcase() {
               </span>
               <button
                 onClick={() => setReplay((r) => r + 1)}
-                className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-hairline px-4 font-mono text-xs text-ink-2 transition-colors hover:text-ink"
+                className="inline-flex items-center gap-1.5 rounded-full border border-hairline px-3 py-1 font-mono text-[11px] text-ink-2 transition-colors hover:text-ink max-sm:min-h-[44px] max-sm:px-4 max-sm:text-xs"
               >
                 <RotateCw className="h-3 w-3" /> replay
               </button>

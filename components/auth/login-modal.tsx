@@ -58,7 +58,7 @@ export function LoginModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="login-title"
-        className="login-dialog relative z-10 my-auto max-h-[90dvh] w-[calc(100vw-2rem)] max-w-[940px] overflow-y-auto"
+        className="login-dialog relative z-10 my-auto max-h-[90dvh] w-full max-w-[940px]"
       >
         <LoginExperience nextPath={nextPath} onClose={onClose} />
       </div>

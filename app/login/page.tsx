@@ -24,7 +24,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps = {}) {
         <div className="absolute left-1/2 top-[-18rem] size-[38rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,var(--accent-dim),transparent_70%)] blur-2xl" />
       </div>
 
-      <div className="relative z-10 w-full max-w-[940px]">
+      <div className="relative z-10 my-auto w-full max-w-[940px] py-6">
         <LoginExperience
           nextPath={nextPath}
           signedOut={resolvedSearchParams?.signedOut === "1"}

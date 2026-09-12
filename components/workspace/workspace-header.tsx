@@ -42,7 +42,7 @@ export function WorkspaceHeader({ data }: WorkspaceHeaderProps) {
           label="Updated"
           className="p-4 sm:p-5"
           value={
-            <span className="text-xl sm:text-3xl">
+            <span className="text-xl">
               {formatDate(data.workspace.updated_at)}
             </span>
           }

@@ -68,7 +68,7 @@ test.describe("application responsive baseline", () => {
     });
   }
 
-  test("uses code/preview tabs at 375px with only one pane mounted", async ({
+  test("uses code/preview tabs at 375px with inactive pane hidden", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 375, height: 900 });
@@ -100,10 +100,10 @@ test.describe("application responsive baseline", () => {
     await expect(page.getByRole("heading", { name: "motion target" })).toBeVisible();
 
     // Below 768px the studio switches from the resizable split to
-    // Code/Preview tabs (AnalyzeStudio isNarrow): only the active pane is
-    // mounted, so panes cannot overlap by construction. Assert pane
-    // visibility first: the region only reports a laid-out box once its tab
-    // has rendered.
+    // Code/Preview tabs (AnalyzeStudio isNarrow): both panes stay mounted
+    // with the inactive one hidden, so panes cannot overlap by construction.
+    // Assert pane visibility first: the region only reports a laid-out box
+    // once its tab has rendered.
     const studioView = page.getByRole("tablist", { name: "Studio view" });
     await expect(studioView).toBeVisible();
     const codeTab = studioView.getByRole("tab", { name: "Code" });
@@ -113,12 +113,12 @@ test.describe("application responsive baseline", () => {
     const editorPane = page.getByRole("region", { name: "Generated code editor" });
     const previewPane = page.getByRole("region", { name: "Live preview" });
     await expect(editorPane).toBeVisible();
-    await expect(previewPane).toHaveCount(0);
+    await expect(previewPane).toBeHidden();
 
     await previewTab.click();
     await expect(previewTab).toHaveAttribute("aria-selected", "true");
     await expect(previewPane).toBeVisible();
-    await expect(editorPane).toHaveCount(0);
+    await expect(editorPane).toBeHidden();
 
     await assertAppDiagnostics(page, diagnostics);
   });

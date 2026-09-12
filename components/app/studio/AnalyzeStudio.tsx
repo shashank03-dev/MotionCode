@@ -112,6 +112,26 @@ export function AnalyzeStudio({
     return () => media.removeEventListener("change", update);
   }, []);
 
+  // Workbench section tabs (mobile top bar) drive the narrow Code/Preview
+  // tabs via a window event so the pane switches before scrolling to it.
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<"code" | "preview">).detail;
+      if (detail === "code" || detail === "preview") {
+        setMobilePane(detail);
+      }
+    };
+    window.addEventListener(
+      "workbench:studio-pane",
+      handler as EventListener,
+    );
+    return () =>
+      window.removeEventListener(
+        "workbench:studio-pane",
+        handler as EventListener,
+      );
+  }, []);
+
   const run = useCallback(
     (tab: CodeTab, code: string) => {
       const nextRunId = runIdRef.current + 1;
@@ -349,40 +369,51 @@ export function AnalyzeStudio({
               ))}
             </div>
             <div className="min-h-[320px]">
-              {mobilePane === "code" ? (
-                <div id="studio-code" className="min-h-[320px] scroll-mt-16">
-                  <EditorPane
-                    tabs={CODE_TABS}
-                    activeTab={activeTab}
-                    onTabChange={onTabChange}
-                    value={activeCode}
-                    language={languageForTab(activeTab)}
-                    dirty={dirty}
-                    copied={copied}
-                    editable={editable}
-                    onChange={handleChange}
-                    onRun={handleRun}
-                    onFormat={handleFormat}
-                    onReset={handleReset}
-                    onCopy={handleCopy}
-                    onDownload={handleDownload}
-                  />
-                </div>
-              ) : (
-                <div id="studio-preview" className="min-h-[320px] scroll-mt-16">
-                  <PreviewPane
-                    srcDoc={srcDoc}
-                    runId={runId}
-                    status={status}
-                    elapsedMs={elapsedMs}
-                    consoleEntries={consoleEntries}
-                    errorCount={errorCount}
-                    onClearConsole={() => setConsoleEntries([])}
-                    onReplay={handleRun}
-                    iframeRef={iframeRef}
-                  />
-                </div>
-              )}
+              <div
+                id="studio-code"
+                className={cn(
+                  "min-h-[320px] scroll-mt-16",
+                  mobilePane !== "code" && "hidden",
+                )}
+                aria-hidden={mobilePane !== "code"}
+              >
+                <EditorPane
+                  tabs={CODE_TABS}
+                  activeTab={activeTab}
+                  onTabChange={onTabChange}
+                  value={activeCode}
+                  language={languageForTab(activeTab)}
+                  dirty={dirty}
+                  copied={copied}
+                  editable={editable}
+                  onChange={handleChange}
+                  onRun={handleRun}
+                  onFormat={handleFormat}
+                  onReset={handleReset}
+                  onCopy={handleCopy}
+                  onDownload={handleDownload}
+                />
+              </div>
+              <div
+                id="studio-preview"
+                className={cn(
+                  "min-h-[320px] scroll-mt-16",
+                  mobilePane !== "preview" && "hidden",
+                )}
+                aria-hidden={mobilePane !== "preview"}
+              >
+                <PreviewPane
+                  srcDoc={srcDoc}
+                  runId={runId}
+                  status={status}
+                  elapsedMs={elapsedMs}
+                  consoleEntries={consoleEntries}
+                  errorCount={errorCount}
+                  onClearConsole={() => setConsoleEntries([])}
+                  onReplay={handleRun}
+                  iframeRef={iframeRef}
+                />
+              </div>
             </div>
           </div>
         ) : (

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { SiteFooter, SiteHeader } from "./site-chrome";
+import { SiteFooter } from "./site-chrome";
+import { SiteHeader } from "./site-header";
 
 type LegalSection = {
   title: string;
@@ -30,7 +31,7 @@ export function LegalPage({ title, updated, intro, sections }: LegalPageProps) {
               Back to MotionCode
             </Link>
             <p className="eyebrow mt-10">Last updated {updated}</p>
-            <h1 className="mt-4 max-w-3xl font-display text-3xl font-medium leading-tight tracking-tight text-balance sm:text-5xl">
+            <h1 className="mt-4 max-w-3xl font-display text-4xl font-medium leading-tight tracking-tight text-balance sm:text-5xl">
               {title}
             </h1>
             <p className="mt-6 max-w-3xl text-base leading-8 text-ink-2 sm:text-lg">

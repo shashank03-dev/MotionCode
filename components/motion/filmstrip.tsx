@@ -56,7 +56,7 @@ export function Filmstrip({
               }}
             />
             {/* frame index */}
-            <span className="absolute bottom-1 left-1.5 font-mono text-xs tracking-wide text-ink-3">
+            <span className="absolute bottom-1 left-1.5 font-mono text-[8px] tracking-wide text-ink-3 max-sm:text-xs">
               {String(i + 1).padStart(2, "0")}
             </span>
             {isActive && (

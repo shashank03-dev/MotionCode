@@ -20,7 +20,7 @@ export function AdminPageShell({
   title,
 }: AdminPageShellProps) {
   return (
-    <main className="relative min-h-screen bg-canvas px-4 py-10 text-ink sm:px-6 lg:px-8">
+    <main className="relative min-h-dvh bg-canvas px-4 py-10 text-ink sm:px-6 lg:px-8">
       <AppBackground />
       <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-8">
         <header className="grid gap-5 border-b border-hairline pb-7 lg:grid-cols-[1fr_auto] lg:items-end">

@@ -127,7 +127,7 @@ export function AppShell({
       <PlanSync userId={userId} />
       <AppBackground />
 
-      <aside className="relative z-20 border-b border-hairline bg-panel/80 backdrop-blur-xl max-lg:backdrop-blur-none lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r">
+      <aside className="relative z-20 border-b border-hairline bg-panel/80 backdrop-blur-xl lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r">
         <div
           className={cn(
             "flex h-full flex-col gap-7 px-3 py-4 lg:py-6",
@@ -201,7 +201,6 @@ export function AppShell({
                   key={item.key}
                   href={item.href}
                   aria-current={isActive ? "page" : undefined}
-                  aria-label={item.label}
                   title={
                     collapsed
                       ? item.label
