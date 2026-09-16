@@ -121,7 +121,7 @@ export function InlineCreate({
             onClick={() => void submit()}
             aria-label={`Create ${placeholder}`}
             title="Create"
-            className="flex size-9 shrink-0 items-center justify-center rounded-[3px] text-ink-2 transition hover:bg-white/[0.04] hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]"
+            className="flex size-9 max-sm:size-11 shrink-0 items-center justify-center rounded-[3px] text-ink-2 transition hover:bg-white/[0.04] hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]"
           >
             <CornerDownLeft className="size-4" aria-hidden="true" />
           </button>

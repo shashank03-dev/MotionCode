@@ -22,6 +22,7 @@ export function LoginModal({
   useEffect(() => {
     if (!open) return;
 
+    const previouslyFocused = document.activeElement as HTMLElement | null;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
@@ -40,6 +41,7 @@ export function LoginModal({
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
       window.clearTimeout(focusTimer);
+      previouslyFocused?.focus?.();
     };
   }, [open, onClose]);
 
@@ -58,7 +60,7 @@ export function LoginModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="login-title"
-        className="login-dialog relative z-10 my-auto max-h-[90dvh] w-full max-w-[940px]"
+        className="login-dialog relative z-10 my-auto max-h-[90dvh] w-full max-w-[940px] overflow-y-auto"
       >
         <LoginExperience nextPath={nextPath} onClose={onClose} />
       </div>

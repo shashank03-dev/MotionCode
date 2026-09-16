@@ -1,9 +1,10 @@
 "use client";
 
 import { ArrowLeft, X } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+
+import { useInterceptDismiss } from "./use-intercept-dismiss";
 
 type RouteModalProps = {
   /** Shown in the modal header bar and used as the dialog's accessible name. */
@@ -19,16 +20,8 @@ type RouteModalProps = {
  * and renders the full standalone page instead.
  */
 export function RouteModal({ title, children }: RouteModalProps) {
-  const router = useRouter();
   const dialogRef = useRef<HTMLDivElement>(null);
-
-  const dismiss = useCallback(() => {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      router.back();
-    } else {
-      router.replace("/app");
-    }
-  }, [router]);
+  const dismiss = useInterceptDismiss();
 
   useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null;
@@ -79,7 +72,7 @@ export function RouteModal({ title, children }: RouteModalProps) {
       window.clearTimeout(focusTimer);
       previouslyFocused?.focus?.();
     };
-  }, [router, dismiss]);
+  }, [dismiss]);
 
   if (typeof document === "undefined") return null;
 

@@ -24,6 +24,59 @@ async function assertNoHorizontalOverflow(page: Page, route: string) {
 }
 
 test.describe("mobile smoke at 360px", () => {
+  test("landing renders its hero heading without overflow at 360px", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 360, height: 640 });
+    await page.goto("/");
+    const hero = page.getByRole("heading", { level: 1 });
+    await expect(hero).toContainText("Motion,");
+    await expect(hero).toContainText("decoded.");
+    await assertNoHorizontalOverflow(page, "/ @360");
+  });
+
+  test("landing renders its hero heading without overflow at 390px", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+    const hero = page.getByRole("heading", { level: 1 });
+    await expect(hero).toContainText("Motion,");
+    await expect(hero).toContainText("decoded.");
+    await assertNoHorizontalOverflow(page, "/ @390");
+  });
+
+  test("landing renders its hero heading without overflow at 768px", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await page.goto("/");
+    const hero = page.getByRole("heading", { level: 1 });
+    await expect(hero).toContainText("Motion,");
+    await expect(hero).toContainText("decoded.");
+    await assertNoHorizontalOverflow(page, "/ @768");
+  });
+
+  test("landing footer Pricing link meets 44px touch target at 360px", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 360, height: 640 });
+    await page.goto("/");
+    const pricingLink = page.locator("footer").getByRole("link", {
+      name: "Pricing",
+    });
+    await expect(pricingLink.first()).toBeVisible();
+    await expect(async () => {
+      const boxes = await pricingLink.evaluateAll((nodes) =>
+        nodes.map((node) => node.getBoundingClientRect().height),
+      );
+      expect(boxes.length).toBeGreaterThan(0);
+      for (const height of boxes) {
+        expect(height).toBeGreaterThanOrEqual(44);
+      }
+    }).toPass({ timeout: 5000, intervals: [250, 500, 1000] });
+  });
+
   test("pricing renders its tier heading without overflow", async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 640 });
     await page.goto("/pricing");

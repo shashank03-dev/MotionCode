@@ -61,7 +61,7 @@ describe("workbench data loading", () => {
     ]);
 
     from.mockClear();
-    await getWorkbenchTreeData({ id: "user-1" });
+    await getWorkbenchTreeData();
     expect(from.mock.calls.map(([table]) => table)).toEqual([
       "workspaces",
       "projects",

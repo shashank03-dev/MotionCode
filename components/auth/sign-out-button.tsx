@@ -154,7 +154,7 @@ function SignOutConfirmDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg border border-hairline px-4 py-2 min-h-[44px] font-mono text-[0.74rem] uppercase tracking-[0.12em] text-ink-2 transition-colors hover:border-accent-border hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]"
+            className="inline-flex items-center justify-center rounded-lg border border-hairline px-4 py-2 min-h-[44px] font-mono text-[0.74rem] uppercase tracking-[0.12em] text-ink-2 transition-colors hover:border-accent-border hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]"
           >
             Cancel
           </button>
@@ -162,7 +162,7 @@ function SignOutConfirmDialog({
             ref={confirmRef}
             type="button"
             onClick={onConfirm}
-            className="rounded-lg bg-accent px-4 py-2 min-h-[44px] font-mono text-[0.74rem] font-medium uppercase tracking-[0.12em] text-black shadow-glow transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--text)]"
+            className="inline-flex items-center justify-center rounded-lg bg-accent px-4 py-2 min-h-[44px] font-mono text-[0.74rem] font-medium uppercase tracking-[0.12em] text-black shadow-glow transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--text)]"
           >
             Sign out
           </button>

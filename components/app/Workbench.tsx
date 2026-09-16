@@ -23,6 +23,7 @@ import {
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { PlanSync } from "@/components/dashboard/PlanSync";
 import { Logo } from "@/components/site/logo";
+import { STUDIO_PANE_EVENT } from "@/components/app/studio/AnalyzeStudio";
 import { AppBackground } from "@/components/ui/app-background";
 import type { PlanTier } from "@/lib/contracts/plans";
 import { cn } from "@/lib/utils";
@@ -160,7 +161,7 @@ function WorkbenchSectionTab({
     // Canvas/Code tabs never land on a hidden (or unmounted) pane.
     if (pane && typeof window !== "undefined") {
       window.dispatchEvent(
-        new CustomEvent("workbench:studio-pane", { detail: pane }),
+        new CustomEvent(STUDIO_PANE_EVENT, { detail: pane }),
       );
     }
     const doScroll = () => {
@@ -171,12 +172,14 @@ function WorkbenchSectionTab({
         : null;
       const el = byTestid ?? document.getElementById(target);
       if (!el) {
-        console.warn("[workbench] section target missing", { target, testid });
+        if (process.env.NODE_ENV !== "production") {
+          console.warn("[workbench] section target missing", { target, testid });
+        }
         return;
       }
       el.scrollIntoView({ behavior: "smooth", block: "start" });
     };
-    requestAnimationFrame(() => doScroll());
+    requestAnimationFrame(() => requestAnimationFrame(() => doScroll()));
   };
   return (
     <button
@@ -359,7 +362,6 @@ export function Workbench({
             <WorkbenchSectionTab
               label="Code"
               target="studio-code"
-              testid="process-canvas"
               pane="code"
               active={activeSection === "Code"}
               onActivate={() => setActiveSection("Code")}

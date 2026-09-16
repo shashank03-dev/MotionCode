@@ -112,13 +112,34 @@ test.describe("application responsive baseline", () => {
 
     const editorPane = page.getByRole("region", { name: "Generated code editor" });
     const previewPane = page.getByRole("region", { name: "Live preview" });
+    await expect(editorPane).toHaveCount(1);
+    await expect(previewPane).toHaveCount(1);
     await expect(editorPane).toBeVisible();
     await expect(previewPane).toBeHidden();
 
+    const codeWrapper = page.locator("#studio-code");
+    const previewWrapper = page.locator("#studio-preview");
+    await expect(codeWrapper).toHaveAttribute("aria-hidden", "false");
+    await expect(previewWrapper).toHaveAttribute("aria-hidden", "true");
+    await expect(previewWrapper).toHaveClass(/hidden/);
+
     await previewTab.click();
     await expect(previewTab).toHaveAttribute("aria-selected", "true");
+    await expect(codeTab).toHaveAttribute("aria-selected", "false");
     await expect(previewPane).toBeVisible();
     await expect(editorPane).toBeHidden();
+    await expect(codeWrapper).toHaveAttribute("aria-hidden", "true");
+    await expect(codeWrapper).toHaveClass(/hidden/);
+    await expect(previewWrapper).toHaveAttribute("aria-hidden", "false");
+
+    await codeTab.click();
+    await expect(codeTab).toHaveAttribute("aria-selected", "true");
+    await expect(previewTab).toHaveAttribute("aria-selected", "false");
+    await expect(editorPane).toBeVisible();
+    await expect(previewPane).toBeHidden();
+    await expect(codeWrapper).toHaveAttribute("aria-hidden", "false");
+    await expect(previewWrapper).toHaveAttribute("aria-hidden", "true");
+    await expect(previewWrapper).toHaveClass(/hidden/);
 
     await assertAppDiagnostics(page, diagnostics);
   });

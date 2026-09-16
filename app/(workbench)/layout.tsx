@@ -28,7 +28,7 @@ export default async function WorkbenchLayout({
     <Workbench
       explorer={
         <Suspense fallback={<ExplorerLoading />}>
-          <WorkbenchTree user={{ id: user.id }} />
+          <WorkbenchTree />
         </Suspense>
       }
       planTier={summary.planTier}

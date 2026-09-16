@@ -44,9 +44,35 @@ export type PreviewInput = {
 };
 
 export function isPreviewMessage(value: unknown): value is PreviewMessage {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    (value as { source?: unknown }).source === "motioncode-preview"
-  );
+  if (typeof value !== "object" || value === null) return false;
+  const candidate = value as {
+    source?: unknown;
+    type?: unknown;
+    runId?: unknown;
+    text?: unknown;
+    level?: unknown;
+  };
+  if (candidate.source !== "motioncode-preview") return false;
+  if (
+    candidate.type !== "ready" &&
+    candidate.type !== "console" &&
+    candidate.type !== "error"
+  ) {
+    return false;
+  }
+  if (typeof candidate.runId !== "number") return false;
+  if ("text" in candidate && candidate.text !== undefined) {
+    if (typeof candidate.text !== "string") return false;
+  }
+  if ("level" in candidate && candidate.level !== undefined) {
+    if (
+      candidate.level !== "log" &&
+      candidate.level !== "info" &&
+      candidate.level !== "warn" &&
+      candidate.level !== "error"
+    ) {
+      return false;
+    }
+  }
+  return true;
 }

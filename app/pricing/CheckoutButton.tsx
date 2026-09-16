@@ -214,7 +214,7 @@ export function CheckoutButton({ planTier }: CheckoutButtonProps) {
           Checkout closed before payment completed.{" "}
           <a
             href="/support"
-            className="inline-flex min-h-[44px] items-center py-2 text-accent underline underline-offset-4 transition hover:brightness-125"
+            className="max-sm:inline-flex max-sm:min-h-[44px] max-sm:items-center text-accent underline underline-offset-4 transition hover:brightness-125"
           >
             Contact support
           </a>{" "}
@@ -255,26 +255,64 @@ function ProviderButton({
   );
 }
 
+let razorpayCheckoutInFlight: Promise<void> | null = null;
+
 function loadRazorpayCheckout() {
   if (window.Razorpay) {
     return Promise.resolve();
   }
+  if (razorpayCheckoutInFlight) {
+    return razorpayCheckoutInFlight;
+  }
 
-  return new Promise<void>((resolve, reject) => {
+  const pending = new Promise<void>((resolve, reject) => {
+    let settled = false;
+    const timeoutId = window.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      reject(new Error("razorpay-script-timeout"));
+    }, 15000);
+    const settleResolve = () => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeoutId);
+      resolve();
+    };
+    const settleReject = (err: Error) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeoutId);
+      reject(err);
+    };
     const existingScript = document.querySelector<HTMLScriptElement>(
       'script[src="https://checkout.razorpay.com/v1/checkout.js"]',
     );
     if (existingScript) {
-      if (existingScript.dataset.loadFailed === "1") {
-        reject(new Error("razorpay-script-previously-failed"));
+      if (existingScript.dataset.loaded === "1") {
+        if (window.Razorpay) {
+          settleResolve();
+        } else {
+          settleReject(new Error("razorpay-script-load-failed"));
+        }
         return;
       }
-      existingScript.addEventListener("load", () => resolve(), { once: true });
+      if (existingScript.dataset.loadFailed === "1") {
+        settleReject(new Error("razorpay-script-previously-failed"));
+        return;
+      }
+      existingScript.addEventListener(
+        "load",
+        () => {
+          existingScript.dataset.loaded = "1";
+          settleResolve();
+        },
+        { once: true },
+      );
       existingScript.addEventListener(
         "error",
         () => {
           existingScript.dataset.loadFailed = "1";
-          reject(new Error("razorpay-script-load-failed"));
+          settleReject(new Error("razorpay-script-load-failed"));
         },
         {
           once: true,
@@ -286,11 +324,22 @@ function loadRazorpayCheckout() {
     const script = document.createElement("script");
     script.async = true;
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.onload = () => resolve();
+    script.onload = () => {
+      script.dataset.loaded = "1";
+      settleResolve();
+    };
     script.onerror = () => {
       script.dataset.loadFailed = "1";
-      reject(new Error("razorpay-script-load-failed"));
+      settleReject(new Error("razorpay-script-load-failed"));
     };
     document.body.appendChild(script);
   });
+  razorpayCheckoutInFlight = pending;
+  const clearCachedCheckoutPromise = () => {
+    if (razorpayCheckoutInFlight === pending) {
+      razorpayCheckoutInFlight = null;
+    }
+  };
+  pending.then(clearCachedCheckoutPromise, clearCachedCheckoutPromise);
+  return pending;
 }

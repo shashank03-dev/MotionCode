@@ -22,7 +22,7 @@ export type MotionFieldProps = {
   base?: string;
   /** the brand accent — the curve and live values */
   accent?: string;
-  /** grab radius for the cursor, in css px (unused name kept for the call site) */
+  /** grab radius for the cursor, in css px */
   sampleRadius?: number;
   /** parent bumps `current` on keydown; field reads + decays it (pulses the curve) */
   typingImpulseRef?: MutableRefObject<number>;
@@ -95,15 +95,16 @@ export function MotionField({
   background = "rgba(8, 9, 11, 1)",
   base = "rgba(255, 255, 255, 1)",
   accent = "rgba(0, 153, 255, 1)",
+  sampleRadius = 30,
   typingImpulseRef,
 }: MotionFieldProps) {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const pointerRef = useRef({ x: -9999, y: -9999, active: false });
-  const cfg = useRef({ background, base, accent });
+  const cfg = useRef({ background, base, accent, sampleRadius });
   useEffect(() => {
-    cfg.current = { background, base, accent };
-  }, [background, base, accent]);
+    cfg.current = { background, base, accent, sampleRadius };
+  }, [background, base, accent, sampleRadius]);
 
   useEffect(() => {
     const wrapper = wrapperRef.current;
@@ -181,7 +182,7 @@ export function MotionField({
         const h2 = handlePos(2);
         const d1 = Math.hypot(p.x - h1.x, p.y - h1.y);
         const d2 = Math.hypot(p.x - h2.x, p.y - h2.y);
-        const grab = 30;
+        const grab = cfg.current.sampleRadius;
         if (Math.min(d1, d2) < grab) {
           const tt = clamp((p.x - plotL) / (plotR - plotL), -0.1, 1.1);
           const vv = clamp(

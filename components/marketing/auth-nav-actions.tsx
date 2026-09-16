@@ -43,18 +43,33 @@ export function MarketingAuthNavActions({
     setUserEmail(user?.email?.trim() || null);
   };
 
+  const [supabase] = useState(() => {
+    try {
+      return createSupabaseBrowserClient();
+    } catch (err) {
+      console.error("[auth] client init failed", err);
+      return null;
+    }
+  });
+
   useEffect(() => {
+    if (!supabase) {
+      return;
+    }
+
     let isCurrent = true;
 
-    try {
-      const supabase = createSupabaseBrowserClient();
-
-      void supabase.auth.getUser().then(({ data, error }) => {
+    void supabase.auth.getUser().then(({ data, error }) => {
         if (!isCurrent) {
           return;
         }
 
         applyUserState(error ? null : data.user);
+      }).catch((err) => {
+        console.error("[auth] getUser failed", err);
+        if (isCurrent) {
+          applyUserState(null);
+        }
       });
 
       const {
@@ -71,15 +86,13 @@ export function MarketingAuthNavActions({
         isCurrent = false;
         subscription.unsubscribe();
       };
-    } catch {
-      return () => {
-        isCurrent = false;
-      };
-    }
-  }, []);
+  }, [supabase]);
+
+  // Null client (missing env) renders as signed-out instead of stuck "loading".
+  const effectiveAuthState = supabase === null ? "signed-out" : authState;
 
   if (layout === "menu") {
-    if (authState === "signed-in") {
+    if (effectiveAuthState === "signed-in") {
       return (
         <div className="grid gap-1" role="group" aria-label="Account actions">
           <Link
@@ -119,7 +132,10 @@ export function MarketingAuthNavActions({
         <div className="grid gap-1" role="group" aria-label="Account actions">
           <button
             type="button"
-            onClick={() => setLoginOpen(true)}
+            onClick={() => {
+              onNavigate?.();
+              setLoginOpen(true);
+            }}
             className="inline-flex min-h-[44px] items-center rounded-xl px-4 py-2 text-left text-[15px] text-ink-2 transition-colors hover:bg-white/[0.04] hover:text-ink"
           >
             Sign in
@@ -146,13 +162,13 @@ export function MarketingAuthNavActions({
           className="w-full"
           onClick={onNavigate}
         >
-          {authState === "loading" ? "Loading…" : "Try Free"}
+          {effectiveAuthState === "loading" ? "Loading…" : "Try Free"}
         </ButtonLink>
       </div>
     );
   }
 
-  if (authState === "signed-in") {
+  if (effectiveAuthState === "signed-in") {
     return variant === "landing" ? (
       <div className="motioncode-nav-actions" aria-label="Account actions">
         <Link href="/dashboard" className="motioncode-nav-auth">
@@ -215,7 +231,7 @@ export function MarketingAuthNavActions({
 
   return (
     <ButtonLink href="/app" variant="primary" size="sm">
-      {authState === "loading" ? "Loading…" : "Try Free"}
+      {effectiveAuthState === "loading" ? "Loading…" : "Try Free"}
     </ButtonLink>
   );
 }

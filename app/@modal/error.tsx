@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
+
+import { useInterceptDismiss } from "@/components/app/use-intercept-dismiss";
 
 type ModalErrorProps = {
   error: Error & { digest?: string };
@@ -15,15 +16,7 @@ type ModalErrorProps = {
  * down the underlying page - dismiss returns to it via router.back().
  */
 export default function ModalError({ error, reset }: ModalErrorProps) {
-  const router = useRouter();
-
-  const dismiss = useCallback(() => {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      router.back();
-    } else {
-      router.replace("/app");
-    }
-  }, [router]);
+  const dismiss = useInterceptDismiss();
 
   useEffect(() => {
     console.error("[modal] dialog failed", {
@@ -65,15 +58,12 @@ export default function ModalError({ error, reset }: ModalErrorProps) {
         >
           This dialog could not load.
         </h2>
-        <p className="mt-2 text-sm leading-6 text-ink-2">
+        <p id="modal-error-body" className="mt-2 text-sm leading-6 text-ink-2">
           Try loading the dialog again. If it keeps failing, use the support
           page checklist and include the route where this happened.
         </p>
         {error.digest ? (
-          <p
-            id="modal-error-body"
-            className="mt-2 font-mono text-[11px] text-ink-3"
-          >
+          <p className="mt-2 font-mono text-[11px] text-ink-3">
             Reference: {error.digest}
           </p>
         ) : null}

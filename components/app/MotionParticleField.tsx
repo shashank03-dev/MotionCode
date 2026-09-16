@@ -208,6 +208,16 @@ type MotionParticleFieldProps = {
   className?: string;
 };
 
+function subscribeNarrowBreakpoint(onChange: () => void) {
+  const media = window.matchMedia("(max-width: 767px)");
+  media.addEventListener("change", onChange);
+  return () => media.removeEventListener("change", onChange);
+}
+
+function getNarrowBreakpointSnapshot() {
+  return window.matchMedia("(max-width: 767px)").matches;
+}
+
 export function MotionParticleField({
   progress,
   label = null,
@@ -216,18 +226,14 @@ export function MotionParticleField({
   const hostRef = React.useRef<HTMLDivElement>(null);
   // Rebuild the GL surface when the breakpoint flips so particle count and
   // DPR track the current viewport instead of the first mount width.
-  const [isMobile, setIsMobile] = React.useState(
-    () =>
-      typeof window !== "undefined" &&
-      window.matchMedia("(max-width: 767px)").matches,
+  // useSyncExternalStore (server snapshot: not mobile) keeps server and
+  // first client render identical - no hydration mismatch, no cascading
+  // setState-in-effect, single correctly-sized GL init.
+  const isMobile = React.useSyncExternalStore(
+    subscribeNarrowBreakpoint,
+    getNarrowBreakpointSnapshot,
+    () => false,
   );
-  React.useEffect(() => {
-    const media = window.matchMedia("(max-width: 767px)");
-    const update = () => setIsMobile(media.matches);
-    update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, []);
   // Live progress read by the render loop without re-running the GL effect.
   const progressRef = React.useRef(progress);
   React.useEffect(() => {

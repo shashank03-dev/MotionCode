@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { NAV_LINKS } from "@/lib/content";
@@ -29,6 +30,15 @@ export function Nav() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open ]);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
 
   React.useEffect(() => {
     if (typeof window.matchMedia !== "function") return;
@@ -111,18 +121,11 @@ export function Nav() {
         </div>
 
         {open ? (
-          <>
-            <button
-              type="button"
-              aria-label="Close menu"
-              onClick={() => setOpen(false)}
-              className="fixed inset-0 z-40 bg-black/40 md:hidden"
-            />
-            <div
-              ref={menuRef}
-              id={menuId}
-              className="glass-card absolute inset-x-0 top-[calc(100%+8px)] z-50 max-h-[calc(100dvh-96px)] overflow-y-auto rounded-2xl p-2 md:hidden"
-            >
+          <div
+            ref={menuRef}
+            id={menuId}
+            className="glass-card absolute inset-x-0 top-[calc(100%+8px)] z-50 max-h-[calc(100dvh-96px)] overflow-y-auto rounded-2xl p-2 md:hidden"
+          >
             <div className="grid gap-1">
               {NAV_LINKS.map((link) => (
                 <a
@@ -153,10 +156,24 @@ export function Nav() {
                 Start analyzing
               </ButtonLink>
             </div>
-            </div>
-          </>
+          </div>
         ) : null}
       </nav>
+      {open && typeof document !== "undefined"
+        ? createPortal(
+            <button
+              type="button"
+              aria-label="Close menu"
+              tabIndex={-1}
+              onClick={() => {
+                setOpen(false);
+                triggerRef.current?.focus();
+              }}
+              className="fixed inset-0 z-40 bg-black/40 md:hidden"
+            />,
+            document.body,
+          )
+        : null}
     </motion.header>
   );
 }

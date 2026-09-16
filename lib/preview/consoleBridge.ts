@@ -25,7 +25,12 @@ export function consoleBridgeScript(runId: number): string {
   function post(payload) {
     payload.source = "motioncode-preview";
     payload.runId = RUN_ID;
-    try { parent.postMessage(payload, "*"); } catch (e) {}
+    var targetOrigin = "*";
+    try {
+      var o = window.location && window.location.origin;
+      if (o && o !== "null") targetOrigin = o;
+    } catch (e) {}
+    try { parent.postMessage(payload, targetOrigin); } catch (e) {}
   }
   ["log", "info", "warn", "error"].forEach(function (level) {
     var original = console[level] ? console[level].bind(console) : function () {};

@@ -33,6 +33,8 @@ import type { EditorLanguage } from "./CodeMirrorEditor";
 import { EditorPane } from "./EditorPane";
 import { PreviewPane, type PreviewStatus } from "./PreviewPane";
 
+export const STUDIO_PANE_EVENT = "workbench:studio-pane";
+
 type AnalyzeStudioProps = {
   result: AnalysisResult;
   intentColor: string;
@@ -89,9 +91,7 @@ export function AnalyzeStudio({
   const [status, setStatus] = useState<PreviewStatus>("idle");
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
   const [consoleEntries, setConsoleEntries] = useState<ConsoleEntry[]>([]);
-  const [isNarrow, setIsNarrow] = useState(
-    () => typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches,
-  );
+  const [isNarrow, setIsNarrow] = useState(false);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const runIdRef = useRef(0);
@@ -122,12 +122,12 @@ export function AnalyzeStudio({
       }
     };
     window.addEventListener(
-      "workbench:studio-pane",
+      STUDIO_PANE_EVENT,
       handler as EventListener,
     );
     return () =>
       window.removeEventListener(
-        "workbench:studio-pane",
+        STUDIO_PANE_EVENT,
         handler as EventListener,
       );
   }, []);
@@ -260,10 +260,16 @@ export function AnalyzeStudio({
     run(activeTab, code);
   }, [activeTab, original, run]);
 
-  const handleCopy = useCallback(() => {
-    void navigator.clipboard.writeText(editorCode[activeTab] ?? "");
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 2000);
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(editorCode[activeTab] ?? "");
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("[studio] copy failed", err);
+      }
+    }
   }, [activeTab, editorCode]);
 
   const handleDownload = useCallback(() => {
@@ -421,7 +427,12 @@ export function AnalyzeStudio({
             direction="horizontal"
             autoSaveId="motioncode-studio-split-horizontal"
           >
-            <Panel defaultSize={50} minSize={28} className="min-w-0">
+            <Panel
+              id="studio-code"
+              defaultSize={50}
+              minSize={28}
+              className="min-w-0 scroll-mt-16"
+            >
               <EditorPane
                 tabs={CODE_TABS}
                 activeTab={activeTab}
@@ -443,7 +454,12 @@ export function AnalyzeStudio({
               {/* 24px+ grab area: -left-3/-right-3 keeps the 1px visual. */}
               <span className="absolute inset-y-0 -left-3 -right-3 z-10" />
             </PanelResizeHandle>
-            <Panel defaultSize={50} minSize={28} className="min-w-0">
+            <Panel
+              id="studio-preview"
+              defaultSize={50}
+              minSize={28}
+              className="min-w-0 scroll-mt-16"
+            >
               <PreviewPane
                 srcDoc={srcDoc}
                 runId={runId}

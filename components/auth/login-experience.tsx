@@ -35,7 +35,7 @@ export function LoginExperience({
           background="rgba(8, 9, 11, 1)"
           base="rgba(255, 255, 255, 1)"
           accent="rgba(0, 153, 255, 1)"
-          sampleRadius={150}
+          sampleRadius={30}
           typingImpulseRef={typingImpulseRef}
         />
         <div

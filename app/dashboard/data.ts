@@ -153,9 +153,7 @@ export async function getDashboardData(user: Pick<User, "id">) {
 }
 
 /** Loads only the workspace and project rows required by the workbench tree. */
-export async function getWorkbenchTreeData(
-  _user: Pick<User, "id">,
-): Promise<WorkbenchTreeData> {
+export async function getWorkbenchTreeData(): Promise<WorkbenchTreeData> {
   const supabase = await createSupabaseServerClient();
   const [workspaces, projects] = await Promise.all([
     supabase

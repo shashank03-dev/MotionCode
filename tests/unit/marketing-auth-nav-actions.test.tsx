@@ -124,6 +124,69 @@ describe("MarketingAuthNavActions", () => {
     expect(container.textContent).toContain("Sign out");
     expect(container.textContent).not.toContain("Try Free");
   });
+
+  it("calls onNavigate when a menu link is clicked", async () => {
+    getUser.mockResolvedValue({
+      data: { user: { email: "menu@motioncode.ai" } },
+      error: null,
+    });
+    const { MarketingAuthNavActions } = await import(
+      "@/components/marketing/auth-nav-actions"
+    );
+    const onNavigate = vi.fn();
+
+    await act(async () => {
+      root.render(
+        <MarketingAuthNavActions
+          variant="site"
+          layout="menu"
+          onNavigate={onNavigate}
+        />,
+      );
+    });
+    await flushEffects();
+
+    const dashboard = container.querySelector('a[href="/dashboard"]');
+    expect(dashboard).not.toBeNull();
+    await act(async () => {
+      (dashboard as HTMLAnchorElement).click();
+    });
+
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+  });
+
+  it("opens sign-out confirm without calling onNavigate", async () => {
+    getUser.mockResolvedValue({
+      data: { user: { email: "menu@motioncode.ai" } },
+      error: null,
+    });
+    const { MarketingAuthNavActions } = await import(
+      "@/components/marketing/auth-nav-actions"
+    );
+    const onNavigate = vi.fn();
+
+    await act(async () => {
+      root.render(
+        <MarketingAuthNavActions
+          variant="site"
+          layout="menu"
+          onNavigate={onNavigate}
+        />,
+      );
+    });
+    await flushEffects();
+
+    const signOut = Array.from(container.querySelectorAll("button")).find(
+      (candidate) => candidate.textContent?.includes("Sign out"),
+    );
+    expect(signOut).not.toBeUndefined();
+    await act(async () => {
+      (signOut as HTMLButtonElement).click();
+    });
+
+    expect(document.body.textContent).toContain("Sign out of MotionCode?");
+    expect(onNavigate).not.toHaveBeenCalled();
+  });
 });
 
 async function flushEffects() {

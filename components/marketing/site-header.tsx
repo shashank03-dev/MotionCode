@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Menu, X } from "lucide-react";
 
 import { Logo } from "@/components/site/logo";
@@ -30,6 +31,15 @@ export function SiteHeader() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
   }, [open]);
 
   useEffect(() => {
@@ -95,18 +105,11 @@ export function SiteHeader() {
         </div>
 
         {open ? (
-          <>
-            <button
-              type="button"
-              aria-label="Close menu"
-              onClick={() => setOpen(false)}
-              className="fixed inset-0 z-40 bg-black/40 md:hidden"
-            />
-            <div
-              ref={menuRef}
-              id={menuId}
-              className="glass-card absolute inset-x-0 top-[calc(100%+8px)] z-50 max-h-[calc(100dvh-96px)] overflow-y-auto rounded-2xl p-2 md:hidden"
-            >
+          <div
+            ref={menuRef}
+            id={menuId}
+            className="glass-card absolute inset-x-0 top-[calc(100%+8px)] z-50 max-h-[calc(100dvh-96px)] overflow-y-auto rounded-2xl p-2 md:hidden"
+          >
             <div className="grid gap-1">
               {primaryLinks.map((link) => (
                 <Link
@@ -126,10 +129,24 @@ export function SiteHeader() {
                 onNavigate={() => setOpen(false)}
               />
             </div>
-            </div>
-          </>
+          </div>
         ) : null}
       </nav>
+      {open && typeof document !== "undefined"
+        ? createPortal(
+            <button
+              type="button"
+              aria-label="Close menu"
+              tabIndex={-1}
+              onClick={() => {
+                setOpen(false);
+                triggerRef.current?.focus();
+              }}
+              className="fixed inset-0 z-40 bg-black/40 md:hidden"
+            />,
+            document.body,
+          )
+        : null}
     </header>
   );
 }
