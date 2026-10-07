@@ -3,7 +3,7 @@
 import { RotateCw } from "lucide-react";
 import { useState } from "react";
 
-import type { ConsoleEntry } from "@/lib/preview/types";
+import type { ConsoleEntry, PreviewMode } from "@/lib/preview/types";
 import { cn } from "@/lib/utils";
 
 import { ConsolePanel } from "./ConsolePanel";
@@ -14,6 +14,10 @@ type PreviewPaneProps = {
   srcDoc: string;
   runId: number;
   status: PreviewStatus;
+  /** Whether the code or the spec-based fallback is playing (null while running). */
+  mode: PreviewMode | null;
+  /** Active framework tab, shown in the status strip. */
+  frameworkLabel: string;
   elapsedMs: number | null;
   consoleEntries: ConsoleEntry[];
   errorCount: number;
@@ -36,6 +40,8 @@ export function PreviewPane({
   srcDoc,
   runId,
   status,
+  mode,
+  frameworkLabel,
   elapsedMs,
   consoleEntries,
   errorCount,
@@ -116,7 +122,19 @@ export function PreviewPane({
           {STATUS_TEXT[status]}
           {status === "ready" && elapsedMs !== null ? ` · ${elapsedMs}MS` : ""}
         </span>
-        <span className="text-ink-3">v1.0.0</span>
+        <span className="inline-flex items-center gap-2 text-ink-3">
+          {status === "ready" && mode === "fallback" ? (
+            <button
+              type="button"
+              onClick={() => setTab("console")}
+              title="This code couldn't be rendered directly, so the preview plays the motion spec instead. Open the console for details."
+              className="rounded-sm border border-[#ffd166]/40 px-1.5 py-0.5 text-[#ffd166] transition hover:border-[#ffd166]"
+            >
+              Spec preview
+            </button>
+          ) : null}
+          <span>{frameworkLabel}</span>
+        </span>
       </div>
     </section>
   );

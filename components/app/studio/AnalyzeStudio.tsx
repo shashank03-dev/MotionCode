@@ -25,7 +25,11 @@ import {
 } from "@/lib/generatedCode";
 import type { MotionSpecEditableField } from "@/lib/motionSpecEditor";
 import { buildPreviewDoc } from "@/lib/preview/buildPreviewDoc";
-import type { ConsoleEntry, ConsoleLevel } from "@/lib/preview/types";
+import type {
+  ConsoleEntry,
+  ConsoleLevel,
+  PreviewMode,
+} from "@/lib/preview/types";
 import { isPreviewMessage } from "@/lib/preview/types";
 import { cn } from "@/lib/utils";
 
@@ -89,6 +93,7 @@ export function AnalyzeStudio({
   const [srcDoc, setSrcDoc] = useState("");
   const [runId, setRunId] = useState(0);
   const [status, setStatus] = useState<PreviewStatus>("idle");
+  const [previewMode, setPreviewMode] = useState<PreviewMode | null>(null);
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
   const [consoleEntries, setConsoleEntries] = useState<ConsoleEntry[]>([]);
   const [isNarrow, setIsNarrow] = useState(false);
@@ -157,6 +162,7 @@ export function AnalyzeStudio({
 
       setConsoleEntries([]);
       setElapsedMs(null);
+      setPreviewMode(null);
       setStatus("running");
       setRunId(nextRunId);
       setSrcDoc(doc);
@@ -167,6 +173,11 @@ export function AnalyzeStudio({
     [result.spec],
   );
 
+  const editorCodeRef = useRef(editorCode);
+  useEffect(() => {
+    editorCodeRef.current = editorCode;
+  }, [editorCode]);
+
   // Kick off the preview on mount and re-run it when switching framework tabs.
   // This synchronizes the external iframe runtime with editor state — the
   // legitimate role of an effect.
@@ -175,6 +186,22 @@ export function AnalyzeStudio({
     run(activeTab, editorCode[activeTab] ?? "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
+
+  // Spec edits (duration, easing, intent, …) drive the preview's timing and
+  // its spec-based fallback, so replay once the user pauses editing. Skips the
+  // first render; the mount effect above already ran the preview.
+  const { durationMs, delayMs, easing, loops, intent } = result.spec;
+  const specKey = JSON.stringify([durationMs, delayMs, easing, loops, intent]);
+  const lastSpecKeyRef = useRef(specKey);
+  useEffect(() => {
+    if (lastSpecKeyRef.current === specKey) return;
+    lastSpecKeyRef.current = specKey;
+    const timer = window.setTimeout(() => {
+      run(activeTab, editorCodeRef.current[activeTab] ?? "");
+    }, 350);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [specKey]);
 
   // Listen for messages from the preview iframe.
   useEffect(() => {
@@ -199,6 +226,7 @@ export function AnalyzeStudio({
           previewTimeoutRef.current = null;
         }
         setElapsedMs(Math.max(0, Math.round(performance.now() - runStartRef.current)));
+        setPreviewMode(data.mode ?? "code");
         setStatus((current) => (current === "error" ? "error" : "ready"));
         return;
       }
@@ -281,7 +309,8 @@ export function AnalyzeStudio({
     document.body.appendChild(anchor);
     anchor.click();
     document.body.removeChild(anchor);
-    URL.revokeObjectURL(url);
+    // Revoking synchronously can cancel the download in Safari/Firefox.
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }, [activeTab, editorCode]);
 
   return (
@@ -309,7 +338,7 @@ export function AnalyzeStudio({
           <button
             type="button"
             onClick={() => setDrawerOpen((open) => !open)}
-            aria-label="Toggle spec and audit panel"
+            aria-label="Spec &amp; audit"
             aria-expanded={drawerOpen}
             aria-controls="spec-audit-drawer"
             className={cn(
@@ -325,7 +354,7 @@ export function AnalyzeStudio({
           <button
             type="button"
             onClick={onNewAnalysis}
-            aria-label="Start new analysis"
+            aria-label="New analysis"
             className="inline-flex min-h-[44px] items-center gap-1.5 rounded-md border border-hairline px-2.5 font-mono text-[11px] text-ink-2 transition hover:border-[var(--accent-border)] hover:text-ink sm:min-h-0 sm:h-8"
           >
             <PanelLeftClose className="size-3.5" aria-hidden="true" />
@@ -403,7 +432,10 @@ export function AnalyzeStudio({
               <div
                 id="studio-preview"
                 className={cn(
-                  "min-h-[320px] scroll-mt-16",
+                  // A definite height: the pane's iframe/console body is
+                  // absolutely positioned and collapses to 0px under a
+                  // min-height-only parent.
+                  "h-[clamp(320px,62svh,560px)] scroll-mt-16",
                   mobilePane !== "preview" && "hidden",
                 )}
                 aria-hidden={mobilePane !== "preview"}
@@ -412,6 +444,8 @@ export function AnalyzeStudio({
                   srcDoc={srcDoc}
                   runId={runId}
                   status={status}
+                  mode={previewMode}
+                  frameworkLabel={activeTab}
                   elapsedMs={elapsedMs}
                   consoleEntries={consoleEntries}
                   errorCount={errorCount}
@@ -464,6 +498,8 @@ export function AnalyzeStudio({
                 srcDoc={srcDoc}
                 runId={runId}
                 status={status}
+                mode={previewMode}
+                frameworkLabel={activeTab}
                 elapsedMs={elapsedMs}
                 consoleEntries={consoleEntries}
                 errorCount={errorCount}

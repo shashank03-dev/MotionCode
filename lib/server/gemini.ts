@@ -145,7 +145,15 @@ Use this exact shape:
   "gsap": "GSAP implementation string",
   "framer_motion": "Framer Motion implementation string",
   "react_spring": "React Spring implementation string"
-}`;
+}
+
+Code requirements (each snippet must run on its own in a live preview):
+- Target the animated element with the class "element" in every snippet.
+- css: complete rules plus @keyframes; bind the animation (or a transition with its :hover/state rule) to .element.
+- gsap: ES module that imports gsap from "gsap" and animates ".element" at the top level.
+- framer_motion: TSX module with a default-exported React component built from motion elements, importing from "framer-motion".
+- react_spring: TSX module with a default-exported React component using useSpring and animated from "@react-spring/web".
+- Use the detected duration, delay and easing, and respect prefers-reduced-motion.`;
 }
 
 export async function analyzeFramesWithGemini(

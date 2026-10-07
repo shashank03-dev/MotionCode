@@ -49,7 +49,11 @@ export function consoleBridgeScript(runId: number): string {
     var reason = event && event.reason ? (event.reason.stack || event.reason.message || event.reason) : "Unhandled rejection";
     post({ type: "error", text: String(reason) });
   });
-  window.__previewReady = function () { post({ type: "ready" }); };
+  // mode: "code" when the user's code is what's playing, "fallback" when the
+  // spec-driven keyframes stand in for it.
+  window.__previewReady = function (mode) {
+    post({ type: "ready", mode: mode === "fallback" ? "fallback" : "code" });
+  };
 })();
 `;
 }

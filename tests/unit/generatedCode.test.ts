@@ -8,6 +8,7 @@ import {
   getGeneratedOutput,
   highlightCode,
   prettifyCode,
+  type CodeTab,
 } from "@/lib/generatedCode";
 
 const result: AnalysisResult = {
@@ -82,6 +83,52 @@ describe("generated code helpers", () => {
     expect(prettifyCode(".el{opacity:1;}", "CSS")).toContain(".el {\n");
     expect(prettifyCode("const s={from:{scale:1},to:{scale:.9}};", "React Spring"))
       .toContain("const s={\n");
+  });
+
+  it("formats without touching strings, comments, regexes or template literals", () => {
+    const cases: Array<[string, CodeTab]> = [
+      [
+        ".el{transform:scale(.95);opacity:.5}@keyframes a{from{opacity:0}to{opacity:1}}@media (prefers-reduced-motion: reduce){.el{animation:none}}",
+        "CSS",
+      ],
+      ['.el{background:url("data:image/png;base64,abc");transition:all .3s cubic-bezier(0.4, 0, 0.2, 1)}', "CSS"],
+      [
+        "import gsap from 'gsap';gsap.to('.el',{scale:.95,ease:\"cubic-bezier(0.4, 0, 0.2, 1)\"});for(let i=0;i<3;i++){console.log(`a;{${i}}`)}",
+        "GSAP",
+      ],
+      ["const s={from:{scale:1},to:{scale:.9}};const r=/;{/g;", "React Spring"],
+      ["const t = `line1\n    keep;{ indent }\n`; // c;{\n/* a;{\n   b */ x();", "GSAP"],
+    ];
+
+    for (const [code, tab] of cases) {
+      const once = prettifyCode(code, tab);
+      // Idempotent, and only whitespace changes.
+      expect(prettifyCode(once, tab)).toBe(once);
+      expect(once.replace(/\s+/g, "")).toBe(code.replace(/\s+/g, ""));
+      if (tab !== "CSS") {
+        expect(() => new Function(once.replace(/^import[^;]*;/gm, ""))).not.toThrow();
+      }
+    }
+
+    // Template literal contents keep their exact indentation.
+    expect(prettifyCode("const t = `a\n    keep;\n`;", "GSAP")).toContain("\n    keep;\n");
+  });
+
+  it("only re-indents hand-structured JSX instead of re-breaking it", () => {
+    const code = [
+      'import { motion } from "framer-motion";',
+      "export default function Card({ children }) {",
+      "return <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>{children}</motion.div>;",
+      "}",
+    ].join("\n");
+    expect(prettifyCode(code, "Framer Motion")).toBe(
+      [
+        'import { motion } from "framer-motion";',
+        "export default function Card({ children }) {",
+        "  return <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>{children}</motion.div>;",
+        "}",
+      ].join("\n"),
+    );
   });
 
   it("escapes HTML while highlighting code tokens", () => {

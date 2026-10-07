@@ -10,9 +10,17 @@ export type ConsoleEntry = {
   at: number;
 };
 
+export type PreviewMode = "code" | "fallback";
+
 /** Messages the iframe posts back to the parent window. */
 export type PreviewMessage =
-  | { source: "motioncode-preview"; type: "ready"; runId: number }
+  | {
+      source: "motioncode-preview";
+      type: "ready";
+      runId: number;
+      /** Whether the user's code or the spec-driven fallback is playing. */
+      mode?: PreviewMode;
+    }
   | {
       source: "motioncode-preview";
       type: "console";
@@ -51,6 +59,7 @@ export function isPreviewMessage(value: unknown): value is PreviewMessage {
     runId?: unknown;
     text?: unknown;
     level?: unknown;
+    mode?: unknown;
   };
   if (candidate.source !== "motioncode-preview") return false;
   if (
@@ -73,6 +82,9 @@ export function isPreviewMessage(value: unknown): value is PreviewMessage {
     ) {
       return false;
     }
+  }
+  if ("mode" in candidate && candidate.mode !== undefined) {
+    if (candidate.mode !== "code" && candidate.mode !== "fallback") return false;
   }
   return true;
 }

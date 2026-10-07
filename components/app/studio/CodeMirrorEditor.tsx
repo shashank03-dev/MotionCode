@@ -2,7 +2,7 @@
 
 import { css } from "@codemirror/lang-css";
 import { javascript } from "@codemirror/lang-javascript";
-import { Compartment, EditorState } from "@codemirror/state";
+import { Compartment, EditorState, Prec } from "@codemirror/state";
 import { keymap } from "@codemirror/view";
 import { basicSetup, EditorView } from "codemirror";
 import { useEffect, useRef } from "react";
@@ -52,7 +52,9 @@ export function CodeMirrorEditor({
   useEffect(() => {
     if (!hostRef.current) return;
 
-    const runKeymap = keymap.of([
+    // Highest precedence: basicSetup's default keymap binds Mod-Enter to
+    // insertBlankLine, which would otherwise swallow the Run shortcut.
+    const runKeymap = Prec.highest(keymap.of([
       {
         key: "Mod-Enter",
         run: () => {
@@ -60,7 +62,7 @@ export function CodeMirrorEditor({
           return true;
         },
       },
-    ]);
+    ]));
 
     const state = EditorState.create({
       doc: value,
