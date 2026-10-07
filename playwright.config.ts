@@ -49,5 +49,26 @@ export default defineConfig({
         hasTouch: true,
       },
     },
+    // Cross-engine coverage: Gecko (Firefox) and WebKit (Safari, incl. iOS).
+    {
+      name: "desktop-firefox",
+      use: {
+        ...devices["Desktop Firefox"],
+        viewport: { width: 1280, height: 800 },
+      },
+    },
+    {
+      name: "desktop-webkit",
+      use: {
+        ...devices["Desktop Safari"],
+        viewport: { width: 1280, height: 800 },
+      },
+    },
+    {
+      name: "iphone-safari",
+      use: {
+        ...devices["iPhone 14"],
+      },
+    },
   ],
 });

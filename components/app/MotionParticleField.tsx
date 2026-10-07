@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Geometry, Mesh, Program, Renderer } from "ogl";
+import { canUseWebGL } from "@/lib/webgl";
 
 /**
  * GPU particle field that *is* the analysis progress indicator.
@@ -258,6 +259,10 @@ export function MotionParticleField({
     const count = isMobile || saveData ? 1500 : COUNT;
     const dprCap = isMobile ? 1.0 : 1.75;
     const dpr = Math.min(window.devicePixelRatio || 1, dprCap);
+
+    // No WebGL (blocklisted GPU, disabled by privacy settings): keep the
+    // static fallback without ogl logging a console error.
+    if (!canUseWebGL()) return;
 
     let renderer: Renderer;
     try {

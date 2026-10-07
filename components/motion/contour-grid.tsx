@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Renderer, Program, Mesh, Triangle, Vec2 } from "ogl";
+import { canUseWebGL } from "@/lib/webgl";
 
 const VERT = /* glsl */ `
   attribute vec2 uv;
@@ -224,6 +225,10 @@ export function ContourGrid() {
     const el = ref.current;
     if (!el) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    // No WebGL (blocklisted GPU, disabled by privacy settings): keep the
+    // static fallback without ogl logging a console error.
+    if (!canUseWebGL()) return;
 
     let renderer: Renderer;
     // Scaled-down on mobile: cap DPR to 1.0 under 768px width.

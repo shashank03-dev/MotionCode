@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Renderer, Program, Mesh, Triangle, Vec2, RenderTarget } from "ogl";
+import { canUseWebGL } from "@/lib/webgl";
 
 /**
  * AuraCursor — a real-time incompressible fluid simulation (Navier–Stokes,
@@ -215,6 +216,10 @@ export function AuraCursor() {
     const simRes = isCoarse ? 64 : SIM_RESOLUTION;
     const dyeRes = isCoarse ? 256 : DYE_RESOLUTION;
     const pressureIters = isCoarse ? 10 : PRESSURE_ITERATIONS;
+
+    // No WebGL (blocklisted GPU, disabled by privacy settings): keep the
+    // static fallback without ogl logging a console error.
+    if (!canUseWebGL()) return;
 
     let renderer: Renderer;
     try {

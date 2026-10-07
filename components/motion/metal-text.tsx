@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Renderer, Program, Mesh, Triangle, Texture } from "ogl";
 import { cn } from "@/lib/utils";
+import { canUseWebGL } from "@/lib/webgl";
 
 /**
  * MetalText — real animated WebGL chrome. The visible text is rendered to an
@@ -112,6 +113,10 @@ export function MetalText({ text, className, interactive = false, blue = 0.5 }: 
     // ogl throws from its constructor when getContext() returns null, so this
     // must be guarded or the throw escapes to the route error boundary and
     // takes the whole page down.
+    // No WebGL (blocklisted GPU, disabled by privacy settings): keep the
+    // static fallback without ogl logging a console error.
+    if (!canUseWebGL()) return;
+
     let renderer: Renderer;
     try {
       renderer = new Renderer({

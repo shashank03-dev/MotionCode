@@ -144,9 +144,11 @@ async function openHarness(page: Page) {
 
 test.describe("studio preview runtime", () => {
   test("runs generated code for every framework under the app CSP", async ({ page }, testInfo) => {
+    // Viewport-independent, but engine-dependent (sandboxed srcdoc frames,
+    // CSP inheritance, postMessage): run once per browser engine on desktop.
     test.skip(
-      testInfo.project.name !== "desktop-chromium",
-      "Runtime behavior is viewport-independent; run once.",
+      Boolean(testInfo.project.use.isMobile),
+      "Runtime behavior is viewport-independent; covered by desktop projects.",
     );
     await openHarness(page);
 
