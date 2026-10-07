@@ -248,11 +248,13 @@ export function HowItWorks() {
   });
 
   return (
-    <>
+    // The anchor wraps both variants so #how resolves at every breakpoint
+    // (the pinned section is display:none below lg).
+    <div id="how">
       {/* Pinned horizontal sequence — large screens */}
       <section
-        id="how"
         ref={root}
+        data-how-pinned
         className="relative hidden lg:block"
         style={{ height: "320vh" }}
       >
@@ -308,6 +310,6 @@ export function HowItWorks() {
           </Reveal>
         ))}
       </section>
-    </>
+    </div>
   );
 }

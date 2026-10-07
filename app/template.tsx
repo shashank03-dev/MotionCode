@@ -1,40 +1,43 @@
 "use client";
 
-import { AnimatePresence, motion, MotionConfig } from "framer-motion";
-import { usePathname } from "next/navigation";
+import { motion, MotionConfig } from "framer-motion";
+import { useEffect, useState } from "react";
 
-import { useDeviceTier } from "@/lib/device-tier";
+import { detectDeviceTier } from "@/lib/device-tier";
 
+// Flipped after the first template mount on the client. The server never runs
+// effects, so it always renders the "first mount" (no fade) markup.
+let hasHydrated = false;
+
+/**
+ * Next.js creates a fresh template instance for each navigation, so a mount is
+ * the transition: client-side navigations fade the new page in. The tree shape
+ * never changes after mount. Swapping wrappers (or keying an AnimatePresence
+ * by pathname) remounts the whole page, which drops in-progress state and,
+ * while an exit animation runs, renders the current route twice.
+ */
 export default function Template({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const deviceTier = useDeviceTier();
+  // The first paint matches SSR (no fade, content visible immediately). Later
+  // mounts are client-only, so reading the device tier synchronously is safe;
+  // low-end / data-saving devices skip the tween entirely.
+  const [fadeIn] = useState(() => hasHydrated && detectDeviceTier() === "high");
 
-  // On low-end / data-saving devices, skip the per-navigation framer-motion
-  // mount + opacity tween entirely so every route change is instant. The hook
-  // returns "high" on the server and first client paint (so SSR markup matches),
-  // then settles after hydration — at which point a low-tier device drops the
-  // animated wrapper and renders children directly.
-  if (deviceTier === "low") {
-    return <div className="h-full w-full">{children}</div>;
-  }
+  useEffect(() => {
+    hasHydrated = true;
+  }, []);
 
   // `reducedMotion="user"` lets framer-motion skip the transition for users who
-  // prefer reduced motion, without branching the render tree on a client-only
-  // value (which causes an SSR/client hydration mismatch).
+  // prefer reduced motion without branching the render tree.
   return (
     <MotionConfig reducedMotion="user">
-      <AnimatePresence initial={false}>
-        <motion.div
-          key={pathname}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.18, ease: "easeOut" }}
-          className="h-full w-full"
-        >
-          {children}
-        </motion.div>
-      </AnimatePresence>
+      <motion.div
+        initial={fadeIn ? { opacity: 0 } : false}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.18, ease: "easeOut" }}
+        className="h-full w-full"
+      >
+        {children}
+      </motion.div>
     </MotionConfig>
   );
 }

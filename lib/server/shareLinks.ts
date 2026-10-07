@@ -169,6 +169,13 @@ export function generateShareToken() {
   return randomBytes(32).toString("base64url");
 }
 
+/** 32 random bytes as base64url is always 43 URL-safe characters. */
+const SHARE_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
+
+export function isWellFormedShareToken(token: string) {
+  return SHARE_TOKEN_PATTERN.test(token);
+}
+
 export function hashShareToken(token: string) {
   return createHash("sha256").update(token, "utf8").digest("hex");
 }
@@ -270,6 +277,18 @@ export async function resolveSharedProjectByToken(
   token: string,
   options: ShareLinkOptions = {},
 ): Promise<SharedProject | null> {
+  // Tokens we never could have issued are rejected without a database read,
+  // so guessed or mangled links can't be used to load the share table.
+  if (!isWellFormedShareToken(token)) {
+    await observeShareAccess({
+      outcome: "not_found",
+      reason: "malformed_token",
+      token,
+    });
+
+    return null;
+  }
+
   const client = shareClient(options.client);
   const link = await findShareLinkByTokenHash(client, hashShareToken(token));
 

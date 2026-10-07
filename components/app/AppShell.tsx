@@ -505,6 +505,13 @@ export function AppShell({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Keys typed into the code editor, spec fields or any other text input
+      // belong to that field: digits must not switch tabs, and Cmd/Ctrl+Enter
+      // in the editor means "Run preview", not "re-analyze" (which spends quota).
+      if (event.defaultPrevented || isEditableTarget(event.target)) {
+        return;
+      }
+
       if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
         if (!loading && frames.length > 0 && stage !== "extracting") {
           void handleAnalyze();
@@ -516,7 +523,13 @@ export function AppShell({
         fileInputRef.current?.click();
       }
 
-      if (["1", "2", "3", "4"].includes(event.key) && result) {
+      if (
+        ["1", "2", "3", "4"].includes(event.key) &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey &&
+        result
+      ) {
         setActiveTab(CODE_TABS[Number.parseInt(event.key, 10) - 1]);
       }
     };
@@ -871,4 +884,20 @@ function readFreeSaveAcknowledged(): boolean {
 
 function formatMegabytes(bytes: number) {
   return Math.round(bytes / (1024 * 1024));
+}
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  if (target.isContentEditable || target.closest("textarea, select, .cm-editor")) {
+    return true;
+  }
+
+  // Text-like inputs only: range/checkbox/file controls keep the shortcuts.
+  return (
+    target instanceof HTMLInputElement &&
+    ["text", "number", "search", "email", "url", "tel", "password"].includes(target.type)
+  );
 }

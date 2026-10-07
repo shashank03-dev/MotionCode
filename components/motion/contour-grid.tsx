@@ -327,8 +327,9 @@ export function ContourGrid() {
       program.uniforms.uScrollPx.value = window.scrollY;
 
       // Relight the field behind the pinned "how it works" stage. Only the
-      // desktop layout renders #how; when absent the band stays inactive.
-      const how = document.getElementById("how");
+      // desktop layout renders the pinned stage (zero-height when hidden
+      // below lg); when absent the band stays inactive.
+      const how = document.querySelector("#how [data-how-pinned]");
       if (how) {
         const rect = how.getBoundingClientRect();
         const top = rect.top + window.scrollY;
