@@ -110,8 +110,16 @@ test.describe("application responsive baseline", () => {
     const previewTab = studioView.getByRole("tab", { name: "Preview" });
     await expect(codeTab).toHaveAttribute("aria-selected", "true");
 
-    const editorPane = page.getByRole("region", { name: "Generated code editor" });
-    const previewPane = page.getByRole("region", { name: "Live preview" });
+    // includeHidden: the inactive pane is display:none + aria-hidden, which
+    // role queries skip by default; both must stay mounted.
+    const editorPane = page.getByRole("region", {
+      name: "Generated code editor",
+      includeHidden: true,
+    });
+    const previewPane = page.getByRole("region", {
+      name: "Live preview",
+      includeHidden: true,
+    });
     await expect(editorPane).toHaveCount(1);
     await expect(previewPane).toHaveCount(1);
     await expect(editorPane).toBeVisible();

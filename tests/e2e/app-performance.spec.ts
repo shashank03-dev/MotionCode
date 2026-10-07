@@ -104,6 +104,12 @@ test.describe("application performance baseline", () => {
 
     await expect(page.getByRole("heading", { name: "motion target" })).toBeVisible();
     const resultVisibility = Date.now();
+    // Narrow viewports show one studio pane at a time; surface the preview so
+    // its status strip is visible.
+    const studioView = page.getByRole("tablist", { name: "Studio view" });
+    if (await studioView.isVisible()) {
+      await studioView.getByRole("tab", { name: "Preview" }).click();
+    }
     let previewReadiness: number | null = null;
     let previewTimeout: number | null = null;
     try {
@@ -189,6 +195,9 @@ test.describe("application performance baseline", () => {
       "WebGL is unavailable in this browser",
     );
     const initialCanvasCount = await field.locator("canvas").count();
+    // On phone-height viewports the field starts below the fold, where it
+    // (correctly) keeps its loop paused; bring it on screen first.
+    await field.scrollIntoViewIfNeeded();
 
     await page.evaluate(() => {
       let count = 0;

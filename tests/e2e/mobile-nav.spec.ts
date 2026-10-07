@@ -76,7 +76,12 @@ test.describe("landing hamburger at 360px", () => {
     await trigger(page).click();
     await expect(menu(page)).toBeVisible();
 
-    await backdrop(page).click();
+    // Tap the dimmed area below the menu panel, as a user would; the panel
+    // itself covers the backdrop's center.
+    const viewport = page.viewportSize();
+    await backdrop(page).click({
+      position: { x: 12, y: (viewport?.height ?? 640) - 12 },
+    });
 
     await expectClosed(page);
   });

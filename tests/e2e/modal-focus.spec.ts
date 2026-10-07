@@ -21,14 +21,14 @@ test.describe("consent alertdialog focus", () => {
     const diagnostics = installAppDiagnostics(page);
     await openInteractiveApp(page);
 
-    const analyzeButton = page.getByRole("button", { name: /^Analyze$/ });
-    await expect(analyzeButton).toBeVisible();
-    await analyzeButton.focus();
-    await expect(analyzeButton).toBeFocused();
+    // The dropzone (role=button) is the invoker that opens the file picker;
+    // Analyze stays disabled until frames exist, so it can't hold focus.
+    const dropzone = page.getByTestId("upload-dropzone");
+    await expect(dropzone).toBeVisible();
+    await dropzone.focus();
+    await expect(dropzone).toBeFocused();
 
-    const fileInput = page
-      .getByTestId("upload-dropzone")
-      .locator('input[type="file"]');
+    const fileInput = dropzone.locator('input[type="file"]');
     await expect(async () => {
       await fileInput.setInputFiles({
         buffer: tinyGif,
@@ -71,7 +71,7 @@ test.describe("consent alertdialog focus", () => {
     // Escape discards the upload and returns focus to the invoker.
     await page.keyboard.press("Escape");
     await expect(dialog).toHaveCount(0);
-    await expect(analyzeButton).toBeFocused();
+    await expect(dropzone).toBeFocused();
 
     await assertAppDiagnostics(page, diagnostics);
   });

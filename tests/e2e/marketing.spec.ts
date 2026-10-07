@@ -48,17 +48,19 @@ test.describe("marketing surface", () => {
     // early yields a null or partially-styled box.
     const initialNavHeight = await stableHeight(nav);
 
+    // Section links collapse into the hamburger below md; their hrefs are
+    // still wired (mobile-nav.spec.ts covers the open menu).
     await expect(
-      nav.getByRole("link", { name: /^Features$/i }),
+      nav.getByRole("link", { name: /^Features$/i, includeHidden: true }),
     ).toHaveAttribute("href", "#features");
     await expect(
-      nav.getByRole("link", { name: /^How it works$/i }),
+      nav.getByRole("link", { name: /^How it works$/i, includeHidden: true }),
     ).toHaveAttribute("href", "#how");
     await expect(
-      nav.getByRole("link", { name: /^Pricing$/i }),
+      nav.getByRole("link", { name: /^Pricing$/i, includeHidden: true }),
     ).toHaveAttribute("href", "#pricing");
     await expect(
-      nav.getByRole("link", { name: /^Support$/i }),
+      nav.getByRole("link", { name: /^Support$/i, includeHidden: true }),
     ).toHaveAttribute("href", "/support");
     await expect(
       nav.getByRole("link", { name: /Start analyzing/i }),
