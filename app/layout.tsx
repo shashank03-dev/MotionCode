@@ -111,7 +111,10 @@ export default function RootLayout({
         </a>
         <div id="main" tabIndex={-1}>{children}</div>
         {modal}
-        <SpeedInsights />
+        {/* Speed Insights is a Vercel service: only Vercel deployments serve
+            its script. Elsewhere (dev, CI, self-hosted builds) the request is
+            blocked or aborted, which failed every diagnostics-asserting e2e. */}
+        {process.env.VERCEL ? <SpeedInsights /> : null}
       </body>
     </html>
   );
