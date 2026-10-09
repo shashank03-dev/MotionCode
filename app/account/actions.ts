@@ -48,6 +48,25 @@ async function createAccountRequest(kind: RequestKind) {
 
   const request = REQUEST_COPY[kind];
   const client = createTrustedSupabaseServerClient();
+
+  // Repeat clicks used to file one ticket per click; an unresolved request of
+  // the same kind already covers this one.
+  const existing = await client
+    .from("support_tickets")
+    .select("id,status")
+    .eq("user_id", user.id)
+    .eq("subject", request.subject)
+    .limit(25);
+
+  if (existing.error) {
+    throw new Error("Failed to check existing support tickets.");
+  }
+
+  const rows = (existing.data ?? []) as Array<{ status?: unknown }>;
+  if (rows.some((row) => row.status !== "closed")) {
+    redirect(`/account?request=${request.redirectValue}`);
+  }
+
   const result = await client.from("support_tickets").insert({
     body: request.body,
     subject: request.subject,
