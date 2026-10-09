@@ -62,12 +62,9 @@ export function FramesInstrument() {
         <path d="M278 24 h-8 v8 M362 24 h8 v8 M278 108 h-8 v-8 M362 108 h8 v-8" />
       </g>
       <rect x="270" y="24" width="100" height="84" fill="none" stroke="var(--accent)" className="bn-gate" />
-      <text x="320" y="16" textAnchor="middle" className="fill-[var(--ink-3)] font-mono text-[9px] uppercase tracking-[0.16em]">
-        extract
-      </text>
       {/* motion delta per frame — peaks are where the motion changes state */}
       {DELTAS.map((d, i) => {
-        const x = 20 + i * 12.5;
+        const x = 20 + i * 10.8;
         const key = i % 16 === 0;
         return (
           <rect
@@ -85,6 +82,12 @@ export function FramesInstrument() {
         );
       })}
       <line x1="20" x2="620" y1="186.5" y2="186.5" {...ink(0.14)} />
+      <g className="font-mono text-[8.5px] uppercase tracking-[0.14em]">
+        <rect x="548" y="140" width="6" height="6" rx="1" fill="var(--accent)" />
+        <text x="560" y="146" className="fill-[var(--ink-3)]">keyframe</text>
+        <rect x="548" y="154" width="6" height="6" rx="1" fill="var(--text)" fillOpacity="0.25" />
+        <text x="560" y="160" className="fill-[var(--ink-3)]">motion Δ</text>
+      </g>
       <line x1="20" x2="20" y1="134" y2="190" stroke="var(--accent)" strokeOpacity="0.7" className="bn-scan" />
     </svg>
   );
@@ -112,14 +115,8 @@ function Spinner({ x, y }: { x: number; y: number }) {
 export function SpecInstrument() {
   return (
     <svg viewBox="0 0 320 200" className="h-full w-full" aria-hidden>
-      <text x="20" y="26" className="fill-[var(--ink-3)] font-mono text-[9px] uppercase tracking-[0.16em]">
-        motion.spec
-      </text>
-      <text x="300" y="26" textAnchor="end" className="fill-[var(--ink-3)] font-mono text-[9px] uppercase tracking-[0.16em]">
-        v1
-      </text>
       {SPEC_ROWS.map(([key, value], i) => {
-        const y = 44 + i * 38;
+        const y = 22 + i * 40;
         const style = v({ "--d": `${(i * 0.45).toFixed(2)}s` });
         return (
           <g key={key}>
@@ -204,8 +201,8 @@ const CANDIDATES = [
 export function EasingInstrument() {
   const R = 78;
   return (
-    <div className="relative flex h-full w-full flex-col">
-      <div className="relative mx-auto aspect-square w-full max-w-[280px]">
+    <div className="relative flex h-full w-full flex-col justify-center gap-5">
+      <div className="relative mx-auto aspect-square w-full max-w-[300px]">
         <svg viewBox="0 0 240 240" className="absolute inset-0 h-full w-full" aria-hidden>
           <g className="bn-rotate" style={{ transformOrigin: "120px 120px" }}>
             {Array.from({ length: 72 }, (_, i) => {
@@ -242,10 +239,10 @@ export function EasingInstrument() {
           <span className="mt-2 font-mono text-[9px] uppercase tracking-[0.18em] text-ink-3">% match</span>
         </div>
       </div>
-      <p className="mt-4 text-center font-mono text-[10.5px] text-ink-2">
+      <p className="text-center font-mono text-[10.5px] text-ink-2">
         fit <span className="text-ink">cubic-bezier(0.16, 1, 0.3, 1)</span>
       </p>
-      <ul className="mt-auto space-y-2.5 px-1 pt-6 font-mono text-[10.5px]">
+      <ul className="space-y-2.5 border-t border-hairline px-1 pt-5 font-mono text-[10.5px]">
         {CANDIDATES.map((c, i) => (
           <li key={c.name} className="grid grid-cols-[72px_1fr_36px] items-center gap-3">
             <span className={c.win ? "text-ink" : "text-ink-3"}>{c.name}</span>
@@ -264,40 +261,51 @@ export function EasingInstrument() {
 }
 
 /* 05 — Workspaces: references, specs and code kept together, fanned out. */
-const FILES: { name: string; curve: Bezier }[] = [
-  { name: "nav-capsule.mov", curve: [0.65, 0, 0.35, 1] },
-  { name: "modal-spring.gif", curve: [0.34, 1.56, 0.64, 1] },
-  { name: "hero-reveal.mp4", curve: EXPO },
+const FILES: { name: string; meta: string; curve: Bezier }[] = [
+  { name: "nav-capsule.mov", meta: "ease-in-out · 600ms", curve: [0.65, 0, 0.35, 1] },
+  { name: "toast-in.webm", meta: "ease-out · 240ms", curve: [0, 0, 0.58, 1] },
+  { name: "modal-spring.gif", meta: "back-out · 380ms", curve: [0.34, 1.56, 0.64, 1] },
+  { name: "hero-reveal.mp4", meta: "expo-out · 420ms", curve: EXPO },
 ];
 
 export function WorkspaceInstrument() {
+  const cx = 280;
   return (
-    <svg viewBox="0 0 320 200" className="h-full w-full" aria-hidden>
-      <text x="20" y="26" className="fill-[var(--ink-3)] font-mono text-[9px] uppercase tracking-[0.16em]">
-        workspace / landing-v2
-      </text>
-      <circle cx="296" cy="22" r="3" fill="var(--accent)" className="animate-pulse-soft" />
+    <svg viewBox="0 0 560 200" className="h-full w-full" aria-hidden>
       {FILES.map((f, i) => {
         const [x1, y1, x2, y2] = f.curve;
-        const cx = 160;
-        const style = v({ "--fx": `${(i - 1) * 78}px`, "--fr": `${(i - 1) * 7}deg`, "--d": `${(i * 0.06).toFixed(2)}s` });
+        const top = i === FILES.length - 1;
+        const off = i - (FILES.length - 1) / 2;
+        const style = v({ "--fx": `${(off * 124).toFixed(0)}px`, "--fr": `${(off * 4).toFixed(1)}deg`, "--d": `${(i * 0.05).toFixed(2)}s` });
         return (
           <g key={f.name} className="bn-card" style={style}>
-            <rect x={cx - 64} y="52" width="128" height="120" rx="8" fill={i === 2 ? "#26241f" : "#1a1916"} {...ink(i === 2 ? 0.45 : 0.22)} />
-            <rect x={cx - 52} y="64" width="104" height="64" rx="3" fill="#10100e" {...ink(0.08)} />
+            <rect x={cx - 58} y="26" width="116" height="150" rx="8" fill={top ? "#26241f" : "#1a1916"} {...ink(top ? 0.45 : 0.2)} />
+            <rect x={cx - 48} y="36" width="96" height="70" rx="4" fill="#0c0c0b" {...ink(0.08)} />
+            {[0.25, 0.5, 0.75].map((g) => (
+              <line key={g} x1={cx - 48} x2={cx + 48} y1={36 + 70 * g} y2={36 + 70 * g} {...ink(0.05)} />
+            ))}
             <path
-              d={`M${cx - 44} 120 C ${cx - 44 + 88 * x1} ${120 - 48 * y1}, ${cx - 44 + 88 * x2} ${120 - 48 * y2}, ${cx + 44} 72`}
+              d={`M${cx - 40} 98 C ${cx - 40 + 80 * x1} ${98 - 54 * y1}, ${cx - 40 + 80 * x2} ${98 - 54 * y2}, ${cx + 40} 44`}
               fill="none"
-              stroke={i === 2 ? "var(--accent)" : "var(--text)"}
-              strokeOpacity={i === 2 ? 1 : 0.5}
+              stroke={top ? "var(--accent)" : "var(--text)"}
+              strokeOpacity={top ? 1 : 0.45}
               strokeWidth="1.5"
+              strokeLinecap="round"
             />
-            <text x={cx - 52} y="146" className="fill-[var(--text)] font-mono text-[9px]">
+            <text x={cx - 48} y="126" className="fill-[var(--text)] font-mono text-[9px]">
               {f.name}
             </text>
-            <text x={cx - 52} y="160" className="fill-[var(--ink-3)] font-mono text-[8px] uppercase tracking-[0.12em]">
-              spec · css · gsap
+            <text x={cx - 48} y="140" className="fill-[var(--ink-3)] font-mono text-[8px]">
+              {f.meta}
             </text>
+            {["spec", "css", "gsap"].map((t, k) => (
+              <g key={t}>
+                <rect x={cx - 48 + k * 33} y="150" width="29" height="14" rx="7" fill="none" {...ink(top ? 0.3 : 0.15)} />
+                <text x={cx - 33.5 + k * 33} y="160" textAnchor="middle" className="fill-[var(--ink-3)] font-mono text-[7px] uppercase">
+                  {t}
+                </text>
+              </g>
+            ))}
           </g>
         );
       })}
@@ -306,33 +314,61 @@ export function WorkspaceInstrument() {
 }
 
 /* 06 — Reduced motion: the same change, with and without the travel. */
+const TRAVEL = 432;
+const GHOSTS = Array.from({ length: 7 }, (_, i) => i / 6);
+
 export function ReducedInstrument() {
+  const lanes = [
+    { y: 62, label: "motion: full", spec: "translateX · 420ms · expo-out" },
+    { y: 148, label: "prefers-reduced-motion", spec: "opacity · 200ms · no travel" },
+  ];
   return (
-    <svg viewBox="0 0 320 200" className="h-full w-full" aria-hidden>
-      {[
-        { y: 66, label: "motion: full", cls: "bn-travel" },
-        { y: 146, label: "prefers-reduced-motion", cls: "bn-swap" },
-      ].map((lane) => (
+    <svg viewBox="0 0 560 200" className="h-full w-full" aria-hidden>
+      {lanes.map((lane, l) => (
         <g key={lane.label}>
-          <text x="20" y={lane.y - 24} className="fill-[var(--ink-3)] font-mono text-[9px] uppercase tracking-[0.16em]">
+          <text x="40" y={lane.y - 26} className="fill-[var(--text)] font-mono text-[9px] uppercase tracking-[0.16em]">
             {lane.label}
           </text>
-          <line x1="20" x2="300" y1={lane.y} y2={lane.y} {...ink(0.14)} strokeDasharray="2 4" />
-          <rect x="20" y={lane.y - 12} width="24" height="24" rx="6" fill="none" {...ink(0.14)} />
-          <rect x="276" y={lane.y - 12} width="24" height="24" rx="6" fill="none" {...ink(0.14)} />
-          {lane.cls === "bn-travel" ? (
-            <g className="bn-travel">
-              <rect x="20" y={lane.y - 12} width="24" height="24" rx="6" fill="#26241f" stroke="var(--text)" strokeOpacity="0.6" />
-              <circle cx="32" cy={lane.y} r="3" fill="var(--accent)" />
-            </g>
+          <text x="520" y={lane.y - 26} textAnchor="end" className="fill-[var(--ink-3)] font-mono text-[9px]">
+            {lane.spec}
+          </text>
+          <line x1="40" x2="520" y1={lane.y} y2={lane.y} {...ink(0.12)} strokeDasharray="2 4" />
+          {[0, 0.25, 0.5, 0.75, 1].map((t) => (
+            <line key={t} x1={52 + TRAVEL * t} x2={52 + TRAVEL * t} y1={lane.y + 16} y2={lane.y + 20} {...ink(0.25)} />
+          ))}
+          <rect x="40" y={lane.y - 12} width="24" height="24" rx="6" fill="none" {...ink(0.14)} />
+          <rect x={40 + TRAVEL} y={lane.y - 12} width="24" height="24" rx="6" fill="none" {...ink(0.14)} />
+          {l === 0 ? (
+            <>
+              <g className="bn-ghosts">
+              {GHOSTS.map((f, i) => (
+                <rect
+                  key={i}
+                  x={r2(40 + TRAVEL * bezierAt(EXPO, f))}
+                  y={lane.y - 12}
+                  width="24"
+                  height="24"
+                  rx="6"
+                  fill="none"
+                  stroke="var(--text)"
+                  className="bn-ghost"
+                  style={v({ "--d": `${(f * 1.152).toFixed(3)}s`, "--o": (0.12 + i * 0.04).toFixed(2) })}
+                />
+              ))}
+              </g>
+              <g className="bn-travel">
+                <rect x="40" y={lane.y - 12} width="24" height="24" rx="6" fill="#26241f" stroke="var(--text)" strokeOpacity="0.6" />
+                <circle cx="52" cy={lane.y} r="3" fill="var(--accent)" />
+              </g>
+            </>
           ) : (
             <>
               <g className="bn-swap-out">
-                <rect x="20" y={lane.y - 12} width="24" height="24" rx="6" fill="#26241f" stroke="var(--text)" strokeOpacity="0.6" />
+                <rect x="40" y={lane.y - 12} width="24" height="24" rx="6" fill="#26241f" stroke="var(--text)" strokeOpacity="0.6" />
               </g>
               <g className="bn-swap-in">
-                <rect x="276" y={lane.y - 12} width="24" height="24" rx="6" fill="#26241f" stroke="var(--text)" strokeOpacity="0.6" />
-                <circle cx="288" cy={lane.y} r="3" fill="var(--accent)" />
+                <rect x={40 + TRAVEL} y={lane.y - 12} width="24" height="24" rx="6" fill="#26241f" stroke="var(--text)" strokeOpacity="0.6" />
+                <circle cx={52 + TRAVEL} cy={lane.y} r="3" fill="var(--accent)" />
               </g>
             </>
           )}

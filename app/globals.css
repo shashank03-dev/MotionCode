@@ -713,6 +713,41 @@ html[data-intro="play"] {
 .mc-plate .bn-bar { transform-origin: center bottom; }
 .mc-plate .bn-card { transform-origin: center bottom; }
 
+/* Tile chrome: a dot-matrix ground under each instrument, and a spotlight
+   that follows the cursor around the tile's hairline border. */
+.bento-dots {
+  background-image: radial-gradient(rgb(var(--text-rgb) / 0.075) 0.8px, transparent 0.8px);
+  background-size: 14px 14px;
+  background-position: center;
+  -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, #000 40%, transparent 100%);
+  mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, #000 40%, transparent 100%);
+}
+.bento-tile::before,
+.bento-tile::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.45s var(--ease-out);
+}
+.bento-tile::before {
+  padding: 1px;
+  background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 0%), rgb(var(--text-rgb) / 0.42), transparent 70%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  z-index: 2;
+}
+.bento-tile::after {
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 0%), rgb(var(--text-rgb) / 0.035), transparent 65%);
+}
+@media (hover: hover) {
+  .bento-tile:hover::before,
+  .bento-tile:hover::after { opacity: 1; }
+}
+
 /* 01 frames */
 .bn-strip { animation: bn-strip 16s linear infinite; }
 @keyframes bn-strip { to { transform: translateX(-820px); } }
@@ -813,13 +848,29 @@ html[data-intro="play"] {
 }
 
 /* 06 reduced motion — travel vs. crossfade, in step */
-.bn-travel { transform: translateX(256px); animation: bn-travel 3.2s linear infinite both; }
+.bn-travel { transform: translateX(432px); animation: bn-travel 3.2s linear infinite both; }
 @keyframes bn-travel {
   0% { opacity: 0; transform: translateX(0); }
   6% { opacity: 1; }
   16% { transform: translateX(0); animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
-  52%, 86% { opacity: 1; transform: translateX(256px); }
-  96%, 100% { opacity: 0; transform: translateX(256px); }
+  52%, 86% { opacity: 1; transform: translateX(432px); }
+  96%, 100% { opacity: 0; transform: translateX(432px); }
+}
+/* exposures left behind by the travelling block, one per slice of time */
+.bn-ghost { opacity: var(--o); animation: bn-ghost 3.2s linear var(--d, 0s) infinite both; }
+@keyframes bn-ghost {
+  0%, 16% { opacity: 0; }
+  16.6% { opacity: calc(var(--o) * 3.5); }
+  22%, 78% { opacity: var(--o); }
+  80%, 100% { opacity: 0; }
+}
+/* The ghosts' staggered delays wrap past the loop; the group gate keeps every
+   exposure dark until the block passes it again. */
+.bn-ghosts { animation: bn-ghosts 3.2s linear infinite both; }
+@keyframes bn-ghosts {
+  0%, 14% { opacity: 0; }
+  16%, 70% { opacity: 1; }
+  78%, 100% { opacity: 0; }
 }
 .bn-swap-out { opacity: 0; animation: bn-swap-out 3.2s linear infinite both; }
 @keyframes bn-swap-out {

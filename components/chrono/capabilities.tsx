@@ -1,5 +1,7 @@
 "use client";
 
+import type * as React from "react";
+
 import { FEATURES } from "@/lib/content";
 import { cn } from "@/lib/utils";
 
@@ -18,14 +20,33 @@ import { Reveal } from "./reveal";
  */
 
 const LAYOUT: Record<number, { tile: string; visual: string }> = {
-  0: { tile: "md:col-span-2 lg:col-span-8", visual: "h-[210px]" },
-  3: { tile: "md:row-span-2 lg:col-span-4 lg:row-span-2", visual: "min-h-[440px] flex-1 p-6" },
+  0: { tile: "md:col-span-2 lg:col-span-8", visual: "h-[214px] px-2" },
+  3: { tile: "md:row-span-2 lg:col-span-4 lg:row-span-2", visual: "min-h-[460px] flex-1 px-6 pb-6 pt-4" },
   1: { tile: "lg:col-span-4", visual: "h-[200px]" },
   2: { tile: "lg:col-span-4", visual: "h-[200px]" },
   4: { tile: "lg:col-span-6", visual: "h-[200px]" },
   5: { tile: "lg:col-span-6", visual: "h-[200px]" },
 };
 const ORDER = [0, 3, 1, 2, 4, 5];
+
+/** Instrument readouts: what the tile is looking at, and its live state. */
+const HEADERS: Record<number, [label: string, status: string, live?: boolean]> = {
+  0: ["clip.mp4 · 72 frames", "extracting", true],
+  1: ["motion.spec", "v1 · normalized"],
+  2: ["export", "3 targets"],
+  3: ["curve fit", "8 samples", true],
+  4: ["workspace / landing-v2", "4 clips"],
+  5: ["a11y", "fallback included"],
+};
+
+/** Cursor spotlight: feed each tile its local pointer position. */
+function trackSpotlight(e: React.PointerEvent<HTMLElement>) {
+  const tile = (e.target as HTMLElement).closest<HTMLElement>(".bento-tile");
+  if (!tile) return;
+  const r = tile.getBoundingClientRect();
+  tile.style.setProperty("--mx", `${e.clientX - r.left}px`);
+  tile.style.setProperty("--my", `${e.clientY - r.top}px`);
+}
 
 function Rivet({ className }: { className: string }) {
   return <span aria-hidden className={cn("absolute z-10 size-[11px] rounded-[2px] border border-hairline-strong bg-carbon", className)} />;
@@ -60,11 +81,15 @@ export function Capabilities() {
           <Rivet className="-bottom-[6px] -left-[6px]" />
           <Rivet className="-bottom-[6px] -right-[6px]" />
 
-          <ol className="grid grid-cols-1 gap-2 py-2 md:grid-flow-dense md:grid-cols-2 lg:grid-cols-12">
+          <ol
+            onPointerMove={trackSpotlight}
+            className="grid grid-cols-1 gap-2 py-2 md:grid-flow-dense md:grid-cols-2 lg:grid-cols-12"
+          >
             {ORDER.map((i, n) => {
               const feature = FEATURES[i];
               const Instrument = INSTRUMENTS[i];
               const layout = LAYOUT[i];
+              const header = HEADERS[i];
               return (
                 <li key={feature.title} data-testid="capability-card" className={cn("min-w-0", layout.tile)}>
                   <Reveal
@@ -74,8 +99,15 @@ export function Capabilities() {
                       "transition-[border-color,background-color] duration-500 ease-expo hover:border-bone/25 hover:bg-[#121210]",
                     )}
                   >
-                    <span aria-hidden className="row-sweep pointer-events-none absolute inset-x-0 top-0 h-px bg-accent/80" />
-                    <div className={cn("relative transition-transform duration-700 ease-expo group-hover:scale-[1.012]", layout.visual)}>
+                    <span aria-hidden className="row-sweep pointer-events-none absolute inset-x-0 top-0 z-10 h-px bg-accent/80" />
+                    <div className="relative flex items-center justify-between gap-4 px-5 pt-4 font-mono text-[10px] uppercase tracking-[0.16em] text-ink-3">
+                      <span className="truncate">{header[0]}</span>
+                      <span className="flex shrink-0 items-center gap-2">
+                        {header[2] && <span className="size-1.5 animate-pulse-soft rounded-full bg-accent" />}
+                        {header[1]}
+                      </span>
+                    </div>
+                    <div className={cn("bento-dots relative transition-transform duration-700 ease-expo group-hover:scale-[1.012]", layout.visual)}>
                       <Instrument />
                     </div>
                     <div className="relative mt-auto flex flex-col gap-2 border-t border-hairline p-6 pt-5">
