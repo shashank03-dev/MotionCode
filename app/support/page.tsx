@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
+import { PageHero } from "@/components/chrono/page-hero";
 import { SiteFooter, SiteHeader } from "@/components/marketing";
 import { SupportAccessState } from "@/components/support/SupportAccessState";
 import { SupportCenter } from "@/components/support/SupportCenter";
-import { Eyebrow } from "@/components/ui/kit";
 import { listOwnSupportTickets } from "@/lib/server/adminSupport";
 import {
   createSupabaseServerClient,
@@ -54,18 +54,14 @@ export default async function SupportPage() {
 
 function SupportHero() {
   return (
-    <section className="relative border-b border-hairline">
-      <div className="pointer-events-none absolute inset-0 grid-fade opacity-60" aria-hidden="true" />
-      <div className="container-page relative py-10 sm:py-20">
-        <Eyebrow dot>Support</Eyebrow>
-        <h1 className="mt-4 max-w-3xl font-display text-4xl font-medium leading-[1.05] tracking-tightest text-balance sm:text-5xl">
-          Account-scoped help for MotionCode.
-        </h1>
-        <p className="mt-5 max-w-2xl text-base leading-8 text-ink-2 text-pretty">
-          Create a ticket, include the affected workspace or project, and keep the
-          thread tied to your signed-in account.
-        </p>
-      </div>
-    </section>
+    <PageHero
+      kicker="Support"
+      title={
+        <>
+          Account-scoped help for <span className="serif-em">MotionCode.</span>
+        </>
+      }
+      lede="Create a ticket, include the affected workspace or project, and keep the thread tied to your signed-in account."
+    />
   );
 }

@@ -16,7 +16,7 @@ import { useSyncExternalStore, type ReactNode } from "react";
 
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { PlanSync } from "@/components/dashboard/PlanSync";
-import { Logo } from "@/components/site/logo";
+import { Logo } from "@/components/chrono/logo";
 import { AppBackground } from "@/components/ui/app-background";
 import type { PlanTier } from "@/lib/contracts/plans";
 import { cn } from "@/lib/utils";

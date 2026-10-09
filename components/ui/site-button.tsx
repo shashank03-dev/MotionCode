@@ -3,25 +3,26 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const button = cva(
-  "inline-flex touch-manipulation items-center justify-center gap-2 whitespace-nowrap rounded-full font-medium transition-all duration-200 ease-expo focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:pointer-events-none disabled:opacity-50 select-none",
+  "inline-flex touch-manipulation items-center justify-center gap-2 whitespace-nowrap rounded-full font-medium tracking-[-0.01em] transition-[background-color,color,box-shadow,transform] duration-300 ease-expo focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:pointer-events-none disabled:opacity-50 select-none",
   {
     variants: {
       variant: {
+        // Safelight: the one signal colour. Hover settles to bone.
         primary:
-          "bg-accent text-black shadow-glow hover:brightness-110 active:scale-[0.98]",
+          "bg-accent text-carbon hover:bg-bone active:scale-[0.98]",
         solid:
-          "bg-white text-black hover:bg-white/90 active:scale-[0.98]",
+          "bg-bone text-carbon hover:bg-accent active:scale-[0.98]",
         frosted:
-          "bg-white/[0.06] text-ink shadow-ring backdrop-blur hover:bg-white/[0.1] active:scale-[0.98]",
+          "bg-bone/[0.05] text-ink shadow-ring backdrop-blur hover:bg-bone/[0.09] active:scale-[0.98]",
         ghost:
-          "bg-transparent text-ink-2 hover:text-ink hover:bg-white/[0.05]",
+          "bg-transparent text-ink-2 hover:text-ink hover:bg-bone/[0.05]",
         outline:
-          "bg-transparent text-ink shadow-ring hover:bg-white/[0.04] active:scale-[0.98]",
+          "bg-transparent text-ink shadow-[inset_0_0_0_1px_var(--border-strong)] hover:shadow-[inset_0_0_0_1px_var(--text)] active:scale-[0.98]",
       },
       size: {
         sm: "h-9 px-4 text-[13px] max-sm:h-auto max-sm:min-h-[44px]",
         md: "h-11 px-5 text-sm",
-        lg: "h-12 px-6 text-[15px]",
+        lg: "h-[52px] px-7 text-[15px]",
       },
     },
     defaultVariants: { variant: "primary", size: "md" },

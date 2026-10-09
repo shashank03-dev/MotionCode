@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { CommentsPanel } from "@/components/comments";
 import { ExportPanel } from "@/components/export";
-import { Logo } from "@/components/site/logo";
+import { Logo } from "@/components/chrono/logo";
 import { AppBackground } from "@/components/ui/app-background";
 import { EmptyState, Pill, StatTile } from "@/components/ui/kit";
 import { resolveSharedProjectByToken } from "@/lib/server/shareLinks";

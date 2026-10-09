@@ -1,41 +1,39 @@
-import { Preloader } from "@/components/site/preloader";
-import { SiteBackground } from "@/components/motion/site-background";
-import { Nav } from "@/components/site/nav";
-import { Hero } from "@/components/site/hero";
-import { TrustStrip } from "@/components/site/trust-strip";
-import { HowItWorks } from "@/components/site/how-it-works";
-import { Features } from "@/components/site/features";
-import { SpecShowcase } from "@/components/site/spec-showcase";
-import { Playground } from "@/components/site/playground";
-import { Pricing } from "@/components/site/pricing";
-import { CTA } from "@/components/site/cta";
-import { Footer } from "@/components/site/footer";
-import { ProgressiveBlur } from "@/components/motion/progressive-blur";
+import { Bench } from "@/components/chrono/bench";
+import { Capabilities } from "@/components/chrono/capabilities";
+import { Finale } from "@/components/chrono/finale";
+import { Footer } from "@/components/chrono/footer";
+import { Hero } from "@/components/chrono/hero";
+import { Manifesto } from "@/components/chrono/manifesto";
+import { Nav } from "@/components/chrono/nav";
+import { Preloader } from "@/components/chrono/preloader";
+import { Pricing } from "@/components/chrono/pricing";
+import { Sequence } from "@/components/chrono/sequence";
+import { SmoothScroll } from "@/components/chrono/smooth-scroll";
+import { Ticker } from "@/components/chrono/ticker";
 
+/**
+ * The landing page is a reel of plates:
+ *   01 Hero (live chronophotograph) → leader → 02 Sequence (pinned darkroom)
+ *   → 03 Manifesto (paper) → Capabilities index → 04 Bench → 05 Pricing
+ *   → Finale → Footer.
+ */
 export default function Page() {
   return (
-    <>
+    <SmoothScroll>
       {/* First visit of a session only — gated pre-paint in app/layout.tsx. */}
       <Preloader />
-      <SiteBackground />
-      {/* iOS-style gradient blur pinned to the viewport edges: strongest behind
-          the nav pill at the top, easing to crisp; a matching band at the base. */}
-      <ProgressiveBlur side="top" fixed height="150px" strength={16} layers={5} />
-      <ProgressiveBlur side="bottom" fixed height="120px" strength={11} layers={4} />
-      {/* Nav lives at the root (not inside main's z-10 context) so its glass
-          pill paints above the fixed blur bands. */}
       <Nav />
       <main className="relative z-10">
         <Hero />
-        <TrustStrip />
-        <HowItWorks />
-        <Features />
-        <SpecShowcase />
-        <Playground />
+        <Ticker />
+        <Sequence />
+        <Manifesto />
+        <Capabilities />
+        <Bench />
         <Pricing />
-        <CTA />
-        <Footer />
+        <Finale />
       </main>
-    </>
+      <Footer />
+    </SmoothScroll>
   );
 }

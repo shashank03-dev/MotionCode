@@ -1,5 +1,5 @@
 {
-  "background_color": "#000000",
+  "background_color": "#0b0b0a",
   "description": "Upload a video. Get CSS, GSAP, and Framer Motion code instantly.",
   "display": "standalone",
   "icons": [
@@ -31,5 +31,5 @@
   "name": "MotionCode",
   "short_name": "MotionCode",
   "start_url": "/app",
-  "theme_color": "#000000"
+  "theme_color": "#0b0b0a"
 }

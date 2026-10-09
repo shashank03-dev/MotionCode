@@ -1,40 +1,34 @@
 import type { Metadata, Viewport } from "next";
-import { JetBrains_Mono } from "next/font/google";
+import { Instrument_Serif } from "next/font/google";
 import localFont from "next/font/local";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { INTRO_GATE_SCRIPT } from "@/lib/intro-gate";
 import "./globals.css";
 
-// Body / UI face — San Francisco Pro, vendored as a variable woff2 covering
-// wght 1–1000 and both optical sizes (Text ↔ Display). Shared with the site.
-const sfPro = localFont({
-  variable: "--font-sf",
+// Chronograph type system.
+// Sans — Geist, vendored as a variable font: UI, body and display headings.
+const geist = localFont({
+  variable: "--font-geist",
   display: "swap",
-  src: [
-    { path: "./fonts/SF-Pro.woff2", weight: "1 1000", style: "normal" },
-    { path: "./fonts/SF-Pro-Italic.woff2", weight: "1 1000", style: "italic" },
-  ],
+  src: [{ path: "./fonts/GeistVF.woff", weight: "100 900", style: "normal" }],
 });
 
-// Display face — PP Neue Montreal, the same grotesk used on the marketing site.
-const neueMontreal = localFont({
-  variable: "--font-ppnm",
-  display: "swap",
-  src: [
-    { path: "./fonts/ppnm/ppneuemontreal-book.woff2", weight: "400", style: "normal" },
-    { path: "./fonts/ppnm/ppneuemontreal-italic.woff2", weight: "400", style: "italic" },
-    { path: "./fonts/ppnm/ppneuemontreal-medium.woff2", weight: "500", style: "normal" },
-    { path: "./fonts/ppnm/ppneuemontreal-semibolditalic.woff2", weight: "600", style: "italic" },
-    { path: "./fonts/ppnm/ppneuemontreal-bold.woff2", weight: "700", style: "normal" },
-  ],
-});
-
-// Mono — JetBrains Mono for code and UI accents; don't let it block render.
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-jetbrains",
+// Mono — Geist Mono: timecodes, labels, specs and code.
+const geistMono = localFont({
+  variable: "--font-geist-mono",
   display: "swap",
   preload: false,
+  src: [{ path: "./fonts/GeistMonoVF.woff", weight: "100 900", style: "normal" }],
+});
+
+// Serif — Instrument Serif, italic only in practice: the one editorial voice,
+// reserved for accent words inside display headlines.
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-instrument",
+  display: "swap",
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://motioncode.live";
@@ -62,7 +56,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#000000",
+  themeColor: "#0b0b0a",
 };
 
 export default function RootLayout({
@@ -75,7 +69,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`dark ${sfPro.variable} ${neueMontreal.variable} ${jetbrainsMono.variable}`}
+      className={`dark ${geist.variable} ${geistMono.variable} ${instrumentSerif.variable}`}
       // The intro-gate script below stamps `data-intro` on this element before
       // React hydrates, so the client tree legitimately differs from the
       // server HTML here. Without this, React reports a hydration mismatch on
@@ -111,7 +105,7 @@ export default function RootLayout({
       <body className="min-h-dvh overflow-x-clip antialiased" style={{ fontOpticalSizing: "auto" }}>
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-accent focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-black"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-accent focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-carbon"
         >
           Skip to content
         </a>

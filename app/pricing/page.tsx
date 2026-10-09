@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { Check } from "lucide-react";
 
+import { PageHero } from "@/components/chrono/page-hero";
 import { SiteFooter, SiteHeader } from "@/components/marketing";
 import {
   formatQuota,
@@ -59,25 +59,24 @@ export default function PricingPage() {
     <div className="min-h-dvh bg-canvas text-ink">
       <SiteHeader />
       <main>
-        <section className="container-page py-20 sm:py-24">
-          <header className="mx-auto max-w-2xl text-center">
-            <div className="eyebrow mb-4">Pricing</div>
-            <h1 className="font-display text-4xl font-medium leading-tight tracking-tight sm:text-5xl">
-              Access tiers for motion analysis.
-            </h1>
-            <p className="mx-auto mt-5 max-w-xl text-base leading-7 text-ink-2 sm:text-lg">
-              Start free, then upgrade through Razorpay when production work needs
-              more analyses, saved projects, or shared workspace access.
-            </p>
-          </header>
+        <PageHero
+          kicker="Pricing"
+          title={
+            <>
+              Access tiers for <span className="serif-em">motion analysis.</span>
+            </>
+          }
+          lede="Start free, then upgrade through Razorpay when production work needs more analyses, saved projects, or shared workspace access."
+        />
 
-          <div className="mt-14 grid gap-4 lg:grid-cols-3">
-            {TIERS.map((tier) => (
-              <PlanColumn key={tier} tier={tier} />
+        <section className="container-page py-16 sm:py-24">
+          <div className="grid border-t border-hairline-strong lg:grid-cols-3">
+            {TIERS.map((tier, index) => (
+              <PlanColumn key={tier} tier={tier} index={index} />
             ))}
           </div>
 
-          <p className="mt-10 text-center font-mono text-[11px] uppercase tracking-[0.16em] text-ink-3">
+          <p className="mt-12 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-3">
             Prices in USD, billed monthly through Razorpay. Cancel anytime from
             your account.
           </p>
@@ -88,7 +87,7 @@ export default function PricingPage() {
   );
 }
 
-function PlanColumn({ tier }: { tier: PlanTier }) {
+function PlanColumn({ tier, index }: { tier: PlanTier; index: number }) {
   const copy = PLAN_COPY[tier];
   const entitlements = PLAN_ENTITLEMENTS[tier];
   const isFeatured = tier === "pro";
@@ -96,63 +95,64 @@ function PlanColumn({ tier }: { tier: PlanTier }) {
   return (
     <article
       className={cn(
-        "glass-card relative flex flex-col rounded-2xl p-7",
-        isFeatured ? "!border-[var(--accent-border)] shadow-glow" : "",
+        "relative flex flex-col border-b border-hairline py-10 lg:border-b-0 lg:px-8 lg:py-12",
+        index > 0 && "lg:border-l",
+        index === 0 && "lg:pl-0",
+        isFeatured && "lg:bg-bone/[0.025]",
       )}
     >
       {isFeatured ? (
-        <span className="absolute -top-3 left-7 rounded-full bg-accent px-3 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-black">
-          most used
-        </span>
+        <span className="absolute inset-x-0 top-0 h-px bg-accent lg:-top-px" aria-hidden />
       ) : null}
 
-      <h3 className="text-lg font-medium tracking-tight">{PLAN_LABELS[tier]}</h3>
-      <p className="mt-2 text-[14px] leading-6 text-ink-2">{copy.description}</p>
-
-      <div className="mt-5 flex items-end gap-1.5">
-        <span className="font-display text-5xl tracking-tight">{copy.price}</span>
-        <span className="mb-1.5 font-mono text-[12px] text-ink-3">
-          {copy.period}
+      <div className="flex items-center justify-between">
+        <h3 className="text-[1.6rem] tracking-[-0.04em]">{PLAN_LABELS[tier]}</h3>
+        <span
+          className={cn(
+            "font-mono text-[10px] uppercase tracking-[0.16em]",
+            isFeatured ? "text-accent" : "text-ink-3",
+          )}
+        >
+          {isFeatured ? "most used" : String(index + 1).padStart(2, "0")}
         </span>
       </div>
+      <p className="mt-2 text-[15px] leading-6 text-ink-2">{copy.description}</p>
 
-      <p className="mt-7 eyebrow">What you will get</p>
-      <ul className="mt-4 flex-1 space-y-3">
+      <div className="mt-10 flex items-baseline gap-2">
+        <span className="text-[clamp(3.5rem,6vw,5rem)] font-medium leading-none tracking-[-0.06em]">
+          {copy.price}
+        </span>
+        <span className="font-mono text-[12px] text-ink-3">{copy.period}</span>
+      </div>
+
+      <p className="eyebrow mt-10">What you will get</p>
+      <ul className="mt-3 flex-1 border-t border-hairline">
         {FEATURE_LABELS.map(([key, label]) => (
-          <li key={key} className="flex items-start gap-2.5 text-[14px]">
-            <Check
-              className={cn(
-                "mt-0.5 h-4 w-4 shrink-0",
-                isFeatured ? "text-accent" : "text-ink-3",
-              )}
-              strokeWidth={2}
-            />
-            <span className="text-ink-2">
-              {formatFeatureValue(entitlements[key])} {label}
+          <li
+            key={key}
+            className="flex items-center justify-between gap-3 border-b border-hairline py-3 text-[14.5px]"
+          >
+            <span className="text-ink-2">{label}</span>
+            <span className="font-mono text-[12.5px] tabular-nums text-ink">
+              {formatFeatureValue(entitlements[key])}
             </span>
           </li>
         ))}
-        <li className="flex items-start gap-2.5 text-[14px]">
-          <Check
-            className={cn(
-              "mt-0.5 h-4 w-4 shrink-0",
-              isFeatured ? "text-accent" : "text-ink-3",
-            )}
-            strokeWidth={2}
-          />
-          <span className="text-ink-2">{entitlements.supportPriority} support</span>
+        <li className="flex items-center justify-between gap-3 border-b border-hairline py-3 text-[14.5px]">
+          <span className="text-ink-2">support</span>
+          <span className="font-mono text-[12.5px] text-ink">{entitlements.supportPriority}</span>
         </li>
       </ul>
 
       {tier === "free" ? (
         <Link
           href="/app"
-          className="mt-7 inline-flex h-11 w-full items-center justify-center rounded-full border border-hairline-strong text-sm font-medium text-ink transition hover:bg-white/[0.04] active:scale-[0.98]"
+          className="mt-10 inline-flex h-[52px] w-full items-center justify-center rounded-full text-[15px] font-medium text-ink shadow-[inset_0_0_0_1px_var(--border-strong)] transition hover:shadow-[inset_0_0_0_1px_var(--text)] active:scale-[0.98]"
         >
           {copy.cta} →
         </Link>
       ) : (
-        <div className="mt-7">
+        <div className="mt-10">
           <CheckoutButton planTier={tier} />
         </div>
       )}

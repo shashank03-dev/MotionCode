@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 
 import { LoginForm } from "@/components/dashboard/login-form";
-import { Logo } from "@/components/site/logo";
+import { Logo } from "@/components/chrono/logo";
 
 /**
  * Non-dismissible sign-in gate shown over a blurred /app for anonymous

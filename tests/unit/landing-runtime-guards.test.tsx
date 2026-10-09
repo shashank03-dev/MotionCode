@@ -3,7 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import Aurora from "@/components/react-bits/Aurora/Aurora";
+import { Chronograph } from "@/components/chrono/chronograph";
 import { useHydratedReducedMotion } from "@/lib/hooks/use-hydrated-reduced-motion";
 
 function ReducedMotionProbe() {
@@ -60,16 +60,21 @@ describe("landing runtime guards", () => {
     consoleErrorSpy.mockRestore();
   });
 
-  it("does not throw when WebGL is unavailable for Aurora", async () => {
+  it("keeps the static plate when WebGL is unavailable for the hero chronograph", async () => {
     await expect(
       act(async () => {
         root.render(
-          <div style={{ width: "320px", height: "180px" }}>
-            <Aurora />
+          <div style={{ width: "320px", height: "180px", position: "relative" }}>
+            <Chronograph />
           </div>,
         );
       }),
     ).resolves.not.toThrow();
+
+    const host = container.querySelector("[data-chronograph]");
+    expect(host?.getAttribute("data-chronograph")).toBe("still");
+    expect(host?.querySelector("svg")).not.toBeNull();
+    expect(container.querySelector("canvas")).toBeNull();
   });
 
   it("keeps reduced motion disabled during SSR and first hydration render", async () => {

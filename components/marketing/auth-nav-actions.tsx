@@ -20,10 +20,8 @@ type MarketingAuthNavActionsProps = {
 
 type AuthState = "loading" | "signed-out" | "signed-in";
 
-// The site header is a rounded glass pill with title-case ghost links
-// (Features, Pricing). The auth cluster speaks the same language: neutral
-// ghost pills that match those links, with the accent ButtonLink as the one
-// CTA — instead of the square uppercase chips that clashed with the header.
+// The auth cluster speaks the nav's language: quiet ghost links with the
+// safelight ButtonLink as the one CTA.
 const NAV_LINK =
   "rounded-full px-3.5 text-[14px] text-ink-2 transition-colors duration-200 hover:text-ink";
 const SIGN_OUT_LINK =
@@ -98,14 +96,14 @@ export function MarketingAuthNavActions({
           <Link
             href="/dashboard"
             onClick={onNavigate}
-            className="inline-flex min-h-[44px] items-center rounded-xl px-4 py-2 text-[15px] text-ink-2 transition-colors hover:bg-white/[0.04] hover:text-ink"
+            className="inline-flex min-h-[44px] items-center rounded-xl px-4 py-2 text-[15px] text-ink-2 transition-colors hover:bg-bone/[0.05] hover:text-ink"
           >
             Dashboard
           </Link>
           <Link
             href="/account"
             onClick={onNavigate}
-            className="inline-flex min-h-[44px] items-center rounded-xl px-4 py-2 text-[15px] text-ink-2 transition-colors hover:bg-white/[0.04] hover:text-ink"
+            className="inline-flex min-h-[44px] items-center rounded-xl px-4 py-2 text-[15px] text-ink-2 transition-colors hover:bg-bone/[0.05] hover:text-ink"
           >
             Account
           </Link>
@@ -136,7 +134,7 @@ export function MarketingAuthNavActions({
               onNavigate?.();
               setLoginOpen(true);
             }}
-            className="inline-flex min-h-[44px] items-center rounded-xl px-4 py-2 text-left text-[15px] text-ink-2 transition-colors hover:bg-white/[0.04] hover:text-ink"
+            className="inline-flex min-h-[44px] items-center rounded-xl px-4 py-2 text-left text-[15px] text-ink-2 transition-colors hover:bg-bone/[0.05] hover:text-ink"
           >
             Sign in
           </button>
@@ -170,13 +168,16 @@ export function MarketingAuthNavActions({
 
   if (effectiveAuthState === "signed-in") {
     return variant === "landing" ? (
-      <div className="motioncode-nav-actions" aria-label="Account actions">
-        <Link href="/dashboard" className="motioncode-nav-auth">
+      <div className="flex items-center gap-1 whitespace-nowrap" aria-label="Account actions">
+        <Link
+          href="/dashboard"
+          className={cn(NAV_LINK, "hidden min-h-[44px] items-center sm:inline-flex")}
+        >
           Dashboard
         </Link>
-        <Link href="/app" className="motioncode-nav-cta">
+        <ButtonLink href="/app" variant="primary" size="sm" className="ml-1">
           Open App
-        </Link>
+        </ButtonLink>
         <AccountMenu email={userEmail} />
       </div>
     ) : (
@@ -213,17 +214,17 @@ export function MarketingAuthNavActions({
 
   if (variant === "landing") {
     return (
-      <div className="motioncode-nav-actions" aria-label="Account actions">
+      <div className="flex items-center gap-1 whitespace-nowrap" aria-label="Account actions">
         <button
           type="button"
           onClick={() => setLoginOpen(true)}
-          className="motioncode-nav-auth"
+          className={cn(NAV_LINK, "hidden min-h-[44px] items-center sm:inline-flex")}
         >
           Sign in
         </button>
-        <Link href="/app" className="motioncode-nav-cta">
+        <ButtonLink href="/app" variant="primary" size="sm" className="ml-1">
           Try Free
-        </Link>
+        </ButtonLink>
         <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
       </div>
     );
