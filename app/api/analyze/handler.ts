@@ -46,6 +46,7 @@ import {
   AnalyzeRequestSchema,
   MAX_ANALYZE_REQUEST_CONTENT_LENGTH,
   calculateFramePayloadBytes,
+  getAnalysisFrameCount,
   hasFrameValidationIssue,
   type AnalyzeRequestBody,
 } from "./schema";
@@ -204,7 +205,7 @@ export async function handleAnalyzeRequest(
   });
   if (!preflight.ok) {
     await observeAnalysis({
-      frameCount: requestBody.frames.length,
+      frameCount: getAnalysisFrameCount(requestBody),
       model: analysisProvider.model,
       outcome: "rejected",
       planTier,
@@ -221,14 +222,14 @@ export async function handleAnalyzeRequest(
 
   const abuseDecision = resolvedDeps.abuseGuard.check({
     entitlements,
-    frameCount: requestBody.frames.length,
+    frameCount: getAnalysisFrameCount(requestBody),
     payloadBytes: calculateFramePayloadBytes(requestBody.frames),
     userId: user.id,
   });
 
   if (!abuseDecision.ok) {
     await observeAnalysis({
-      frameCount: requestBody.frames.length,
+      frameCount: getAnalysisFrameCount(requestBody),
       model: analysisProvider.model,
       outcome: "rejected",
       planTier,
@@ -266,7 +267,7 @@ export async function handleAnalyzeRequest(
   const createdAt = resolvedDeps.now().toISOString();
   await observeAnalysis({
     analysisId,
-    frameCount: requestBody.frames.length,
+    frameCount: getAnalysisFrameCount(requestBody),
     model: analysisProvider.model,
     outcome: "started",
     planTier,
@@ -300,7 +301,7 @@ export async function handleAnalyzeRequest(
     await Promise.all([
       resolvedDeps.usage.record({
         eventType: "analysis.completed",
-        frameCount: requestBody.frames.length,
+        frameCount: getAnalysisFrameCount(requestBody),
         model: analysisProvider.model,
         planTier,
         projectId: requestBody.projectId ?? null,
@@ -311,7 +312,7 @@ export async function handleAnalyzeRequest(
         actorId: user.id,
         eventType: "analysis.completed",
         metadata: {
-          frameCount: requestBody.frames.length,
+          frameCount: getAnalysisFrameCount(requestBody),
           model: analysisProvider.model,
           planTier,
           projectId: requestBody.projectId ?? null,
@@ -342,7 +343,7 @@ export async function handleAnalyzeRequest(
     });
     await observeAnalysis({
       analysisId,
-      frameCount: requestBody.frames.length,
+      frameCount: getAnalysisFrameCount(requestBody),
       model: analysisProvider.model,
       outcome: "failed",
       planTier,
@@ -359,7 +360,7 @@ export async function handleAnalyzeRequest(
 
   await observeAnalysis({
     analysisId,
-    frameCount: requestBody.frames.length,
+    frameCount: getAnalysisFrameCount(requestBody),
     model: analysisProvider.model,
     outcome: "completed",
     planTier,
@@ -575,7 +576,7 @@ async function reserveAnalysisUsage({
     const reserved = await resolvedDeps.reserveDailyAnalysisUsage({
       dailyLimit: entitlements.dailyAnalyses,
       eventType: "analysis.started",
-      frameCount: requestBody.frames.length,
+      frameCount: getAnalysisFrameCount(requestBody),
       model: analysisProvider.model,
       planTier,
       projectId: requestBody.projectId ?? null,
@@ -586,7 +587,7 @@ async function reserveAnalysisUsage({
 
     if (!reserved) {
       await observeAnalysis({
-        frameCount: requestBody.frames.length,
+        frameCount: getAnalysisFrameCount(requestBody),
         model: analysisProvider.model,
         outcome: "rejected",
         planTier,
@@ -608,7 +609,7 @@ async function reserveAnalysisUsage({
     return { ok: true };
   } catch {
     await observeAnalysis({
-      frameCount: requestBody.frames.length,
+      frameCount: getAnalysisFrameCount(requestBody),
       model: analysisProvider.model,
       outcome: "failed",
       planTier,
@@ -643,6 +644,7 @@ function resolveAnalysisProvider({
     return {
       generate: () =>
         resolvedDeps.generateAnalysis({
+          frameGrid: requestBody.frameGrid,
           frames: requestBody.frames,
           model: requestBody.model,
         }),
@@ -653,6 +655,7 @@ function resolveAnalysisProvider({
   return {
     generate: () =>
       resolvedDeps.generateOpenAiAnalysis({
+        frameGrid: requestBody.frameGrid,
         frames: requestBody.frames,
         model: DEFAULT_OPENAI_ANALYSIS_MODEL,
       }),
@@ -689,7 +692,7 @@ async function runModelAnalysis({
     const result = parseAnalysisResultSchema({
       assetId: resourceIds.assetId,
       createdAt,
-      frameCount: requestBody.frames.length,
+      frameCount: getAnalysisFrameCount(requestBody),
       id: analysisId,
       model: analysisProvider.model,
       outputs: generated.outputs,
@@ -719,7 +722,7 @@ async function runModelAnalysis({
     });
     await observeAnalysis({
       analysisId,
-      frameCount: requestBody.frames.length,
+      frameCount: getAnalysisFrameCount(requestBody),
       model: analysisProvider.model,
       outcome: "failed",
       planTier,
@@ -803,7 +806,7 @@ async function recordFailureAuditSafely(
       actorId: user.id,
       eventType: "analysis.failed",
       metadata: {
-        frameCount: requestBody.frames.length,
+        frameCount: getAnalysisFrameCount(requestBody),
         model: analysisModel,
         planTier,
         reason,

@@ -2,6 +2,7 @@ import { ApiError } from "./apiErrors";
 import {
   buildGeminiPrompt,
   normalizeGeminiGeneratedAnalysis,
+  type FrameGridLayout,
   type GeminiAnalysis,
 } from "./gemini";
 
@@ -12,6 +13,7 @@ export const DEFAULT_OPENAI_ANALYSIS_MODEL = "gpt-5.5" as const;
 export type OpenAIAnalysisModel = typeof DEFAULT_OPENAI_ANALYSIS_MODEL;
 
 export type OpenAIAnalyzeInput = {
+  frameGrid?: FrameGridLayout;
   frames: string[];
   model: OpenAIAnalysisModel;
 };
@@ -36,7 +38,7 @@ export async function analyzeFramesWithOpenAI(
       input: [
         {
           content: [
-            { text: buildGeminiPrompt(input.frames.length), type: "input_text" },
+            { text: buildGeminiPrompt(input.frames.length, input.frameGrid), type: "input_text" },
             ...input.frames.map((frame) => ({
               image_url: `data:image/jpeg;base64,${frame}`,
               type: "input_image",

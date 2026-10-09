@@ -27,6 +27,7 @@ import {
   type PlanEntitlements,
   type PlanTier,
 } from "@/lib/contracts/plans";
+import { composeContactSheet } from "@/lib/contactSheet";
 import { extractFrames, isSupportedMediaFile } from "@/lib/extractFrames";
 import { CODE_TABS, type CodeTab } from "@/lib/generatedCode";
 import type { MotionSpecEditableField } from "@/lib/motionSpecEditor";
@@ -822,6 +823,22 @@ function AnalyzeStudioLoading() {
   );
 }
 
+// Several frames go up as one numbered contact sheet; a single frame (GIF) is
+// sent as is. If the browser cannot compose the sheet, fall back to sending
+// the frames individually — the API accepts both.
+async function buildFramePayload(frames: string[]) {
+  if (frames.length < 2) {
+    return { frames };
+  }
+
+  try {
+    const sheet = await composeContactSheet(frames);
+    return { frameGrid: sheet.frameGrid, frames: [sheet.image] };
+  } catch {
+    return { frames };
+  }
+}
+
 async function analyzeViaApi({
   frames,
   planTier,
@@ -833,7 +850,7 @@ async function analyzeViaApi({
 }) {
   const response = await fetch("/api/analyze", {
     body: JSON.stringify({
-      frames,
+      ...(await buildFramePayload(frames)),
       model: planTier === "free" ? "gemini-2.5-flash" : "gemini-2.5-pro",
     }),
     headers: { "Content-Type": "application/json" },

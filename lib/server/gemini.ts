@@ -13,11 +13,27 @@ import {
 
 import { ApiError } from "./apiErrors";
 import { getServerEnv } from "./env";
+import { serverLogger } from "./logger";
 
 const GEMINI_ENDPOINT_ROOT =
   "https://generativelanguage.googleapis.com/v1beta/models";
 
+// Plan tiers and stored analyses keep these ids as stable contract values.
 export const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"] as const;
+
+// The upstream model each tier actually calls. Google now limits 2.5 models to
+// accounts that used them before, so new API keys fail on them; the tier ids
+// stay put while GEMINI_FLASH_MODEL / GEMINI_PRO_MODEL can swap the upstream
+// model without code changes.
+const DEFAULT_UPSTREAM_MODELS: Record<GeminiModel, string> = {
+  "gemini-2.5-flash": "gemini-3.8-flash",
+  "gemini-2.5-pro": "gemini-3.1-pro-preview",
+};
+
+const UPSTREAM_MODEL_ENV_KEYS: Record<GeminiModel, string> = {
+  "gemini-2.5-flash": "GEMINI_FLASH_MODEL",
+  "gemini-2.5-pro": "GEMINI_PRO_MODEL",
+};
 
 const MOTION_INTENTS: MotionIntent[] = [
   "entrance",
@@ -102,7 +118,14 @@ export type GeminiAnalysis = {
   spec: MotionSpec;
 };
 
+export type FrameGridLayout = {
+  columns: number;
+  frameCount: number;
+  rows: number;
+};
+
 export type GeminiAnalyzeInput = {
+  frameGrid?: FrameGridLayout;
   frames: string[];
   model: GeminiModel;
 };
@@ -122,8 +145,8 @@ export type NormalizeAnalysisContext = {
   versionId: string;
 };
 
-export function buildGeminiPrompt(frameCount: number) {
-  return `You are a frontend animation engineer analyzing ${frameCount} JPEG frames.
+export function buildGeminiPrompt(frameCount: number, frameGrid?: FrameGridLayout) {
+  return `${describeFrameInput(frameCount, frameGrid)}
 
 Return only raw JSON. Do not include markdown, comments, or prose.
 
@@ -136,7 +159,7 @@ Use this exact shape:
   "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
   "loops": false,
   "description": "One concise sentence describing the motion.",
-  "keyframes_detected": ${frameCount},
+  "keyframes_detected": ${frameGrid?.frameCount ?? frameCount},
   "performance_score": 90,
   "gpu_accelerated": true,
   "accessibility_note": "Reduced-motion guidance.",
@@ -156,20 +179,65 @@ Code requirements (each snippet must run on its own in a live preview):
 - Use the detected duration, delay and easing, and respect prefers-reduced-motion.`;
 }
 
+function describeFrameInput(frameCount: number, frameGrid?: FrameGridLayout) {
+  if (!frameGrid) {
+    return `You are a frontend animation engineer analyzing ${frameCount} JPEG frames.`;
+  }
+
+  return `You are a frontend animation engineer analyzing one JPEG contact sheet.
+The sheet tiles ${frameGrid.frameCount} frames sampled at even time intervals from one animation, in a grid of ${frameGrid.columns} columns by ${frameGrid.rows} rows.
+Read the cells left to right, then top to bottom; each cell is numbered in its top-left corner (1 = first frame). Empty cells after the last frame are blank.
+Treat each cell as a separate moment in time and compare positions, scale, opacity and rotation across cells to infer the motion.`;
+}
+
+export function resolveUpstreamGeminiModel(
+  model: GeminiModel,
+  env: Record<string, string | undefined> = process.env,
+) {
+  return env[UPSTREAM_MODEL_ENV_KEYS[model]]?.trim() || DEFAULT_UPSTREAM_MODELS[model];
+}
+
 export async function analyzeFramesWithGemini(
   input: GeminiAnalyzeInput,
   deps: GeminiClientDeps = {},
 ): Promise<GeminiAnalysis> {
   const apiKey = deps.apiKey ?? getServerEnv().geminiApiKey;
   const fetcher = deps.fetch ?? fetch;
+  const primary = resolveUpstreamGeminiModel(input.model);
+  const fallback = resolveUpstreamGeminiModel("gemini-2.5-flash");
+
+  try {
+    return await requestGeminiAnalysis(input, primary, apiKey, fetcher);
+  } catch (error) {
+    // Pro models are often unavailable to a key (preview access, free-tier
+    // quota); answer with Flash rather than failing the paid analysis.
+    if (primary === fallback || !(error instanceof ApiError)) {
+      throw error;
+    }
+
+    if (error.code !== "MODEL_FAILED" && error.code !== "QUOTA_EXCEEDED") {
+      throw error;
+    }
+
+    serverLogger.warn("gemini.model_fallback", { fallback, model: primary });
+    return requestGeminiAnalysis(input, fallback, apiKey, fetcher);
+  }
+}
+
+async function requestGeminiAnalysis(
+  input: GeminiAnalyzeInput,
+  upstreamModel: string,
+  apiKey: string,
+  fetcher: typeof fetch,
+): Promise<GeminiAnalysis> {
   const response = await fetcher(
-    `${GEMINI_ENDPOINT_ROOT}/${input.model}:generateContent`,
+    `${GEMINI_ENDPOINT_ROOT}/${upstreamModel}:generateContent`,
     {
       body: JSON.stringify({
         contents: [
           {
             parts: [
-              { text: buildGeminiPrompt(input.frames.length) },
+              { text: buildGeminiPrompt(input.frames.length, input.frameGrid) },
               ...input.frames.map((frame) => ({
                 inline_data: {
                   data: frame,
@@ -193,6 +261,14 @@ export async function analyzeFramesWithGemini(
   );
 
   if (!response.ok) {
+    // The upstream reason (bad key, model access, region) is otherwise lost
+    // behind the generic MODEL_FAILED message.
+    serverLogger.error("gemini.request_failed", {
+      detail: await readErrorDetail(response),
+      model: upstreamModel,
+      status: response.status,
+    });
+
     if (response.status === 429) {
       throw new ApiError(
         "QUOTA_EXCEEDED",
@@ -207,6 +283,16 @@ export async function analyzeFramesWithGemini(
   const text = extractGeminiText(payload);
   const parsed = parseGeminiJsonText(text);
   return normalizeGeminiGeneratedAnalysis(parsed);
+}
+
+async function readErrorDetail(response: Response) {
+  try {
+    const body = getRecord(await response.json());
+    const error = getRecord(body.error);
+    return typeof error.message === "string" ? error.message : null;
+  } catch {
+    return null;
+  }
 }
 
 export function normalizeGeminiGeneratedAnalysis(input: unknown): GeminiAnalysis {

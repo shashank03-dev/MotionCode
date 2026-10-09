@@ -30,9 +30,26 @@ export const Base64JpegFrameSchema = z
     }
   });
 
+// Clients tile the sampled frames into one contact-sheet JPEG so the model
+// gets a single image. frameGrid describes that layout; when it is present,
+// frames must hold exactly the one sheet.
+export const FrameGridSchema = z
+  .object({
+    columns: z.number().int().min(1).max(MAX_ANALYZE_FRAMES),
+    frameCount: z.number().int().min(1).max(MAX_ANALYZE_FRAMES),
+    rows: z.number().int().min(1).max(MAX_ANALYZE_FRAMES),
+  })
+  .strict()
+  .refine((grid) => grid.columns * grid.rows >= grid.frameCount, {
+    message: "Frame grid is too small for its frame count.",
+  });
+
+export type FrameGrid = z.infer<typeof FrameGridSchema>;
+
 export const AnalyzeRequestSchema = z
   .object({
     assetId: ResourceIdSchema.optional(),
+    frameGrid: FrameGridSchema.optional(),
     frames: z.array(Base64JpegFrameSchema).min(1).max(MAX_ANALYZE_FRAMES),
     model: z.enum(GEMINI_MODELS).default("gemini-2.5-flash"),
     projectId: ResourceIdSchema.optional(),
@@ -40,6 +57,10 @@ export const AnalyzeRequestSchema = z
     workspaceId: ResourceIdSchema.optional(),
   })
   .strict()
+  .refine((value) => !value.frameGrid || value.frames.length === 1, {
+    message: "A frame grid request must send exactly one contact sheet.",
+    path: ["frames"],
+  })
   .refine(
     (value) =>
       Boolean(value.assetId) === Boolean(value.projectId) &&
@@ -51,6 +72,12 @@ export const AnalyzeRequestSchema = z
   );
 
 export type AnalyzeRequestBody = z.infer<typeof AnalyzeRequestSchema>;
+
+// Logical frame count: the frames tiled into the contact sheet, or the number
+// of individual frames for clients that still send them one by one.
+export function getAnalysisFrameCount(body: Pick<AnalyzeRequestBody, "frameGrid" | "frames">) {
+  return body.frameGrid?.frameCount ?? body.frames.length;
+}
 
 export function calculateFramePayloadBytes(frames: string[]) {
   return frames.reduce((total, frame) => total + Buffer.from(frame, "base64").length, 0);

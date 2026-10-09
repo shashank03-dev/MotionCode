@@ -344,6 +344,82 @@ describe("POST /api/analyze", () => {
     expect(deps.generateAnalysis).not.toHaveBeenCalled();
   });
 
+  it("analyzes a contact sheet as its logical frame count", async () => {
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
+    const deps = createDeps({ ids: [...TRANSIENT_IDS] });
+    const frameGrid = { columns: 3, frameCount: 6, rows: 2 };
+
+    const response = await handleAnalyzeRequest(
+      makeRequest({
+        frameGrid,
+        frames: [VALID_JPEG_BASE64],
+        model: "gemini-2.5-flash",
+      }),
+      deps,
+    );
+    const json = (await response.json()) as ApiResponse<AnalysisResult>;
+
+    expect(response.status).toBe(200);
+    expect(json).toMatchObject({ data: { frameCount: 6 }, ok: true });
+    expect(deps.generateAnalysis).toHaveBeenCalledWith({
+      frameGrid,
+      frames: [VALID_JPEG_BASE64],
+      model: "gemini-2.5-flash",
+    });
+    expect(deps.reserveDailyAnalysisUsage).toHaveBeenCalledWith(
+      expect.objectContaining({ frameCount: 6 }),
+    );
+  });
+
+  it("rejects contact sheets that do not send exactly one image", async () => {
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
+    const deps = createDeps();
+
+    const response = await handleAnalyzeRequest(
+      makeRequest(
+        requestBody({
+          frameGrid: { columns: 2, frameCount: 4, rows: 2 },
+          frames: [VALID_JPEG_BASE64, VALID_JPEG_BASE64],
+        }),
+      ),
+      deps,
+    );
+
+    expect(response.status).toBe(400);
+    expect(deps.generateAnalysis).not.toHaveBeenCalled();
+  });
+
+  it("rejects frame grids too small for their frame count", async () => {
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
+    const deps = createDeps();
+
+    const response = await handleAnalyzeRequest(
+      makeRequest(
+        requestBody({ frameGrid: { columns: 2, frameCount: 6, rows: 2 } }),
+      ),
+      deps,
+    );
+
+    expect(response.status).toBe(400);
+    expect(deps.generateAnalysis).not.toHaveBeenCalled();
+  });
+
+  it("enforces the plan frame limit on the contact sheet frame count", async () => {
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
+    const deps = createDeps({ planTier: "free" });
+    const frameCount = PLAN_ENTITLEMENTS.free.maxFramesPerAnalysis + 1;
+
+    const response = await handleAnalyzeRequest(
+      makeRequest(
+        requestBody({ frameGrid: { columns: frameCount, frameCount, rows: 1 } }),
+      ),
+      deps,
+    );
+
+    expect(response.status).toBeGreaterThanOrEqual(400);
+    expect(deps.generateAnalysis).not.toHaveBeenCalled();
+  });
+
   it("blocks models that are not allowed by the user's plan", async () => {
     const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
     const deps = createDeps({ planTier: "free" });
@@ -1260,6 +1336,90 @@ describe("Supabase daily analysis reservation", () => {
         { client },
       ),
     ).resolves.toBe(false);
+  });
+});
+
+describe("Gemini upstream models", () => {
+  const okResponse = () =>
+    new Response(
+      JSON.stringify({
+        candidates: [
+          { content: { parts: [{ text: JSON.stringify({ intent: "entrance" }) }] } },
+        ],
+      }),
+      { status: 200 },
+    );
+
+  it("calls the current upstream model for each tier", async () => {
+    const { analyzeFramesWithGemini } = await import("@/lib/server/gemini");
+    const fetcher = vi.fn(async () => okResponse());
+
+    await analyzeFramesWithGemini(
+      { frames: [VALID_JPEG_BASE64], model: "gemini-2.5-flash" },
+      { apiKey: "server-gemini-key", fetch: fetcher as typeof fetch },
+    );
+
+    expect(fetcher).toHaveBeenCalledWith(
+      expect.stringContaining("/gemini-3.8-flash:generateContent"),
+      expect.anything(),
+    );
+  });
+
+  it("lets env override the upstream model", async () => {
+    const { resolveUpstreamGeminiModel } = await import("@/lib/server/gemini");
+
+    expect(
+      resolveUpstreamGeminiModel("gemini-2.5-flash", { GEMINI_FLASH_MODEL: "gemini-x" }),
+    ).toBe("gemini-x");
+    expect(resolveUpstreamGeminiModel("gemini-2.5-pro", {})).toBe(
+      "gemini-3.1-pro-preview",
+    );
+  });
+
+  it("falls back to Flash when the Pro model is unavailable", async () => {
+    const { analyzeFramesWithGemini } = await import("@/lib/server/gemini");
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: { message: "not found" } }), {
+          status: 404,
+        }),
+      )
+      .mockResolvedValueOnce(okResponse());
+
+    const result = await analyzeFramesWithGemini(
+      { frames: [VALID_JPEG_BASE64], model: "gemini-2.5-pro" },
+      { apiKey: "server-gemini-key", fetch: fetcher as typeof fetch },
+    );
+
+    expect(result.spec.intent).toBe("entrance");
+    expect(fetcher.mock.calls.map(([url]) => url)).toEqual([
+      expect.stringContaining("/gemini-3.1-pro-preview:"),
+      expect.stringContaining("/gemini-3.8-flash:"),
+    ]);
+  });
+
+  it("does not retry a failing Flash request", async () => {
+    const { analyzeFramesWithGemini } = await import("@/lib/server/gemini");
+    const fetcher = vi.fn(async () => new Response("bad key", { status: 400 }));
+
+    await expect(
+      analyzeFramesWithGemini(
+        { frames: [VALID_JPEG_BASE64], model: "gemini-2.5-flash" },
+        { apiKey: "server-gemini-key", fetch: fetcher as typeof fetch },
+      ),
+    ).rejects.toMatchObject({ code: "MODEL_FAILED" });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it("describes the contact sheet layout in the prompt", async () => {
+    const { buildGeminiPrompt } = await import("@/lib/server/gemini");
+    const prompt = buildGeminiPrompt(1, { columns: 3, frameCount: 6, rows: 2 });
+
+    expect(prompt).toContain("one JPEG contact sheet");
+    expect(prompt).toContain("6 frames");
+    expect(prompt).toContain("3 columns by 2 rows");
+    expect(prompt).toContain('"keyframes_detected": 6');
   });
 });
 
