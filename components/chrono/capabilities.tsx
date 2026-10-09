@@ -1,93 +1,40 @@
+"use client";
+
 import { FEATURES } from "@/lib/content";
 import { cn } from "@/lib/utils";
 
+import { INSTRUMENTS } from "./bento";
+import { usePlateLive } from "./plates";
 import { Reveal } from "./reveal";
 
 /**
- * Capabilities as a catalogue index rather than a card grid: ruled rows,
- * plate numbers, and a small instrument glyph per row that runs its motion
- * on hover (and gently, once, as the row develops into view).
+ * Capabilities as an instrument bench: a bento of hairline tiles, each with a
+ * live instrument showing the feature doing its job (frames feeding a gate, a
+ * spec resolving, a match-confidence donut…). Rivets mark the grid corners and
+ * dashed rules run out to the page edges, like registration marks on a plate.
+ *
+ * Layout (lg, 12 cols): frames 8 · easing 4×2 rows / spec 4 · targets 4 /
+ * workspaces 6 · reduced motion 6. Instruments only run while on screen.
  */
 
-function Glyph({ index }: { index: number }) {
-  const common = "h-10 w-16 shrink-0 text-ink-3 transition-colors duration-500 group-hover:text-ink";
-  switch (index) {
-    case 0: // frame extraction — a strip of frames, one lit
-      return (
-        <svg viewBox="0 0 64 40" className={common} aria-hidden fill="none">
-          {[0, 1, 2, 3].map((i) => (
-            <rect
-              key={i}
-              x={2 + i * 15.5}
-              y="10"
-              width="13"
-              height="20"
-              rx="1.5"
-              stroke="currentColor"
-              className="glyph-frame"
-              style={{ animationDelay: `${i * 120}ms` }}
-            />
-          ))}
-        </svg>
-      );
-    case 1: // normalized spec — braces holding three keys
-      return (
-        <svg viewBox="0 0 64 40" className={common} aria-hidden fill="none" stroke="currentColor">
-          <path d="M12 6c-5 0-5 4-5 8s-3 6-4 6c1 0 4 2 4 6s0 8 5 8M52 6c5 0 5 4 5 8s3 6 4 6c-1 0-4 2-4 6s0 8-5 8" />
-          {[13, 20, 27].map((y, i) => (
-            <line key={y} x1="20" x2={44 - i * 6} y1={y} y2={y} className="glyph-line" style={{ animationDelay: `${i * 140}ms` }} />
-          ))}
-        </svg>
-      );
-    case 2: // multi-target — one source, three outputs
-      return (
-        <svg viewBox="0 0 64 40" className={common} aria-hidden fill="none" stroke="currentColor">
-          <circle cx="8" cy="20" r="3" />
-          {[8, 20, 32].map((y, i) => (
-            <path key={y} d={`M11 20 C 30 20, 30 ${y}, 50 ${y}`} className="glyph-draw" style={{ animationDelay: `${i * 120}ms` }} pathLength={1} />
-          ))}
-          {[8, 20, 32].map((y) => (
-            <rect key={`r${y}`} x="51" y={y - 3} width="10" height="6" rx="1" />
-          ))}
-        </svg>
-      );
-    case 3: // easing detection — the curve with its handles
-      return (
-        <svg viewBox="0 0 64 40" className={common} aria-hidden fill="none" stroke="currentColor">
-          <path d="M4 36 L14 4" strokeOpacity="0.4" />
-          <path d="M60 4 L40 4" strokeOpacity="0.4" />
-          <path d="M4 36 C 14 4, 40 4, 60 4" className="glyph-draw" pathLength={1} strokeWidth="1.5" />
-          <circle cx="14" cy="4" r="2" className="fill-carbon" />
-          <circle cx="40" cy="4" r="2" className="fill-carbon" />
-        </svg>
-      );
-    case 4: // workspaces — stacked folders
-      return (
-        <svg viewBox="0 0 64 40" className={common} aria-hidden fill="none" stroke="currentColor">
-          {[0, 1, 2].map((i) => (
-            <path
-              key={i}
-              d={`M${10 + i * 6} ${30 - i * 7} v-14 h10 l3 3 h${22 - i * 2} v11 z`}
-              className="glyph-lift"
-              style={{ animationDelay: `${i * 110}ms` }}
-            />
-          ))}
-        </svg>
-      );
-    default: // reduced motion — the same move, without the travel
-      return (
-        <svg viewBox="0 0 64 40" className={common} aria-hidden fill="none" stroke="currentColor">
-          <line x1="6" x2="58" y1="20" y2="20" strokeDasharray="2 4" />
-          <rect x="8" y="12" width="16" height="16" rx="4" strokeOpacity="0.35" />
-          <rect x="40" y="12" width="16" height="16" rx="4" className="glyph-fade" />
-        </svg>
-      );
-  }
+const LAYOUT: Record<number, { tile: string; visual: string }> = {
+  0: { tile: "md:col-span-2 lg:col-span-8", visual: "h-[210px]" },
+  3: { tile: "md:row-span-2 lg:col-span-4 lg:row-span-2", visual: "min-h-[440px] flex-1 p-6" },
+  1: { tile: "lg:col-span-4", visual: "h-[200px]" },
+  2: { tile: "lg:col-span-4", visual: "h-[200px]" },
+  4: { tile: "lg:col-span-6", visual: "h-[200px]" },
+  5: { tile: "lg:col-span-6", visual: "h-[200px]" },
+};
+const ORDER = [0, 3, 1, 2, 4, 5];
+
+function Rivet({ className }: { className: string }) {
+  return <span aria-hidden className={cn("absolute z-10 size-[11px] rounded-[2px] border border-hairline-strong bg-carbon", className)} />;
 }
 
 export function Capabilities() {
+  const [gridRef, live] = usePlateLive<HTMLDivElement>();
   return (
-    <section id="features" className="relative py-28 sm:py-36">
+    <section id="features" className="relative overflow-x-clip py-28 sm:py-36">
       <div className="container-page">
         <div className="grid gap-8 lg:grid-cols-[1fr_1.2fr] lg:items-end">
           <Reveal>
@@ -104,34 +51,46 @@ export function Capabilities() {
           </Reveal>
         </div>
 
-        <ol className="mt-16 border-t border-hairline-strong">
-          {FEATURES.map((feature, i) => (
-            <li key={feature.title} data-testid="capability-card">
-              <Reveal
-                delay={i * 0.04}
-                className={cn(
-                  "group relative grid grid-cols-[2.5rem_1fr] items-start gap-x-4 gap-y-3 border-b border-hairline py-7 transition-colors duration-500",
-                  "md:grid-cols-[4rem_minmax(0,1fr)_minmax(0,1.3fr)_4rem] md:items-center md:gap-8 md:py-9",
-                  "hover:bg-bone/[0.025]",
-                )}
-              >
-                <span className="font-mono text-[12px] tabular-nums text-ink-3 transition-colors duration-500 group-hover:text-accent md:pl-2">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <h3 className="text-[clamp(1.5rem,2.4vw,2.1rem)] leading-tight tracking-[-0.04em] transition-transform duration-700 ease-expo md:group-hover:translate-x-2">
-                  {feature.title}
-                </h3>
-                <p className="col-start-2 max-w-lg text-[15px] leading-relaxed text-ink-2 md:col-start-auto">
-                  {feature.body}
-                </p>
-                <span className="hidden justify-self-end md:block">
-                  <Glyph index={i} />
-                </span>
-                <span aria-hidden className="row-sweep pointer-events-none absolute inset-x-0 -bottom-px h-px bg-accent/70" />
-              </Reveal>
-            </li>
-          ))}
-        </ol>
+        <div ref={gridRef} data-live={live} className="mc-plate relative mt-16">
+          {/* registration marks: rules out to the page edge, rivets at the corners */}
+          <span aria-hidden className="pointer-events-none absolute -top-px left-1/2 h-px w-[200vw] -translate-x-1/2 border-t border-dashed border-hairline-strong" />
+          <span aria-hidden className="pointer-events-none absolute -bottom-px left-1/2 h-px w-[200vw] -translate-x-1/2 border-t border-dashed border-hairline-strong" />
+          <Rivet className="-left-[6px] -top-[6px]" />
+          <Rivet className="-right-[6px] -top-[6px]" />
+          <Rivet className="-bottom-[6px] -left-[6px]" />
+          <Rivet className="-bottom-[6px] -right-[6px]" />
+
+          <ol className="grid grid-cols-1 gap-2 py-2 md:grid-flow-dense md:grid-cols-2 lg:grid-cols-12">
+            {ORDER.map((i, n) => {
+              const feature = FEATURES[i];
+              const Instrument = INSTRUMENTS[i];
+              const layout = LAYOUT[i];
+              return (
+                <li key={feature.title} data-testid="capability-card" className={cn("min-w-0", layout.tile)}>
+                  <Reveal
+                    delay={n * 0.05}
+                    className={cn(
+                      "bento-tile group relative flex h-full flex-col overflow-hidden rounded-[6px] border border-hairline-strong bg-[#10100e]",
+                      "transition-[border-color,background-color] duration-500 ease-expo hover:border-bone/25 hover:bg-[#121210]",
+                    )}
+                  >
+                    <span aria-hidden className="row-sweep pointer-events-none absolute inset-x-0 top-0 h-px bg-accent/80" />
+                    <div className={cn("relative transition-transform duration-700 ease-expo group-hover:scale-[1.012]", layout.visual)}>
+                      <Instrument />
+                    </div>
+                    <div className="relative mt-auto flex flex-col gap-2 border-t border-hairline p-6 pt-5">
+                      <span className="font-mono text-[11px] tabular-nums text-ink-3 transition-colors duration-500 group-hover:text-accent">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <h3 className="text-[clamp(1.25rem,1.7vw,1.5rem)] leading-tight tracking-[-0.035em]">{feature.title}</h3>
+                      <p className="max-w-md text-[14.5px] leading-relaxed text-ink-2">{feature.body}</p>
+                    </div>
+                  </Reveal>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
       </div>
     </section>
   );

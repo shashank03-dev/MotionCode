@@ -25,7 +25,7 @@ const CURVE: Bezier = [0.16, 1, 0.3, 1];
 const EASE = formatBezier(CURVE);
 
 /** Plays a plate's keyframes only while it is in view. */
-function usePlateLive<T extends Element>() {
+export function usePlateLive<T extends Element>() {
   const ref = React.useRef<T>(null);
   const [live, setLive] = React.useState(false);
   React.useEffect(() => {
@@ -38,7 +38,7 @@ function usePlateLive<T extends Element>() {
   return [ref, live] as const;
 }
 
-const v = (vars: Record<string, string | number>) => vars as React.CSSProperties;
+export const v = (vars: Record<string, string | number>) => vars as React.CSSProperties;
 
 /* ------------------------------------------------------------------------ */
 /* 01 — Reference                                                            */

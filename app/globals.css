@@ -693,39 +693,145 @@ html[data-intro="play"] {
     filter 0.9s var(--ease-out) var(--reveal-delay, 0s);
 }
 
-/* Capability glyphs — each runs its motion on row hover. */
-.glyph-frame { transition: fill 0.3s, stroke 0.3s; }
-.group:hover .glyph-frame { animation: glyph-flash 1.2s var(--ease-chrono) infinite; }
-@keyframes glyph-flash {
-  0%, 100% { fill: transparent; }
-  20% { fill: var(--accent); stroke: var(--accent); }
-  45% { fill: transparent; }
-}
-.glyph-line { stroke-dasharray: 30; stroke-dashoffset: 0; }
-.group:hover .glyph-line { animation: glyph-write 1.4s var(--ease-out) infinite; }
-@keyframes glyph-write {
-  0% { stroke-dashoffset: 30; }
-  60%, 100% { stroke-dashoffset: 0; }
-}
-.glyph-draw { stroke-dasharray: 1; stroke-dashoffset: 0; }
-.group:hover .glyph-draw { animation: glyph-draw 1.6s var(--ease-out) infinite; stroke: var(--accent); }
+/* Nav menu draw-on (nav-menu.tsx .menu-draw). */
 @keyframes glyph-draw {
   0% { stroke-dashoffset: 1; }
   55%, 100% { stroke-dashoffset: 0; }
 }
-.group:hover .glyph-lift { animation: glyph-lift 1.4s var(--ease-out) infinite; }
-@keyframes glyph-lift {
-  0%, 100% { transform: translateY(0); }
-  35% { transform: translateY(-3px); stroke: var(--accent); }
-}
-.group:hover .glyph-fade { animation: glyph-fade 1.6s var(--ease-chrono) infinite; }
-@keyframes glyph-fade {
-  0%, 100% { opacity: 0.2; }
-  50% { opacity: 1; stroke: var(--accent); }
-}
 @media (prefers-reduced-motion: reduce) {
-  .reveal[data-reveal] { opacity: 1; transform: none; }
-  .group:hover :is(.glyph-frame, .glyph-line, .glyph-draw, .glyph-lift, .glyph-fade) { animation: none; }
+  .reveal[data-reveal] { opacity: 1; transform: none; filter: none; }
+}
+
+/* --------------------------------------------------------------------------
+   Capabilities bento instruments (components/chrono/bento.tsx). Paused off
+   screen and stilled under reduced motion by the .mc-plate rules above.
+   -------------------------------------------------------------------------- */
+.mc-plate :is(.bn-spin, .bn-pop, .bn-bar, .bn-card) {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.mc-plate .bn-bar { transform-origin: center bottom; }
+.mc-plate .bn-card { transform-origin: center bottom; }
+
+/* 01 frames */
+.bn-strip { animation: bn-strip 16s linear infinite; }
+@keyframes bn-strip { to { transform: translateX(-820px); } }
+.bn-gate { opacity: 0; animation: bn-gate 1.6s var(--ease-out) infinite; }
+@keyframes bn-gate {
+  0% { opacity: 0.7; }
+  60%, 100% { opacity: 0; }
+}
+.bn-bar { animation: bn-bar 2.4s ease-in-out var(--d, 0s) infinite alternate both; }
+@keyframes bn-bar {
+  from { transform: scaleY(0.45); }
+  to { transform: scaleY(1); }
+}
+.bn-scan { opacity: 0; animation: bn-scan 4.8s linear infinite; }
+@keyframes bn-scan {
+  0% { opacity: 0; transform: translateX(0); }
+  4%, 94% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(600px); }
+}
+
+/* 02 spec — each field spins, then resolves with a check */
+.bn-spin { animation: bn-spin 0.9s linear infinite; }
+@keyframes bn-spin { to { transform: rotate(360deg); } }
+.bn-pending { opacity: 0; animation: bn-pending 6s linear var(--d, 0s) infinite both; }
+@keyframes bn-pending {
+  0%, 19% { opacity: 1; }
+  21%, 96% { opacity: 0; }
+  100% { opacity: 1; }
+}
+.bn-done { animation: bn-done 6s linear var(--d, 0s) infinite both; }
+@keyframes bn-done {
+  0%, 20% { opacity: 0; }
+  22%, 90% { opacity: 1; }
+  96%, 100% { opacity: 0; }
+}
+.bn-pop { animation: bn-pop 6s linear var(--d, 0s) infinite both; }
+@keyframes bn-pop {
+  0%, 20% { transform: scale(0.3); }
+  20.1% { transform: scale(0.3); animation-timing-function: var(--ease-out); }
+  25% { transform: scale(1.18); animation-timing-function: var(--ease-out); }
+  29%, 100% { transform: scale(1); }
+}
+
+/* 03 targets — a pulse down each wire, the node lights on arrival */
+.bn-pulse { opacity: 0; stroke-dasharray: 0.18 1; animation: bn-pulse 2.4s cubic-bezier(0.65, 0, 0.35, 1) var(--d, 0s) infinite both; }
+@keyframes bn-pulse {
+  0% { opacity: 1; stroke-dashoffset: 0.18; }
+  55%, 100% { opacity: 1; stroke-dashoffset: -1; }
+}
+.bn-hit { opacity: 0; animation: bn-hit 2.4s var(--ease-out) var(--d, 0s) infinite both; }
+@keyframes bn-hit {
+  0%, 38% { opacity: 0; }
+  44% { opacity: 1; }
+  85%, 100% { opacity: 0; }
+}
+
+/* 04 easing — the confidence donut fills on the very curve it detected */
+@property --bn-pct {
+  syntax: "<integer>";
+  initial-value: 98;
+  inherits: false;
+}
+.bn-rotate { animation: bn-rotate 60s linear infinite; }
+.bn-rotate-rev { animation: bn-rotate 40s linear infinite reverse; }
+@keyframes bn-rotate { to { transform: rotate(360deg); } }
+.bn-donut { stroke-dashoffset: 1.4; animation: bn-donut 6s linear infinite both; }
+@keyframes bn-donut {
+  0%, 6% { stroke-dashoffset: 100; animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
+  40%, 88% { stroke-dashoffset: 1.4; animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1); }
+  97%, 100% { stroke-dashoffset: 100; }
+}
+.bn-tick { animation: bn-tick 6s linear var(--d, 0s) infinite both; }
+@keyframes bn-tick {
+  0%, 6% { opacity: 0; }
+  6.5%, 88% { opacity: 1; }
+  92%, 100% { opacity: 0; }
+}
+.bn-count { counter-reset: pct var(--bn-pct); animation: bn-count 6s linear infinite both; }
+.bn-count::before { content: counter(pct); }
+@keyframes bn-count {
+  0%, 6% { --bn-pct: 0; animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
+  40%, 88% { --bn-pct: 98; animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1); }
+  97%, 100% { --bn-pct: 0; }
+}
+.bn-bar-x { transform-origin: left center; animation: bn-bar-x 6s linear var(--d, 0s) infinite both; }
+@keyframes bn-bar-x {
+  0%, 6% { transform: scaleX(0); animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
+  32%, 88% { transform: scaleX(1); animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1); }
+  97%, 100% { transform: scaleX(0); }
+}
+
+/* 05 workspaces — the stack fans out and gathers */
+.bn-card { transform: translateX(var(--fx)) rotate(var(--fr)); animation: bn-card 5s linear var(--d, 0s) infinite both; }
+@keyframes bn-card {
+  0%, 8% { transform: translateX(0) rotate(0deg); animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
+  36%, 74% { transform: translateX(var(--fx)) rotate(var(--fr)); animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1); }
+  96%, 100% { transform: translateX(0) rotate(0deg); }
+}
+
+/* 06 reduced motion — travel vs. crossfade, in step */
+.bn-travel { transform: translateX(256px); animation: bn-travel 3.2s linear infinite both; }
+@keyframes bn-travel {
+  0% { opacity: 0; transform: translateX(0); }
+  6% { opacity: 1; }
+  16% { transform: translateX(0); animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
+  52%, 86% { opacity: 1; transform: translateX(256px); }
+  96%, 100% { opacity: 0; transform: translateX(256px); }
+}
+.bn-swap-out { opacity: 0; animation: bn-swap-out 3.2s linear infinite both; }
+@keyframes bn-swap-out {
+  0% { opacity: 0; }
+  6%, 16% { opacity: 1; }
+  30%, 100% { opacity: 0; }
+}
+.bn-swap-in { animation: bn-swap-in 3.2s linear infinite both; }
+@keyframes bn-swap-in {
+  0%, 16% { opacity: 0; }
+  30%, 86% { opacity: 1; }
+  96%, 100% { opacity: 0; }
 }
 
 /* Bench (components/chrono/bench.tsx) */

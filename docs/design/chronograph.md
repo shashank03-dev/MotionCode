@@ -64,7 +64,7 @@ are a legend, not the brand — they stay distinguishable from safelight.
 3. **Sequence** (`#how`) — pinned darkroom: clip → contact sheet → Marey plot →
    generated code, scrubbed by a ScrollTrigger timeline.
 4. **Manifesto** — the paper plate; words develop on scroll.
-5. **Capabilities** (`#features`) — a ruled catalogue index with motion glyphs.
+5. **Capabilities** (`#features`) — an instrument bench: a bento of hairline tiles, each with a live SVG instrument (frame gate, resolving spec, wire pulses, a match-confidence donut, fanning workspace, travel vs. crossfade). Rivets and dashed registration rules frame the grid.
 6. **Bench** (`#playground`) — real code generation from `lib/chrono/bezier.ts`.
 7. **Pricing** (`#pricing`), **Finale**, **Footer** (wordmark as last exposure).
 
