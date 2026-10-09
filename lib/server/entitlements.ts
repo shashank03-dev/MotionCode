@@ -162,6 +162,39 @@ export async function getEntitlementSummary(
   };
 }
 
+// The plan a user is actually on: admin override, then trusted subscription,
+// then profile — the same resolution analyses use, without the usage read.
+export async function getEffectivePlanTier(
+  userId: string,
+  options: EntitlementOptions = {},
+): Promise<PlanTier> {
+  const client = getEntitlementsClient(options.client);
+  const now = options.now ?? new Date();
+  const [profile, override, subscription] = await Promise.all([
+    readProfile(client, userId),
+    getActivePlanOverride(userId, { client, now }),
+    readLatestSubscription(client, userId),
+  ]);
+
+  return resolveTrustedPlanTier({ override, profile, subscription }).planTier;
+}
+
+export const getEffectivePlanTierCached = requestCache(
+  async (userId: string) => getEffectivePlanTier(userId),
+);
+
+// workspaces.plan_tier is a stored snapshot that nothing keeps current (admin
+// overrides, upgrades and expiries never touch it), so a workspace's plan is
+// always its owner's effective plan.
+export async function withEffectivePlanTier<
+  T extends { owner_id: string; plan_tier: PlanTier },
+>(workspace: T): Promise<T> {
+  return {
+    ...workspace,
+    plan_tier: await getEffectivePlanTierCached(workspace.owner_id),
+  };
+}
+
 export const getEntitlementSummaryCached = requestCache(
   async (userId: string) => getEntitlementSummary(userId),
 );

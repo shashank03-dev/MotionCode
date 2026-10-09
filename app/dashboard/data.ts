@@ -3,7 +3,10 @@ import * as navigation from "next/navigation";
 
 import { loginPathForNext } from "@/lib/auth/redirects";
 import type { PlanTier } from "@/lib/contracts/plans";
-import { getEntitlementSummary } from "@/lib/server/entitlements";
+import {
+  getEntitlementSummary,
+  withEffectivePlanTier,
+} from "@/lib/server/entitlements";
 import {
   createSupabaseServerClient,
   getCurrentUser,
@@ -297,7 +300,7 @@ export async function getWorkspacePageData(
     members: members.data ?? [],
     projects: projects.data ?? [],
     role,
-    workspace,
+    workspace: await withEffectivePlanTier(workspace),
   } satisfies WorkspacePageData;
 }
 
@@ -343,7 +346,7 @@ export async function getProjectPageData(
     project,
     role: await getWorkspaceRole(workspace.data, user.id),
     versions: versions.data ?? [],
-    workspace: workspace.data,
+    workspace: await withEffectivePlanTier(workspace.data),
   } satisfies ProjectPageData;
 }
 

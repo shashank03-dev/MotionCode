@@ -52,15 +52,17 @@ export async function BillingContent({
   // in entitlement resolution, so surface it as its own complimentary state.
   const isComplimentary = summary.source === "admin_override";
   const override = summary.override;
-  const planTier = isComplimentary
-    ? summary.planTier
-    : isPaidPlanTier(subscription?.plan_tier)
-      ? subscription.plan_tier
-      : summary.planTier;
   const isManageable =
     Boolean(subscriptionId) &&
     typeof subscription?.status === "string" &&
     MANAGEABLE_STATUSES.has(subscription.status);
+  // An abandoned checkout leaves an "incomplete" row carrying the paid tier;
+  // only a live subscription may show its tier over the effective plan.
+  const planTier = isComplimentary
+    ? summary.planTier
+    : isManageable && isPaidPlanTier(subscription?.plan_tier)
+      ? subscription.plan_tier
+      : summary.planTier;
   const renewalLabel = subscription?.current_period_end
     ? formatDate(subscription.current_period_end)
     : "the end of the current billing period";

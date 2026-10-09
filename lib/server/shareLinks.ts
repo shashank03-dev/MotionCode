@@ -8,6 +8,10 @@ import type {
 } from "@/lib/contracts/motion";
 import { PLAN_TIERS, type PlanTier } from "@/lib/contracts/plans";
 import { createTrustedSupabaseServerClient } from "@/lib/server/audit";
+import {
+  getEffectivePlanTier,
+  type EntitlementsSupabaseClient,
+} from "@/lib/server/entitlements";
 import { ApiError } from "@/lib/server/apiErrors";
 import { observeShareAccess } from "@/lib/server/observability";
 import type { Json } from "@/types/database";
@@ -420,7 +424,13 @@ async function findWorkspace(client: ShareDataClient, workspaceId: string) {
     return null;
   }
 
-  return row;
+  // The stored column is never kept current; gate on the owner's real plan.
+  return {
+    ...row,
+    plan_tier: await getEffectivePlanTier(row.owner_id, {
+      client: client as unknown as EntitlementsSupabaseClient,
+    }),
+  };
 }
 
 async function getShareLinkById(client: ShareDataClient, shareLinkId: string) {

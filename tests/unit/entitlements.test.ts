@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { PLAN_ENTITLEMENTS } from "@/lib/contracts/plans";
 import type { EntitlementsSupabaseClient } from "@/lib/server/entitlements";
 import {
+  getEffectivePlanTier,
   getEntitlementSummary,
   resolvePlanTierForUser,
 } from "@/lib/server/entitlements";
@@ -72,6 +73,34 @@ function enablePaidCheckout() {
 }
 
 describe("entitlement resolution", () => {
+  it("resolves the effective plan tier from an admin override", async () => {
+    const client = createEntitlementsClient({
+      admin_plan_overrides: [
+        {
+          created_at: "2026-06-05T12:00:00.000Z",
+          expires_at: "2026-06-07T12:00:00.000Z",
+          plan_tier: "pro",
+          user_id: "user_123",
+        },
+      ],
+      profiles: [{ id: "user_123", plan_tier: "free" }],
+      subscriptions: [],
+    });
+
+    await expect(
+      getEffectivePlanTier("user_123", {
+        client,
+        now: new Date("2026-06-06T12:00:00.000Z"),
+      }),
+    ).resolves.toBe("pro");
+    await expect(
+      getEffectivePlanTier("user_123", {
+        client,
+        now: new Date("2026-06-08T12:00:00.000Z"),
+      }),
+    ).resolves.toBe("free");
+  });
+
   it("uses an active admin override ahead of subscription and profile tiers", async () => {
     const client = createEntitlementsClient({
       admin_plan_overrides: [

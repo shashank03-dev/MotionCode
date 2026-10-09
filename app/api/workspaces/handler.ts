@@ -3,7 +3,10 @@ import { z } from "zod";
 
 import { PLAN_ENTITLEMENTS, type PlanTier } from "@/lib/contracts/plans";
 import { apiError, apiSuccess, ApiError, isApiError } from "@/lib/server/apiErrors";
-import { resolvePlanTierForUser } from "@/lib/server/entitlements";
+import {
+  resolvePlanTierForUser,
+  withEffectivePlanTier,
+} from "@/lib/server/entitlements";
 import { ensureProfileForUser } from "@/lib/server/profiles";
 import { createSupabaseAdminClient } from "@/lib/server/supabaseAdmin";
 import {
@@ -353,7 +356,7 @@ export async function getWorkspaceAccessWithSupabase(
   workspaceId: string,
 ): Promise<WorkspaceAccess | null> {
   const supabase = await createSupabaseServerClient();
-  const { data: workspace, error: workspaceError } = await supabase
+  const { data: workspaceRow, error: workspaceError } = await supabase
     .from("workspaces")
     .select("*")
     .eq("id", workspaceId)
@@ -362,9 +365,11 @@ export async function getWorkspaceAccessWithSupabase(
   if (workspaceError) {
     throw new ApiError("INTERNAL_ERROR", "Failed to read workspace.");
   }
-  if (!workspace) {
+  if (!workspaceRow) {
     return null;
   }
+
+  const workspace = await withEffectivePlanTier(workspaceRow);
 
   if (workspace.owner_id === userId) {
     return { role: "owner", workspace };
