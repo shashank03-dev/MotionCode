@@ -78,7 +78,13 @@ test.describe("marketing surface", () => {
     await expect(pricing.getByText("$18", { exact: true })).toBeVisible();
     await expect(pricing.getByText("$49", { exact: true })).toBeVisible();
     await expect(pricing.getByText("Most popular")).toBeVisible();
-    await expect(pricing.getByText("Easing curve editor")).toBeVisible();
+    // Tier copy is derived from PLAN_ENTITLEMENTS (lib/pricing.ts).
+    await expect(pricing.getByText("Editable code studio with export")).toBeVisible();
+    await expect(pricing.getByText("1 analysis a day")).toBeVisible();
+    await expect(pricing.getByRole("link", { name: /^Start free$/i })).toHaveAttribute("href", "/app");
+    await expect(
+      pricing.getByRole("link", { name: /Compare every limit/i }),
+    ).toHaveAttribute("href", "/pricing#compare");
     await expect(pricing.getByRole("link", { name: /^Go Pro$/i })).toBeVisible();
     await expect(pricing.getByRole("link", { name: /^Go Team$/i })).toBeVisible();
 
@@ -206,6 +212,35 @@ test.describe("marketing surface", () => {
       footer.getByRole("link", { name: /^Terms$/i }),
     ).toHaveAttribute("href", "/terms");
     await expect(footer.getByText(/Made for motion/)).toBeVisible();
+  });
+
+  test("pricing page compares every limit and answers billing questions", async ({
+    page,
+  }) => {
+    await page.goto("/pricing");
+
+    await expect(
+      page.getByRole("heading", { name: "Access tiers for motion analysis." }),
+    ).toBeVisible();
+    await expect(page.getByRole("button", { name: /Pay with Razorpay/i })).toHaveCount(2);
+    await expect(page.getByText("Most popular")).toBeVisible();
+
+    const table = page.locator("#compare table");
+    await expect(table).toBeVisible();
+    const row = (label: string) => table.getByRole("row", { name: new RegExp(`^${label}`) });
+    await expect(row("Frames per analysis")).toContainText("6");
+    await expect(row("Frames per analysis")).toContainText("12");
+    await expect(row("Frames per analysis")).toContainText("16");
+    await expect(row("Max upload")).toContainText("250 MB");
+    await expect(row("Code studio")).toContainText("Read-only");
+
+    const faq = page.locator("details", { hasText: "How does billing work?" });
+    await expect(faq.getByText(/processed by Razorpay/)).toBeHidden();
+    await faq.locator("summary").click();
+    await expect(faq.getByText(/processed by Razorpay/)).toBeVisible();
+    await expect(
+      page.locator("details", { hasText: "Do you offer refunds?" }).getByRole("link", { includeHidden: true }),
+    ).toHaveAttribute("href", "/refunds");
   });
 
   test("support, privacy, and terms routes render and examples is removed", async ({ page }) => {

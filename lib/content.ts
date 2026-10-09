@@ -75,56 +75,6 @@ export const STEPS = [
   },
 ];
 
-export const PRICING = [
-  {
-    name: "Free",
-    price: "$0",
-    cadence: "/forever",
-    blurb: "For trying the pipeline on a real reference.",
-    features: [
-      "5 analyses / month",
-      "CSS + Framer export",
-      "Reduced-motion fallback",
-      "1 workspace",
-    ],
-    cta: "Start free",
-    href: "/app",
-    featured: false,
-  },
-  {
-    name: "Pro",
-    price: "$18",
-    cadence: "/month",
-    blurb: "For designers and engineers shipping motion daily.",
-    features: [
-      "Unlimited analyses",
-      "CSS + GSAP + Framer export",
-      "Easing curve editor",
-      "Unlimited workspaces",
-      "Version history",
-    ],
-    cta: "Go Pro",
-    href: "/pricing",
-    featured: true,
-  },
-  {
-    name: "Team",
-    price: "$49",
-    cadence: "/month",
-    blurb: "For teams keeping a shared motion language.",
-    features: [
-      "Everything in Pro",
-      "Shared workspaces",
-      "Motion tokens export",
-      "SSO + roles",
-      "Priority support",
-    ],
-    cta: "Go Team",
-    href: "/pricing",
-    featured: false,
-  },
-];
-
 // Generic, non-impersonating role marks for the credibility strip.
 export const TRUST_MARKS = [
   "PRODUCT DESIGN",

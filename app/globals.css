@@ -641,3 +641,16 @@ html[data-intro="play"] {
 @media (prefers-reduced-motion: reduce) {
   .viewfinder-tc { animation: none; }
 }
+
+/* Pricing exposure strips (components/chrono/pricing-tiers.tsx): hover the
+   tier and its plate re-exposes, one strobe at a time. */
+@keyframes tier-strobe {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+.group:hover .tier-sample {
+  animation: tier-strobe 0.45s var(--ease-out) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .group:hover .tier-sample { animation: none; }
+}

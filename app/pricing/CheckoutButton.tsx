@@ -8,6 +8,8 @@ import type { PlanTier } from "@/lib/contracts/plans";
 
 type CheckoutButtonProps = {
   planTier: Extract<PlanTier, "pro" | "studio">;
+  /** `primary` fills with safelight (the featured plan); `outline` is quiet. */
+  variant?: "primary" | "outline";
 };
 
 type RazorpayCheckoutResponse = {
@@ -65,7 +67,7 @@ declare global {
   }
 }
 
-export function CheckoutButton({ planTier }: CheckoutButtonProps) {
+export function CheckoutButton({ planTier, variant = "primary" }: CheckoutButtonProps) {
   const [error, setError] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -179,6 +181,7 @@ export function CheckoutButton({ planTier }: CheckoutButtonProps) {
   return (
     <div className="flex flex-col gap-2">
       <ProviderButton
+        variant={variant}
         disabled={loading}
         icon={<CreditCard className="h-4 w-4" aria-hidden="true" />}
         label="Pay with Razorpay"
@@ -226,12 +229,14 @@ export function CheckoutButton({ planTier }: CheckoutButtonProps) {
 }
 
 function ProviderButton({
+  variant,
   icon,
   disabled,
   label,
   loading,
   onClick,
 }: {
+  variant: "primary" | "outline";
   disabled: boolean;
   icon: React.ReactNode;
   label: string;
@@ -240,7 +245,11 @@ function ProviderButton({
 }) {
   return (
     <button
-      className="inline-flex h-11 w-full min-w-0 items-center justify-center gap-2 rounded-full bg-accent px-4 text-sm font-medium text-carbon shadow-glow transition hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
+      className={
+        variant === "primary"
+          ? "inline-flex h-[52px] w-full min-w-0 items-center justify-center gap-2 rounded-full bg-accent px-5 text-[15px] font-medium text-carbon transition-colors duration-300 hover:bg-bone active:scale-[0.98] disabled:opacity-60"
+          : "inline-flex h-[52px] w-full min-w-0 items-center justify-center gap-2 rounded-full px-5 text-[15px] font-medium text-ink shadow-[inset_0_0_0_1px_var(--border-strong)] transition-shadow duration-300 hover:shadow-[inset_0_0_0_1px_var(--text)] active:scale-[0.98] disabled:opacity-60"
+      }
       disabled={disabled}
       onClick={onClick}
       type="button"
