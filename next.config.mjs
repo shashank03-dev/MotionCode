@@ -79,6 +79,12 @@ const nextConfig = {
   },
   // Tree-shake large icon/animation packages so only used exports ship.
   experimental: {
+    // Dev-only. Next's React debug channel reloads the page when the
+    // navigation entry reports `transferSize === 0` ("served from cache").
+    // Firefox reports 0 while a dynamic route is still streaming, so every
+    // dynamic page reloaded itself — in a loop once a few browsers shared the
+    // dev server (parallel e2e workers). Costs only richer dev owner stacks.
+    reactDebugChannel: false,
     optimizePackageImports: [
       "lucide-react",
       "framer-motion",
