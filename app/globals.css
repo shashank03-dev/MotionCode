@@ -848,13 +848,13 @@ html[data-intro="play"] {
 }
 
 /* 06 reduced motion — travel vs. crossfade, in step */
-.bn-travel { transform: translateX(432px); animation: bn-travel 3.2s linear infinite both; }
+.bn-travel { transform: translateX(var(--travel, 432px)); animation: bn-travel 3.2s linear infinite both; }
 @keyframes bn-travel {
   0% { opacity: 0; transform: translateX(0); }
   6% { opacity: 1; }
   16% { transform: translateX(0); animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
-  52%, 86% { opacity: 1; transform: translateX(432px); }
-  96%, 100% { opacity: 0; transform: translateX(432px); }
+  52%, 86% { opacity: 1; transform: translateX(var(--travel, 432px)); }
+  96%, 100% { opacity: 0; transform: translateX(var(--travel, 432px)); }
 }
 /* exposures left behind by the travelling block, one per slice of time */
 .bn-ghost { opacity: var(--o); animation: bn-ghost 3.2s linear var(--d, 0s) infinite both; }

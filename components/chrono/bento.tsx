@@ -268,15 +268,31 @@ const FILES: { name: string; meta: string; curve: Bezier }[] = [
   { name: "hero-reveal.mp4", meta: "expo-out · 420ms", curve: EXPO },
 ];
 
-export function WorkspaceInstrument() {
-  const cx = 280;
+/**
+ * Wide tiles draw twice: a 560-wide plate for lg+, and a narrow plate with the
+ * same elements re-spaced for phones/tablets, so labels stay legible instead
+ * of shrinking to ~60%. Only one is displayed (and so animated) at a time.
+ */
+function Responsive({ render }: { render: (compact: boolean) => React.ReactNode }) {
   return (
-    <svg viewBox="0 0 560 200" className="h-full w-full" aria-hidden>
+    <>
+      <div className="h-full lg:hidden">{render(true)}</div>
+      <div className="hidden h-full lg:block">{render(false)}</div>
+    </>
+  );
+}
+
+function WorkspacePlate({ compact }: { compact: boolean }) {
+  const W = compact ? 320 : 560;
+  const spread = compact ? 54 : 124;
+  const cx = W / 2;
+  return (
+    <svg viewBox={`0 0 ${W} 200`} className="h-full w-full" aria-hidden>
       {FILES.map((f, i) => {
         const [x1, y1, x2, y2] = f.curve;
         const top = i === FILES.length - 1;
         const off = i - (FILES.length - 1) / 2;
-        const style = v({ "--fx": `${(off * 124).toFixed(0)}px`, "--fr": `${(off * 4).toFixed(1)}deg`, "--d": `${(i * 0.05).toFixed(2)}s` });
+        const style = v({ "--fx": `${(off * spread).toFixed(0)}px`, "--fr": `${(off * 4).toFixed(1)}deg`, "--d": `${(i * 0.05).toFixed(2)}s` });
         return (
           <g key={f.name} className="bn-card" style={style}>
             <rect x={cx - 58} y="26" width="116" height="150" rx="8" fill={top ? "#26241f" : "#1a1916"} {...ink(top ? 0.45 : 0.2)} />
@@ -313,62 +329,74 @@ export function WorkspaceInstrument() {
   );
 }
 
+export function WorkspaceInstrument() {
+  return <Responsive render={(compact) => <WorkspacePlate compact={compact} />} />;
+}
+
 /* 06 — Reduced motion: the same change, with and without the travel. */
-const TRAVEL = 432;
 const GHOSTS = Array.from({ length: 7 }, (_, i) => i / 6);
 
-export function ReducedInstrument() {
+function ReducedPlate({ compact }: { compact: boolean }) {
+  // Wide: specs sit right of the lane label. Narrow: they drop under the lane.
+  const W = compact ? 320 : 560;
+  const H = compact ? 220 : 200;
+  const x0 = compact ? 20 : 40;
+  const travel = W - 2 * x0 - 24;
   const lanes = [
-    { y: 62, label: "motion: full", spec: "translateX · 420ms · expo-out" },
-    { y: 148, label: "prefers-reduced-motion", spec: "opacity · 200ms · no travel" },
+    { y: compact ? 62 : 62, label: "motion: full", spec: "translateX · 420ms · expo-out" },
+    { y: compact ? 160 : 148, label: "prefers-reduced-motion", spec: "opacity · 200ms · no travel" },
   ];
+  const box = { width: 24, height: 24, rx: 6 };
   return (
-    <svg viewBox="0 0 560 200" className="h-full w-full" aria-hidden>
+    <svg viewBox={`0 0 ${W} ${H}`} className="h-full w-full" aria-hidden style={v({ "--travel": `${travel}px` })}>
       {lanes.map((lane, l) => (
         <g key={lane.label}>
-          <text x="40" y={lane.y - 26} className="fill-[var(--text)] font-mono text-[9px] uppercase tracking-[0.16em]">
+          <text x={x0} y={lane.y - 26} className="fill-[var(--text)] font-mono text-[9px] uppercase tracking-[0.16em]">
             {lane.label}
           </text>
-          <text x="520" y={lane.y - 26} textAnchor="end" className="fill-[var(--ink-3)] font-mono text-[9px]">
+          <text
+            x={compact ? x0 : W - x0}
+            y={compact ? lane.y + 34 : lane.y - 26}
+            textAnchor={compact ? "start" : "end"}
+            className="fill-[var(--ink-3)] font-mono text-[9px]"
+          >
             {lane.spec}
           </text>
-          <line x1="40" x2="520" y1={lane.y} y2={lane.y} {...ink(0.12)} strokeDasharray="2 4" />
+          <line x1={x0} x2={W - x0} y1={lane.y} y2={lane.y} {...ink(0.12)} strokeDasharray="2 4" />
           {[0, 0.25, 0.5, 0.75, 1].map((t) => (
-            <line key={t} x1={52 + TRAVEL * t} x2={52 + TRAVEL * t} y1={lane.y + 16} y2={lane.y + 20} {...ink(0.25)} />
+            <line key={t} x1={x0 + 12 + travel * t} x2={x0 + 12 + travel * t} y1={lane.y + 16} y2={lane.y + 20} {...ink(0.25)} />
           ))}
-          <rect x="40" y={lane.y - 12} width="24" height="24" rx="6" fill="none" {...ink(0.14)} />
-          <rect x={40 + TRAVEL} y={lane.y - 12} width="24" height="24" rx="6" fill="none" {...ink(0.14)} />
+          <rect x={x0} y={lane.y - 12} {...box} fill="none" {...ink(0.14)} />
+          <rect x={x0 + travel} y={lane.y - 12} {...box} fill="none" {...ink(0.14)} />
           {l === 0 ? (
             <>
               <g className="bn-ghosts">
-              {GHOSTS.map((f, i) => (
-                <rect
-                  key={i}
-                  x={r2(40 + TRAVEL * bezierAt(EXPO, f))}
-                  y={lane.y - 12}
-                  width="24"
-                  height="24"
-                  rx="6"
-                  fill="none"
-                  stroke="var(--text)"
-                  className="bn-ghost"
-                  style={v({ "--d": `${(f * 1.152).toFixed(3)}s`, "--o": (0.12 + i * 0.04).toFixed(2) })}
-                />
-              ))}
+                {GHOSTS.map((f, i) => (
+                  <rect
+                    key={i}
+                    x={r2(x0 + travel * bezierAt(EXPO, f))}
+                    y={lane.y - 12}
+                    {...box}
+                    fill="none"
+                    stroke="var(--text)"
+                    className="bn-ghost"
+                    style={v({ "--d": `${(f * 1.152).toFixed(3)}s`, "--o": (0.12 + i * 0.04).toFixed(2) })}
+                  />
+                ))}
               </g>
               <g className="bn-travel">
-                <rect x="40" y={lane.y - 12} width="24" height="24" rx="6" fill="#26241f" stroke="var(--text)" strokeOpacity="0.6" />
-                <circle cx="52" cy={lane.y} r="3" fill="var(--accent)" />
+                <rect x={x0} y={lane.y - 12} {...box} fill="#26241f" stroke="var(--text)" strokeOpacity="0.6" />
+                <circle cx={x0 + 12} cy={lane.y} r="3" fill="var(--accent)" />
               </g>
             </>
           ) : (
             <>
               <g className="bn-swap-out">
-                <rect x="40" y={lane.y - 12} width="24" height="24" rx="6" fill="#26241f" stroke="var(--text)" strokeOpacity="0.6" />
+                <rect x={x0} y={lane.y - 12} {...box} fill="#26241f" stroke="var(--text)" strokeOpacity="0.6" />
               </g>
               <g className="bn-swap-in">
-                <rect x={40 + TRAVEL} y={lane.y - 12} width="24" height="24" rx="6" fill="#26241f" stroke="var(--text)" strokeOpacity="0.6" />
-                <circle cx={52 + TRAVEL} cy={lane.y} r="3" fill="var(--accent)" />
+                <rect x={x0 + travel} y={lane.y - 12} {...box} fill="#26241f" stroke="var(--text)" strokeOpacity="0.6" />
+                <circle cx={x0 + travel + 12} cy={lane.y} r="3" fill="var(--accent)" />
               </g>
             </>
           )}
@@ -376,6 +404,10 @@ export function ReducedInstrument() {
       ))}
     </svg>
   );
+}
+
+export function ReducedInstrument() {
+  return <Responsive render={(compact) => <ReducedPlate compact={compact} />} />;
 }
 
 export const INSTRUMENTS = [

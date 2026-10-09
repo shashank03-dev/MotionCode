@@ -24,8 +24,8 @@ const LAYOUT: Record<number, { tile: string; visual: string }> = {
   3: { tile: "md:row-span-2 lg:col-span-4 lg:row-span-2", visual: "min-h-[460px] flex-1 px-6 pb-6 pt-4" },
   1: { tile: "lg:col-span-4", visual: "h-[200px]" },
   2: { tile: "lg:col-span-4", visual: "h-[200px]" },
-  4: { tile: "lg:col-span-6", visual: "h-[200px]" },
-  5: { tile: "lg:col-span-6", visual: "h-[200px]" },
+  4: { tile: "lg:col-span-6", visual: "h-[236px] lg:h-[200px]" },
+  5: { tile: "lg:col-span-6", visual: "h-[256px] lg:h-[200px]" },
 };
 const ORDER = [0, 3, 1, 2, 4, 5];
 
