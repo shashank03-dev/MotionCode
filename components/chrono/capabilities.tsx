@@ -127,6 +127,7 @@ export function Capabilities() {
                 <span className="hidden justify-self-end md:block">
                   <Glyph index={i} />
                 </span>
+                <span aria-hidden className="row-sweep pointer-events-none absolute inset-x-0 -bottom-px h-px bg-accent/70" />
               </Reveal>
             </li>
           ))}

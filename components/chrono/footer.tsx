@@ -33,7 +33,7 @@ const COLUMNS = [
 ];
 
 const LINK =
-  "text-[14px] text-ink-2 transition-colors hover:text-ink max-sm:inline-flex max-sm:min-h-[44px] max-sm:items-center";
+  "link-wipe text-[14px] text-ink-2 hover:text-ink max-sm:inline-flex max-sm:min-h-[44px] max-sm:items-center";
 
 /** The wordmark as a final exposure: letters step up one frame at a time on hover. */
 function Wordmark() {

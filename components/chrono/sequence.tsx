@@ -8,6 +8,9 @@ import { STEPS } from "@/lib/content";
 import { bezierAt, bezierPath, formatBezier, toCss, type Bezier } from "@/lib/chrono/bezier";
 import { cn } from "@/lib/utils";
 
+import { Reveal } from "./reveal";
+import { AnalyzePlate, ReferencePlate, ShipPlate } from "./plates";
+
 /**
  * "How it works" as one continuous darkroom process, scrubbed by scroll:
  *
@@ -34,7 +37,7 @@ const CODE = toCss({
 }).split("\n");
 
 /** A mock interface frame: a card mid-flight at progress `p`. */
-function FrameArt({ p, live = false }: { p: number; live?: boolean }) {
+function FrameArt({ p }: { p: number }) {
   return (
     <div className="absolute inset-0 overflow-hidden bg-[#10100e]">
       <div className="absolute inset-x-[8%] top-[8%] flex items-center gap-[2%]">
@@ -43,32 +46,13 @@ function FrameArt({ p, live = false }: { p: number; live?: boolean }) {
         <span className="ml-auto h-[3px] w-[8%] rounded-full bg-bone/10" />
       </div>
       <div
-        className={cn(
-          "absolute left-1/2 w-[34%] -translate-x-1/2 rounded-[6%/9%] border border-bone/50 bg-[#26241f] p-[3%] shadow-[0_20px_40px_-20px_rgba(0,0,0,0.9)]",
-          live && "seq-live-card",
-        )}
-        style={live ? undefined : { top: `${66 - p * 40}%`, opacity: 0.35 + p * 0.65 }}
+        className="absolute left-1/2 w-[34%] -translate-x-1/2 rounded-[6%/9%] border border-bone/50 bg-[#26241f] p-[3%] shadow-[0_20px_40px_-20px_rgba(0,0,0,0.9)]"
+        style={{ top: `${66 - p * 40}%`, opacity: 0.35 + p * 0.65 }}
       >
         <span className="block h-[5px] w-[60%] rounded-full bg-bone/70" />
         <span className="mt-[6%] block h-[4px] w-[85%] rounded-full bg-bone/15" />
         <span className="mt-[4%] block h-[4px] w-[70%] rounded-full bg-bone/15" />
       </div>
-    </div>
-  );
-}
-
-/** Camera chrome over the live clip: corner marks, centre cross, timecode. */
-function Viewfinder() {
-  const corner = "absolute size-5 border-bone/50";
-  return (
-    <div className="pointer-events-none absolute inset-[4%]" aria-hidden>
-      <span className={cn(corner, "left-0 top-0 border-l border-t")} />
-      <span className={cn(corner, "right-0 top-0 border-r border-t")} />
-      <span className={cn(corner, "bottom-0 left-0 border-b border-l")} />
-      <span className={cn(corner, "bottom-0 right-0 border-b border-r")} />
-      <span className="absolute left-1/2 top-1/2 h-4 w-px -translate-x-1/2 -translate-y-1/2 bg-bone/30" />
-      <span className="absolute left-1/2 top-1/2 h-px w-4 -translate-x-1/2 -translate-y-1/2 bg-bone/30" />
-      <span className="viewfinder-tc absolute bottom-1 right-2 font-mono text-[10px] tabular-nums tracking-[0.1em] text-ink-2" />
     </div>
   );
 }
@@ -180,7 +164,6 @@ function PinnedSequence() {
 
       // Act 1 → 2: the clip is cut into frames.
       tl.to(q("[data-seq='live']"), { opacity: 0, duration: 0.06 }, 0.2)
-        .to(q("[data-seq='rec']"), { opacity: 0, duration: 0.04 }, 0.2)
         .set(q("[data-seq='frame']"), { opacity: 1 }, 0.2);
       q("[data-seq='frame']").forEach((frame, i) => {
         const g = GRID[i];
@@ -294,15 +277,7 @@ function PinnedSequence() {
               </div>
             ))}
             <div data-seq="live" className="absolute inset-0 z-20 border border-hairline-strong">
-              <FrameArt p={0} live />
-              <Viewfinder />
-            </div>
-            <div
-              data-seq="rec"
-              className="absolute left-3 top-3 z-30 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.16em] text-ink-2"
-            >
-              <span className="size-1.5 animate-pulse-soft rounded-full bg-accent" />
-              reference.mp4 · rec
+              <ReferencePlate bare className="h-full w-full" />
             </div>
 
             <div data-seq="plot" className="absolute inset-y-0 left-0 z-30 flex w-full items-center justify-center opacity-0">
@@ -330,44 +305,32 @@ function PinnedSequence() {
   );
 }
 
+const STACKED_PLATES = [ReferencePlate, AnalyzePlate, ShipPlate];
+
 function StackedSequence() {
   return (
     <section data-how-stacked className="container-page py-24">
       <p className="eyebrow">How it works</p>
       <h2 className="display-md mt-3">From reference to shipped</h2>
-      <ol className="mt-14 grid grid-cols-1 gap-16">
-        {STEPS.map((step, i) => (
-          <li
-            key={step.kicker}
-            className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2 md:items-center md:gap-10 [&>*]:min-w-0"
-          >
-            <div>
-              <p className="font-mono text-[12px] tracking-[0.12em] text-accent">{step.kicker}</p>
-              <h3 className="mt-3 text-3xl tracking-[-0.04em]">{step.title}</h3>
-              <p className="mt-3 max-w-md text-ink-2">{step.body}</p>
-            </div>
-            <div className="relative">
-              {i === 0 ? (
-                <div className="relative aspect-[3/2] border border-hairline-strong">
-                  <FrameArt p={0} live />
-                </div>
-              ) : i === 1 ? (
-                <div className="grid grid-cols-4 gap-1.5">
-                  {SAMPLES.map((p, f) => (
-                    <div key={f} className="relative aspect-square border border-hairline">
-                      <FrameArt p={p} />
-                    </div>
-                  ))}
-                  <div className="col-span-4 mt-3 border border-hairline p-2">
-                    <Plot className="h-auto w-full" />
-                  </div>
-                </div>
-              ) : (
-                <CodeBlock className="text-[11.5px]" />
-              )}
-            </div>
-          </li>
-        ))}
+      <ol className="mt-14 grid grid-cols-1 gap-20">
+        {STEPS.map((step, i) => {
+          const Plate = STACKED_PLATES[i];
+          return (
+            <li
+              key={step.kicker}
+              className="grid min-w-0 grid-cols-1 gap-8 md:grid-cols-2 md:items-center md:gap-10 [&>*]:min-w-0"
+            >
+              <Reveal>
+                <p className="font-mono text-[12px] tracking-[0.12em] text-accent">{step.kicker}</p>
+                <h3 className="mt-3 text-3xl tracking-[-0.04em]">{step.title}</h3>
+                <p className="mt-3 max-w-md text-ink-2">{step.body}</p>
+              </Reveal>
+              <Reveal delay={0.08}>
+                <Plate />
+              </Reveal>
+            </li>
+          );
+        })}
       </ol>
     </section>
   );
