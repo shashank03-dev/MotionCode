@@ -654,3 +654,90 @@ html[data-intro="play"] {
 @media (prefers-reduced-motion: reduce) {
   .group:hover .tier-sample { animation: none; }
 }
+
+/* Nav (components/chrono/nav.tsx): the bar contracts into a floating capsule
+   on scroll; the hover pill glides between links; the Product panel drops in. */
+.nav-capsule {
+  transition:
+    max-width 0.7s var(--ease-out),
+    background-color 0.5s var(--ease-out),
+    border-color 0.5s var(--ease-out),
+    padding 0.7s var(--ease-out),
+    box-shadow 0.5s var(--ease-out),
+    backdrop-filter 0.5s var(--ease-out);
+}
+.nav-pill {
+  transition:
+    transform 0.45s var(--ease-out),
+    width 0.45s var(--ease-out),
+    opacity 0.25s ease;
+}
+@keyframes nav-panel-in {
+  from { opacity: 0; transform: translate(-50%, -6px) scale(0.985); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+.nav-panel {
+  transform-origin: top center;
+  animation: nav-panel-in 0.35s var(--ease-out) both;
+}
+@keyframes menu-sample {
+  0%, 12% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  30%, 82% { opacity: var(--o, 1); transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+}
+.menu-sample {
+  animation: menu-sample 2.4s var(--ease-out) infinite both;
+}
+.menu-draw { stroke-dasharray: 1; stroke-dashoffset: 0; }
+.group\/item:hover .menu-draw { animation: glyph-draw 1.4s var(--ease-out) infinite; stroke: var(--accent); }
+@media (prefers-reduced-motion: reduce) {
+  .nav-capsule, .nav-pill { transition: none; }
+  .nav-panel, .menu-sample { animation: none; }
+  .menu-sample { opacity: var(--o, 1); }
+}
+
+/* Route shutter (app/template.tsx): a carbon plate carrying the destination
+   slate lifts off the incoming page. */
+@keyframes route-shutter {
+  0%, 25% { clip-path: inset(0 0 0 0); }
+  100% { clip-path: inset(0 0 100% 0); }
+}
+@keyframes route-slate {
+  0% { opacity: 0; transform: translateY(8px); }
+  30%, 55% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateY(-12px); }
+}
+.route-shutter {
+  position: fixed;
+  inset: 0;
+  z-index: 190;
+  display: grid;
+  place-items: center;
+  background: var(--carbon);
+  pointer-events: none;
+  animation: route-shutter 0.75s var(--ease-chrono) both;
+}
+.route-shutter__slate {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  animation: route-slate 0.75s var(--ease-out) both;
+}
+.route-shutter__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .route-shutter { animation: fade-out 0.15s linear both; }
+  .route-shutter__slate { animation: none; }
+}
+@keyframes fade-out {
+  to { opacity: 0; }
+}

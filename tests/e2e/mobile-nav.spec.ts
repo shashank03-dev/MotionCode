@@ -12,7 +12,11 @@ import { expect, type Page, test } from "@playwright/test";
  */
 
 function trigger(page: Page) {
-  return page.locator("header button[aria-expanded]");
+  // The hamburger, by name — the desktop Product menu button also carries
+  // aria-expanded.
+  return page.locator(
+    "header button[aria-label='Open menu'], header button[aria-label='Close menu']",
+  );
 }
 
 function menu(page: Page) {

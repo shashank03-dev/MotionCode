@@ -96,15 +96,18 @@ test.describe("marketing surface", () => {
     });
     await expect(ctaHeading).toBeVisible();
 
-    // Scrolled: the bar picks up its frosted carbon surface without changing
-    // height.
+    // Scrolled: the bar contracts into a frosted floating capsule without
+    // changing height.
     await page.evaluate(() => window.scrollTo(0, 1600));
     await expect(header).toHaveAttribute("data-scrolled", "true");
+    await expect(nav).toHaveAttribute("data-capsule", "true");
     await expect(async () => {
-      const backdrop = await header.evaluate(
-        (node) => getComputedStyle(node).backdropFilter,
-      );
-      expect(backdrop).toMatch(/blur\((?!0px)/);
+      const chrome = await nav.evaluate((node) => {
+        const styles = getComputedStyle(node);
+        return { backdrop: styles.backdropFilter, radius: parseFloat(styles.borderTopLeftRadius) };
+      });
+      expect(chrome.backdrop).toMatch(/blur\((?!0px)/);
+      expect(chrome.radius).toBeGreaterThanOrEqual(12);
     }).toPass();
     const scrolledNavHeight = await stableHeight(nav);
     expect(Math.abs(scrolledNavHeight - initialNavHeight)).toBeLessThanOrEqual(2);
@@ -212,6 +215,39 @@ test.describe("marketing surface", () => {
       footer.getByRole("link", { name: /^Terms$/i }),
     ).toHaveAttribute("href", "/terms");
     await expect(footer.getByText(/Made for motion/)).toBeVisible();
+  });
+
+  test("desktop nav: product menu, sliding pill and scrollspy", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    const nav = page.getByRole("navigation", { name: "Primary navigation" });
+
+    // Product menu: keyboard-operable disclosure next to "Features".
+    const trigger = nav.getByRole("button", { name: "Product menu" });
+    await expect(trigger).toHaveAttribute("aria-expanded", "false");
+    await trigger.click();
+    await expect(trigger).toHaveAttribute("aria-expanded", "true");
+    const panel = nav.getByRole("region", { name: "Product" });
+    await expect(panel).toBeVisible();
+    await expect(panel.getByRole("link", { name: /Chronograph/ })).toHaveAttribute("href", "#top");
+    await expect(panel.getByRole("link", { name: /Code bench/ }).first()).toHaveAttribute("href", "#playground");
+    await expect(panel.getByRole("link", { name: /Compare plans/ })).toHaveAttribute("href", "/pricing#compare");
+    await expect(panel.getByRole("link", { name: /Open the analyzer/ })).toHaveAttribute("href", "/app");
+    await page.keyboard.press("Escape");
+    await expect(panel).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+
+    // Hovering "Features" opens it too; leaving closes it.
+    await page.mouse.move(700, 700);
+    await nav.getByRole("link", { name: /^Features$/ }).hover();
+    await expect(panel).toBeVisible();
+    await page.mouse.move(700, 700);
+    await expect(panel).toHaveCount(0);
+
+    // Scrollspy: the link for the section under the reading line is current.
+    await page.evaluate(() => document.querySelector("#pricing")?.scrollIntoView());
+    await expect(nav.getByRole("link", { name: /^Pricing$/ })).toHaveAttribute("aria-current", "location");
+    await expect(nav.getByRole("link", { name: /^How it works$/ })).not.toHaveAttribute("aria-current", "location");
   });
 
   test("pricing page compares every limit and answers billing questions", async ({
