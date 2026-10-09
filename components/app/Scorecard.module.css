@@ -2,10 +2,10 @@
   --score-surface: rgba(21, 25, 19, 0.78);
   --score-surface-hover: rgba(25, 29, 21, 0.96);
   --score-track: rgba(86, 84, 73, 0.3);
-  --score-good: #a9b6c8;
+  --score-good: #b0ada2;
   --score-warn: #f4a340;
-  --score-bad: #f08f78;
-  --score-neutral: var(--accent, #a6a6a6);
+  --score-bad: #f0506e;
+  --score-neutral: var(--accent, #a5a297);
   --score-label: color-mix(in srgb, var(--accent) 56%, transparent);
 
   container-type: inline-size;

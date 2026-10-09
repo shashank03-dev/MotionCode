@@ -323,9 +323,9 @@ function renderToken(token: { type: TokenType; value: string }) {
     case "number":
       return `<span style="color: #fb923c">${escaped}</span>`;
     case "property":
-      return `<span style="color: #38bdf8">${escaped}</span>`;
+      return `<span style="color: #ff8a5c">${escaped}</span>`;
     case "string":
-      return `<span style="color: #5cb3ff">${escaped}</span>`;
+      return `<span style="color: #ff8a5c">${escaped}</span>`;
     default:
       return escaped;
   }

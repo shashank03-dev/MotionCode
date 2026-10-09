@@ -268,7 +268,7 @@ function Section({
   return (
     <Panel as="section" variant="glass" inset="none" radius="2xl" className="p-5 sm:p-6">
       <div className="mb-5 flex items-center gap-2.5">
-        <span className="grid size-7 place-items-center rounded-lg border border-hairline bg-white/[0.03] text-ink-3">
+        <span className="grid size-7 place-items-center rounded-lg border border-hairline bg-bone/[0.03] text-ink-3">
           {icon}
         </span>
         <h2 className="font-display text-[15px] font-medium tracking-tight text-ink">

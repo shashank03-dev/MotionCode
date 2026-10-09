@@ -117,7 +117,7 @@ export function AdminUsersTable({ initialUsers }: AdminUsersTableProps) {
         </div>
         <div className="flex flex-col gap-2 text-sm">
           {error ? (
-            <p className="rounded-lg border border-[#ff7a7a]/40 bg-[#ff7a7a]/10 px-3 py-2 text-[#ffd1d1]">
+            <p className="rounded-lg border border-[#f0506e]/40 bg-[#f0506e]/10 px-3 py-2 text-[#ffd1d1]">
               {error}
             </p>
           ) : null}
@@ -130,9 +130,9 @@ export function AdminUsersTable({ initialUsers }: AdminUsersTableProps) {
       </div>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1080px] border-collapse text-left text-sm">
-          <thead className="bg-[#0f1115] text-xs uppercase text-ink-2">
+          <thead className="bg-[#151513] text-xs uppercase text-ink-2">
             <tr>
-              <th className="sticky left-0 z-10 bg-[#0f1115] px-4 py-3 font-medium">User</th>
+              <th className="sticky left-0 z-10 bg-[#151513] px-4 py-3 font-medium">User</th>
               <th className="px-4 py-3 font-medium">Current Plan</th>
               <th className="px-4 py-3 font-medium">Latest Override</th>
               <th className="px-4 py-3 font-medium">Override Plan</th>
@@ -187,7 +187,7 @@ export function AdminUsersTable({ initialUsers }: AdminUsersTableProps) {
                   </td>
                   <td className="px-4 py-3">
                     <select
-                      className="h-11 min-h-[44px] w-full min-w-0 rounded-lg border border-hairline bg-[#0f1115] px-2 text-base text-ink"
+                      className="h-11 min-h-[44px] w-full min-w-0 rounded-lg border border-hairline bg-[#151513] px-2 text-base text-ink"
                       disabled={disabled}
                       onChange={(event) =>
                         updateDraft(user, {
@@ -205,7 +205,7 @@ export function AdminUsersTable({ initialUsers }: AdminUsersTableProps) {
                   </td>
                   <td className="px-4 py-3">
                     <input
-                      className="h-11 min-h-[44px] w-64 min-w-0 rounded-lg border border-hairline bg-[#0f1115] px-2 text-base text-ink placeholder:text-ink-3"
+                      className="h-11 min-h-[44px] w-64 min-w-0 rounded-lg border border-hairline bg-[#151513] px-2 text-base text-ink placeholder:text-ink-3"
                       disabled={disabled}
                       onChange={(event) =>
                         updateDraft(user, { reason: event.target.value })
@@ -216,7 +216,7 @@ export function AdminUsersTable({ initialUsers }: AdminUsersTableProps) {
                   </td>
                   <td className="px-4 py-3">
                     <input
-                      className="h-11 min-h-[44px] w-48 min-w-0 rounded-lg border border-hairline bg-[#0f1115] px-2 text-base text-ink"
+                      className="h-11 min-h-[44px] w-48 min-w-0 rounded-lg border border-hairline bg-[#151513] px-2 text-base text-ink"
                       disabled={disabled}
                       onChange={(event) =>
                         updateDraft(user, { expiresAt: event.target.value })
@@ -260,7 +260,7 @@ function PlanPill({ tier }: { tier: PlanTier }) {
       ? "border-accent/50 bg-accent/12 text-ink"
       : tier === "pro"
         ? "border-accent/50 bg-accent/12 text-[#d8ffe2]"
-        : "border-hairline bg-[#0f1115] text-ink";
+        : "border-hairline bg-[#151513] text-ink";
 
   return (
     <span className={`inline-flex rounded-lg border px-2 py-1 text-xs ${tone}`}>

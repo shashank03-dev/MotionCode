@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 /**
  * Loading-state primitives shared by every route-level `loading.tsx`.
  *
- * These replace the old hand-rolled `animate-pulse bg-white/10` blocks, which
+ * These replace the old hand-rolled `animate-pulse bg-bone/10` blocks, which
  * read as a generic template rather than the MotionCode design language. The
  * shimmer is a single accent-tinted sweep travelling across a hairline well —
  * the same electric-blue signal used elsewhere, held well below CTA intensity

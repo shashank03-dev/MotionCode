@@ -55,7 +55,7 @@ export function EditorPane({
 }: EditorPaneProps) {
   return (
     <section
-      className="flex h-full min-h-0 min-w-0 flex-col bg-[#0a0b0d]/70"
+      className="flex h-full min-h-0 min-w-0 flex-col bg-[#121210]/70"
       aria-label="Generated code editor"
     >
       {/* Toolbar */}

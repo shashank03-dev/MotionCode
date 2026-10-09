@@ -59,9 +59,9 @@ function harnessHead(): string {
   body {
     min-height: 100%;
     background:
-      radial-gradient(circle at 50% 0%, rgba(0, 153, 255, 0.05), transparent 60%),
-      #0a0b0d;
-    color: #f7f8f8;
+      radial-gradient(circle at 50% 0%, rgba(255, 91, 31, 0.05), transparent 60%),
+      #121210;
+    color: #edebe4;
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     overflow: hidden;
   }
@@ -80,8 +80,8 @@ function harnessHead(): string {
     display: grid;
     place-items: center;
     border-radius: 14px;
-    background: linear-gradient(135deg, #a6a6a6, rgba(255,255,255,0.55));
-    color: #0a0b0d;
+    background: linear-gradient(135deg, #a5a297, rgba(255,255,255,0.55));
+    color: #121210;
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.04em;
@@ -93,7 +93,7 @@ function harnessHead(): string {
     width: 132px;
     height: 132px;
     border-radius: 14px;
-    background: linear-gradient(135deg, #a6a6a6, rgba(255,255,255,0.55));
+    background: linear-gradient(135deg, #a5a297, rgba(255,255,255,0.55));
   }
 </style>`;
 }

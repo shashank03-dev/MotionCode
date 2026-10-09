@@ -69,7 +69,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
             type="button"
             onClick={reset}
             style={{
-              background: "#0099ff",
+              background: "#ff5b1f",
               border: 0,
               borderRadius: "9999px",
               color: "#000",
@@ -93,12 +93,12 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
             }}
           >
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- global-error must stay router-independent */}
-            <a href="/" style={{ color: "#0099ff", fontSize: "0.875rem" }}>
+            <a href="/" style={{ color: "#ff5b1f", fontSize: "0.875rem" }}>
               Go to homepage
             </a>
             <a
               href="/support"
-              style={{ color: "#0099ff", fontSize: "0.875rem" }}
+              style={{ color: "#ff5b1f", fontSize: "0.875rem" }}
             >
               Support
             </a>

@@ -99,7 +99,7 @@ export function SupportCenter({ initialTickets, userEmail }: SupportCenterProps)
             />
           </Field>
           <button
-            className="inline-flex h-11 min-h-[44px] items-center justify-center gap-2 rounded-full bg-accent px-5 text-sm font-medium text-black shadow-glow transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
+            className="inline-flex h-11 min-h-[44px] items-center justify-center gap-2 rounded-full bg-accent px-5 text-sm font-medium text-carbon shadow-glow transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
             disabled={submitting}
             type="submit"
           >

@@ -188,7 +188,7 @@ function WorkbenchSectionTab({
       aria-label={`Go to ${label} section`}
       aria-pressed={active}
       className={cn(
-        "inline-flex min-h-[44px] flex-1 items-center justify-center rounded-lg px-3 font-mono text-[11px] uppercase tracking-[0.16em] transition hover:bg-white/[0.03] hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]",
+        "inline-flex min-h-[44px] flex-1 items-center justify-center rounded-lg px-3 font-mono text-[11px] uppercase tracking-[0.16em] transition hover:bg-bone/[0.03] hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]",
         active ? "bg-[var(--accent-dim)] text-ink" : "text-ink-2",
       )}
     >
@@ -219,7 +219,7 @@ function SidebarLink({
         "group inline-flex h-9 w-full items-center gap-2.5 rounded-lg border px-3 font-sans text-[13px] font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]",
         active
           ? "border-accent-border bg-accent-dim text-ink"
-          : "border-transparent text-ink-2 hover:border-hairline hover:bg-white/[0.03] hover:text-ink",
+          : "border-transparent text-ink-2 hover:border-hairline hover:bg-bone/[0.03] hover:text-ink",
       )}
     >
       <Icon

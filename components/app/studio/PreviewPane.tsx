@@ -53,7 +53,7 @@ export function PreviewPane({
 
   return (
     <section
-      className="flex h-full min-h-0 min-w-0 flex-col bg-[#0a0b0d]"
+      className="flex h-full min-h-0 min-w-0 flex-col bg-[#121210]"
       aria-label="Live preview"
     >
       {/* Tab bar */}
@@ -91,7 +91,7 @@ export function PreviewPane({
             title="Animation preview"
             sandbox="allow-scripts"
             srcDoc={srcDoc}
-            className="h-full w-full border-0 bg-[#0a0b0d]"
+            className="h-full w-full border-0 bg-[#121210]"
           />
         </div>
         <div className={cn("absolute inset-0", tab === "console" ? "block" : "hidden")}>
@@ -104,7 +104,7 @@ export function PreviewPane({
         <span
           className={cn(
             "inline-flex items-center gap-1.5",
-            status === "error" || status === "timeout" ? "text-[#f58f7c]" : "text-ink-3",
+            status === "error" || status === "timeout" ? "text-[#f0506e]" : "text-ink-3",
           )}
         >
           <span
@@ -113,7 +113,7 @@ export function PreviewPane({
               status === "ready"
                 ? "bg-accent"
                   : status === "error" || status === "timeout"
-                  ? "bg-[#f58f7c]"
+                  ? "bg-[#f0506e]"
                   : status === "running"
                     ? "bg-[#ffd166]"
                     : "bg-[var(--muted)]",
@@ -164,7 +164,7 @@ function PreviewTabButton({
     >
       {label}
       {badge ? (
-        <span className="ml-1.5 inline-flex h-4 min-w-3.5 items-center justify-center rounded-full bg-[#f58f7c]/20 px-1 text-[10px] text-[#f58f7c]">
+        <span className="ml-1.5 inline-flex h-4 min-w-3.5 items-center justify-center rounded-full bg-[#f0506e]/20 px-1 text-[10px] text-[#f0506e]">
           {badge}
         </span>
       ) : null}

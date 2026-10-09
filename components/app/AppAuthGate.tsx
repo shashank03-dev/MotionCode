@@ -28,7 +28,7 @@ export function AppAuthGate() {
     <div className="fixed inset-0 z-[160] flex items-center justify-center overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-6 sm:pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-black/70 backdrop-blur-xl"
+        className="fixed inset-0 bg-carbon/75 backdrop-blur-xl"
       />
       <div
         role="dialog"
@@ -38,16 +38,16 @@ export function AppAuthGate() {
       >
         <div className="flex items-center justify-between">
           <Logo />
-          <span className="rounded-full border border-hairline px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.16em] text-ink-3">
+          <span className="border border-hairline px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.16em] text-ink-3">
             Sign in
           </span>
         </div>
 
         <h1
           id="app-auth-title"
-          className="mt-6 font-display text-2xl font-medium leading-[1.1] tracking-tightest text-ink"
+          className="mt-7 text-[2rem] font-medium leading-[1] tracking-[-0.045em] text-ink"
         >
-          Sign in to start analyzing motion.
+          Sign in to start <span className="serif-em">analyzing motion.</span>
         </h1>
         <p className="mt-2.5 text-[14.5px] leading-6 text-ink-2 text-pretty">
           MotionCode turns motion references into a spec and production code.

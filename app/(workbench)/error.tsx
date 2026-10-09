@@ -32,7 +32,7 @@ export default function WorkbenchError({ error, reset }: WorkbenchErrorProps) {
         <button
           type="button"
           onClick={reset}
-          className="mt-4 inline-flex h-10 items-center gap-2 rounded-full bg-accent px-5 text-sm font-medium text-black shadow-glow transition hover:brightness-110 active:scale-[0.98]"
+          className="mt-4 inline-flex h-10 items-center gap-2 rounded-full bg-accent px-5 text-sm font-medium text-carbon shadow-glow transition hover:brightness-110 active:scale-[0.98]"
         >
           Try again
         </button>

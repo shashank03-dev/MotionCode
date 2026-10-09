@@ -71,20 +71,20 @@ export default function ModalError({ error, reset }: ModalErrorProps) {
           <button
             type="button"
             onClick={reset}
-            className="inline-flex h-11 items-center rounded-lg bg-accent px-5 text-sm font-medium text-black transition hover:brightness-110 active:scale-[0.98]"
+            className="inline-flex h-11 items-center rounded-lg bg-accent px-5 text-sm font-medium text-carbon transition hover:brightness-110 active:scale-[0.98]"
           >
             Try again
           </button>
           <Link
             href="/support"
-            className="inline-flex h-11 items-center rounded-lg px-5 text-sm font-medium text-ink transition hover:bg-white/[0.04]"
+            className="inline-flex h-11 items-center rounded-lg px-5 text-sm font-medium text-ink transition hover:bg-bone/[0.04]"
           >
             Support
           </Link>
           <button
             type="button"
             onClick={dismiss}
-            className="inline-flex h-11 items-center rounded-lg px-5 text-sm font-medium text-ink transition hover:bg-white/[0.04]"
+            className="inline-flex h-11 items-center rounded-lg px-5 text-sm font-medium text-ink transition hover:bg-bone/[0.04]"
           >
             Close
           </button>

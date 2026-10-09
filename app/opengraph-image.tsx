@@ -18,8 +18,8 @@ export default function Image() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          background: "#0f1115",
-          color: "#f7f8f8",
+          background: "#151513",
+          color: "#edebe4",
           padding: "64px",
           fontFamily: "monospace",
           position: "relative",
@@ -58,7 +58,7 @@ export default function Image() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#0099ff",
+              color: "#ff5b1f",
               fontSize: 28,
             }}
           >
@@ -68,7 +68,7 @@ export default function Image() {
             style={{
               fontSize: 28,
               letterSpacing: 5,
-              color: "#0099ff",
+              color: "#ff5b1f",
               textTransform: "uppercase",
             }}
           >
@@ -99,7 +99,7 @@ export default function Image() {
             zIndex: 1,
             display: "flex",
             gap: 20,
-            color: "#a6a6a6",
+            color: "#a5a297",
             fontSize: 24,
           }}
         >

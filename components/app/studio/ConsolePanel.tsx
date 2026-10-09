@@ -10,7 +10,7 @@ const LEVEL_STYLES: Record<ConsoleEntry["level"], string> = {
   log: "text-ink",
   info: "text-accent",
   warn: "text-[#ffd166]",
-  error: "text-[#f58f7c]",
+  error: "text-[#f0506e]",
 };
 
 const LEVEL_LABEL: Record<ConsoleEntry["level"], string> = {
@@ -34,7 +34,7 @@ export function ConsolePanel({
   }, [entries.length]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[#0a0b0d]">
+    <div className="flex h-full min-h-0 flex-col bg-[#121210]">
       <div className="flex items-center justify-between border-b border-hairline px-3 py-1.5">
         <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-3">
           {entries.length} message{entries.length === 1 ? "" : "s"}

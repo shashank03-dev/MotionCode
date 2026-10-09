@@ -24,10 +24,10 @@ export function VersionTimeline({ projectId, versions }: VersionTimelineProps) {
             <Link
               key={version.id}
               href={`/projects/${projectId}/versions/${version.id}`}
-              className="group grid gap-3 px-5 py-4 transition-colors hover:bg-white/[0.02] sm:grid-cols-[1fr_auto] sm:items-center"
+              className="group grid gap-3 px-5 py-4 transition-colors hover:bg-bone/[0.02] sm:grid-cols-[1fr_auto] sm:items-center"
             >
               <div className="flex items-center gap-3">
-                <span className="grid size-8 shrink-0 place-items-center rounded-full border border-hairline bg-white/[0.03] text-ink-3 transition-colors group-hover:border-accent-border group-hover:text-accent">
+                <span className="grid size-8 shrink-0 place-items-center rounded-full border border-hairline bg-bone/[0.03] text-ink-3 transition-colors group-hover:border-accent-border group-hover:text-accent">
                   <GitCommit className="size-4" aria-hidden="true" />
                 </span>
                 <div className="min-w-0">

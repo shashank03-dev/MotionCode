@@ -78,16 +78,16 @@ export function AdminSupportTickets({
           </p>
         </div>
         {error ? (
-          <p className="rounded-lg border border-[#ff7a7a]/40 bg-[#ff7a7a]/10 px-3 py-2 text-sm text-[#ffd1d1]">
+          <p className="rounded-lg border border-[#f0506e]/40 bg-[#f0506e]/10 px-3 py-2 text-sm text-[#ffd1d1]">
             {error}
           </p>
         ) : null}
       </div>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[920px] border-collapse text-left text-sm">
-          <thead className="bg-[#0f1115] text-xs uppercase text-ink-2">
+          <thead className="bg-[#151513] text-xs uppercase text-ink-2">
             <tr>
-              <th className="sticky left-0 z-10 bg-[#0f1115] px-4 py-3 font-medium">Ticket</th>
+              <th className="sticky left-0 z-10 bg-[#151513] px-4 py-3 font-medium">Ticket</th>
               <th className="px-4 py-3 font-medium">Requester</th>
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium">Priority</th>
@@ -120,7 +120,7 @@ export function AdminSupportTickets({
                   </td>
                   <td className="px-4 py-3">
                     <select
-                      className="h-11 min-h-[44px] w-full min-w-0 rounded-lg border border-hairline bg-[#0f1115] px-2 text-base text-ink"
+                      className="h-11 min-h-[44px] w-full min-w-0 rounded-lg border border-hairline bg-[#151513] px-2 text-base text-ink"
                       disabled={disabled}
                       onChange={(event) =>
                         updateTicket(ticket.id, {
@@ -138,7 +138,7 @@ export function AdminSupportTickets({
                   </td>
                   <td className="px-4 py-3">
                     <select
-                      className="h-11 min-h-[44px] w-full min-w-0 rounded-lg border border-hairline bg-[#0f1115] px-2 text-base text-ink"
+                      className="h-11 min-h-[44px] w-full min-w-0 rounded-lg border border-hairline bg-[#151513] px-2 text-base text-ink"
                       disabled={disabled}
                       onChange={(event) =>
                         updateTicket(ticket.id, {

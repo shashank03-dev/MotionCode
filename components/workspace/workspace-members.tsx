@@ -46,7 +46,7 @@ function MemberRow({
   return (
     <div className="grid gap-2 px-5 py-3.5 sm:grid-cols-[1fr_auto] sm:items-center">
       <div className="flex items-center gap-3">
-        <span className="grid size-8 shrink-0 place-items-center rounded-full border border-hairline bg-white/[0.03] text-ink-3">
+        <span className="grid size-8 shrink-0 place-items-center rounded-full border border-hairline bg-bone/[0.03] text-ink-3">
           <UserRound className="size-4" aria-hidden="true" />
         </span>
         <div className="min-w-0">

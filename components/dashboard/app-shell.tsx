@@ -93,7 +93,7 @@ const utilityItems = [
 const navItemBase =
   "group inline-flex min-h-[44px] shrink-0 items-center gap-2.5 rounded-lg border px-3 py-2 text-[13.5px] transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]";
 const navItemIdle =
-  "border-transparent text-ink-2 hover:border-hairline hover:bg-white/[0.03] hover:text-ink";
+  "border-transparent text-ink-2 hover:border-hairline hover:bg-bone/[0.03] hover:text-ink";
 const navItemActive =
   "border-accent-border bg-accent-dim font-medium text-ink shadow-[inset_0_0_0_1px_var(--accent-border)]";
 
@@ -274,7 +274,7 @@ export function AppShell({
                   href="/pricing"
                   title="Upgrade your plan"
                   className={cn(
-                    "inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-lg bg-accent text-[13px] font-medium text-black shadow-glow transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]",
+                    "inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-lg bg-accent text-[13px] font-medium text-carbon shadow-glow transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]",
                     collapsed && "lg:size-11 lg:flex-none",
                   )}
                 >
@@ -286,7 +286,7 @@ export function AppShell({
                   href="/onboarding"
                   title="New workspace"
                   className={cn(
-                    "inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-lg border border-hairline bg-white/[0.03] text-[13px] font-medium text-ink transition hover:border-accent-border hover:bg-accent-dim focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]",
+                    "inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-lg border border-hairline bg-bone/[0.03] text-[13px] font-medium text-ink transition hover:border-accent-border hover:bg-accent-dim focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-border)]",
                     collapsed && "lg:size-11 lg:flex-none",
                   )}
                 >
@@ -327,7 +327,7 @@ export function AppShell({
                 href="/pricing"
                 title="Upgrade your plan"
                 aria-label="Upgrade your plan"
-                className="inline-flex size-11 items-center justify-center rounded-lg bg-accent text-black shadow-glow"
+                className="inline-flex size-11 items-center justify-center rounded-lg bg-accent text-carbon shadow-glow"
               >
                 <Sparkles className="size-4" />
               </Link>

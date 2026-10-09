@@ -4,12 +4,12 @@ import { cn } from "@/lib/utils";
 /**
  * Shared design-kit for the authenticated product surfaces.
  *
- * Every primitive here speaks the single MotionCode design language ported from
- * the marketing site: true-black canvas, hairline borders, glassmorphism, a
- * single electric-blue accent used only for signal, PP Neue Montreal display
- * headings, and JetBrains-mono technical labels. Compose pages from these so the
- * app and the landing read as one product — never hand-roll ad-hoc surfaces or
- * hardcode off-black greens again.
+ * Every primitive here speaks Chronograph, the single MotionCode design
+ * language (docs/design/chronograph.md): warm carbon canvas, bone ink, hairline
+ * rules, one safelight accent used only for signal, Geist display headings with
+ * an Instrument Serif italic accent, and Geist Mono technical labels. Compose
+ * pages from these so the app and the landing read as one product — never
+ * hand-roll ad-hoc surfaces or hardcode colours.
  */
 
 /* --------------------------------------------------------------------------- *
@@ -68,7 +68,7 @@ export function PageHeader({
     >
       <div className="max-w-3xl">
         {eyebrow ? <Eyebrow dot>{eyebrow}</Eyebrow> : null}
-        <h1 className="mt-3 font-display text-3xl font-medium leading-[1.05] tracking-tightest text-balance text-ink sm:text-[2.6rem]">
+        <h1 className="mt-4 font-display text-[2.1rem] font-medium leading-[1] tracking-[-0.045em] text-balance text-ink sm:text-[3rem]">
           {title}
         </h1>
         {description ? (
@@ -177,7 +177,7 @@ export function StatTile({
  * wells that light their border to accent on focus.
  * --------------------------------------------------------------------------- */
 const controlBase =
-  "w-full rounded-lg border border-hairline bg-[#0d0e11] px-3.5 text-[14px] max-sm:text-base text-ink placeholder:text-ink-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] outline-none transition-colors duration-200 focus:border-accent-border focus:ring-2 focus:ring-[var(--accent-dim)] disabled:opacity-50";
+  "w-full rounded-lg border border-hairline bg-carbon px-3.5 text-[14px] max-sm:text-base text-ink placeholder:text-ink-3 shadow-[inset_0_1px_0_rgba(237,235,228,0.03)] outline-none transition-colors duration-200 focus:border-accent-border focus:ring-2 focus:ring-[var(--accent-dim)] disabled:opacity-50";
 
 export const Input = React.forwardRef<
   HTMLInputElement,
@@ -237,12 +237,12 @@ export function Pill({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[10.5px] font-medium uppercase leading-none tracking-[0.16em]",
-        tone === "neutral" && "border-hairline bg-white/[0.03] text-ink-2",
+        "inline-flex items-center gap-1.5 rounded-[4px] border px-2 py-1 font-mono text-[10.5px] font-medium uppercase leading-none tracking-[0.16em]",
+        tone === "neutral" && "border-hairline bg-bone/[0.03] text-ink-2",
         tone === "muted" && "border-hairline text-ink-3",
         tone === "accent" && "border-accent-border bg-accent-dim text-accent",
         tone === "danger" &&
-          "border-[var(--danger-border)] bg-[rgba(232,112,95,0.1)] text-[var(--danger)]",
+          "border-[var(--danger-border)] bg-danger/10 text-[var(--danger)]",
         className,
       )}
     >
@@ -299,7 +299,7 @@ export function EmptyState({
       )}
     >
       {icon ? (
-        <span className="grid size-11 place-items-center rounded-xl border border-hairline bg-white/[0.02] text-ink-3">
+        <span className="grid size-11 place-items-center rounded-xl border border-hairline bg-bone/[0.02] text-ink-3">
           {icon}
         </span>
       ) : null}

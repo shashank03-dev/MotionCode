@@ -63,7 +63,7 @@ export function CreateWorkspaceForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-accent px-5 text-sm font-medium text-black shadow-glow transition hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-accent px-5 text-sm font-medium text-carbon shadow-glow transition hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
         >
           {isSubmitting ? (
             <Loader2 className="size-4 animate-spin" />

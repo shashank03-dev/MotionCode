@@ -132,7 +132,7 @@ export function UpgradeDialog({
         <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
           <Link
             href="/pricing"
-            className="inline-flex h-11 min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-accent-border bg-accent px-5 text-sm font-medium text-black shadow-glow transition hover:brightness-110 active:scale-[0.98] sm:w-auto sm:flex-1"
+            className="inline-flex h-11 min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-accent-border bg-accent px-5 text-sm font-medium text-carbon shadow-glow transition hover:brightness-110 active:scale-[0.98] sm:w-auto sm:flex-1"
           >
             View plans
             <ArrowUpRight className="size-4" aria-hidden="true" />

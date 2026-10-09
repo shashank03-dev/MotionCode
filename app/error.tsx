@@ -34,13 +34,13 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
           <button
             type="button"
             onClick={reset}
-            className="inline-flex h-11 items-center gap-2 rounded-full bg-accent px-5 text-sm font-medium text-black shadow-glow transition hover:brightness-110 active:scale-[0.98]"
+            className="inline-flex h-11 items-center gap-2 rounded-full bg-accent px-5 text-sm font-medium text-carbon shadow-glow transition hover:brightness-110 active:scale-[0.98]"
           >
             Try again
           </button>
           <Link
             href="/support"
-            className="inline-flex h-11 items-center rounded-full px-5 text-sm font-medium text-ink shadow-ring transition hover:bg-white/[0.04]"
+            className="inline-flex h-11 items-center rounded-full px-5 text-sm font-medium text-ink shadow-ring transition hover:bg-bone/[0.04]"
           >
             Support
           </Link>

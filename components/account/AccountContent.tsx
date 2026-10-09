@@ -126,7 +126,7 @@ export async function AccountContent({ notices }: AccountContentProps = {}) {
             </p>
           </div>
           <div
-            className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/[0.06]"
+            className="mt-4 h-1.5 overflow-hidden rounded-full bg-bone/[0.06]"
             role="progressbar"
             aria-valuemin={0}
             aria-valuemax={daily.limit}
@@ -230,7 +230,7 @@ export async function AccountContent({ notices }: AccountContentProps = {}) {
           </p>
           <div className="mt-5 flex flex-col gap-2.5">
             <form action={requestDataExportAction}>
-              <button className="inline-flex h-11 min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-hairline bg-white/[0.03] px-4 text-[13px] text-ink-2 transition hover:border-accent-border hover:text-ink">
+              <button className="inline-flex h-11 min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-hairline bg-bone/[0.03] px-4 text-[13px] text-ink-2 transition hover:border-accent-border hover:text-ink">
                 <Download className="size-4" aria-hidden="true" />
                 Request data export
               </button>

@@ -119,7 +119,7 @@ export function CheckoutButton({ planTier }: CheckoutButtonProps) {
         },
         subscription_id: json.data.subscriptionId,
         theme: {
-          color: "#0099ff",
+          color: "#ff5b1f",
         },
       });
 
@@ -240,7 +240,7 @@ function ProviderButton({
 }) {
   return (
     <button
-      className="inline-flex h-11 w-full min-w-0 items-center justify-center gap-2 rounded-full bg-accent px-4 text-sm font-medium text-black shadow-glow transition hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
+      className="inline-flex h-11 w-full min-w-0 items-center justify-center gap-2 rounded-full bg-accent px-4 text-sm font-medium text-carbon shadow-glow transition hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
       disabled={disabled}
       onClick={onClick}
       type="button"

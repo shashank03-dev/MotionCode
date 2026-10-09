@@ -93,7 +93,7 @@ export function FreeSaveNoticeModal({
         aria-labelledby="free-save-title"
         aria-describedby="free-save-body"
         tabIndex={-1}
-        className="relative z-10 my-auto max-h-[90dvh] w-full max-w-[420px] overflow-y-auto rounded-2xl border border-hairline bg-[#0a0b0d] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-[0_30px_80px_rgba(0,0,0,0.6)]"
+        className="relative z-10 my-auto max-h-[90dvh] w-full max-w-[420px] overflow-y-auto rounded-2xl border border-hairline bg-[#121210] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-[0_30px_80px_rgba(0,0,0,0.6)]"
       >
         <div className="flex items-start gap-3.5">
           <span
@@ -149,7 +149,7 @@ export function FreeSaveNoticeModal({
             ref={confirmRef}
             type="button"
             onClick={() => onConfirm(dontRemind)}
-            className="rounded-lg border border-[var(--accent)] bg-[var(--accent)] px-3.5 py-2 font-mono text-[0.74rem] font-medium text-[#0a0b0d] transition-colors hover:bg-[var(--text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--text)]"
+            className="rounded-lg border border-[var(--accent)] bg-[var(--accent)] px-3.5 py-2 font-mono text-[0.74rem] font-medium text-[#121210] transition-colors hover:bg-[var(--text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--text)]"
           >
             Continue
           </button>

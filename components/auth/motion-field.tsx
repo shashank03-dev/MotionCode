@@ -92,9 +92,9 @@ function bezier(cp: CP) {
 
 export function MotionField({
   className,
-  background = "rgba(8, 9, 11, 1)",
+  background = "rgba(8,9,11, 1)",
   base = "rgba(255, 255, 255, 1)",
-  accent = "rgba(0, 153, 255, 1)",
+  accent = "rgba(255,91,31,1)",
   sampleRadius = 30,
   typingImpulseRef,
 }: MotionFieldProps) {

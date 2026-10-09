@@ -156,7 +156,7 @@ export function AccountMenu({ email }: AccountMenuProps) {
         aria-controls={open ? menuId : undefined}
         aria-label={email ? `Account menu for ${email}` : "Account menu"}
         title={accountLabel}
-        className="inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-[rgba(0, 153, 255, 0.4)] bg-[rgba(0, 153, 255, 0.08)] font-mono text-xs font-bold uppercase text-accent transition-colors will-change-transform hover:border-[rgba(0, 153, 255, 0.7)] hover:bg-[rgba(0, 153, 255, 0.16)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        className="inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-[rgba(255,91,31,0.4)] bg-[rgba(255,91,31,0.08)] font-mono text-xs font-bold uppercase text-accent transition-colors will-change-transform hover:border-[rgba(255,91,31,0.7)] hover:bg-[rgba(255,91,31,0.16)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
       >
         {accountInitial}
       </button>
@@ -173,7 +173,7 @@ export function AccountMenu({ email }: AccountMenuProps) {
                 top: position.top,
                 right: position.right,
                 background:
-                  "radial-gradient(circle at 88% 0%, rgba(0, 153, 255, 0.1), transparent 44%), linear-gradient(150deg, rgba(247, 248, 248, 0.1), rgba(247, 248, 248, 0.03) 46%, rgba(10, 11, 13, 0.42)), rgba(10, 11, 13, 0.82)",
+                  "radial-gradient(circle at 88% 0%, rgba(255,91,31,0.1), transparent 44%), linear-gradient(150deg, rgba(247, 248, 248, 0.1), rgba(247, 248, 248, 0.03) 46%, rgba(10, 11, 13, 0.42)), rgba(10, 11, 13, 0.82)",
               }}
               className="z-[100] max-h-[calc(100dvh-16px)] w-60 max-w-[calc(100vw-16px)] overflow-y-auto rounded-2xl border border-[rgba(247,248,248,0.2)] pb-[env(safe-area-inset-bottom)] shadow-[0_24px_60px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(247,248,248,0.16)] backdrop-blur-2xl"
             >
@@ -192,7 +192,7 @@ export function AccountMenu({ email }: AccountMenuProps) {
                 <button
                   type="submit"
                   role="menuitem"
-                  className="flex w-full items-center px-4 py-3 text-left font-mono text-xs uppercase tracking-[0.08em] text-[rgba(247,248,248,0.78)] transition hover:bg-[rgba(0, 153, 255, 0.08)] hover:text-accent focus-visible:bg-[rgba(0, 153, 255, 0.08)] focus-visible:text-accent focus-visible:outline-none"
+                  className="flex w-full items-center px-4 py-3 text-left font-mono text-xs uppercase tracking-[0.08em] text-[rgba(247,248,248,0.78)] transition hover:bg-[rgba(255,91,31,0.08)] hover:text-accent focus-visible:bg-[rgba(255,91,31,0.08)] focus-visible:text-accent focus-visible:outline-none"
                 >
                   Sign out
                 </button>

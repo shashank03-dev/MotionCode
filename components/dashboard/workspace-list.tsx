@@ -40,7 +40,7 @@ export function WorkspaceList({ workspaces }: WorkspaceListProps) {
             <Link
               key={workspace.id}
               href={`/workspaces/${workspace.id}`}
-              className="group grid gap-2 px-5 py-4 transition-colors hover:bg-white/[0.02] sm:grid-cols-[1fr_auto] sm:items-center"
+              className="group grid gap-2 px-5 py-4 transition-colors hover:bg-bone/[0.02] sm:grid-cols-[1fr_auto] sm:items-center"
             >
               <div>
                 <div className="flex items-center gap-2 text-sm font-medium text-ink">

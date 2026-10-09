@@ -41,7 +41,7 @@ export function RecentProjects({ projects }: RecentProjectsProps) {
               {projects.map((project) => (
                 <tr
                   key={project.id}
-                  className="group transition-colors hover:bg-white/[0.02]"
+                  className="group transition-colors hover:bg-bone/[0.02]"
                 >
                   <td className="px-5 py-3.5">
                     <Link

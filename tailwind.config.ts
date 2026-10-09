@@ -51,11 +51,28 @@ const config: Config = {
         paper: "rgb(var(--paper-rgb) / <alpha-value>)",
         "paper-ink": "rgb(var(--paper-ink-rgb) / <alpha-value>)",
         "paper-ink-2": "var(--paper-ink-2)",
-        danger: "var(--danger)",
+        danger: "rgb(var(--danger-rgb) / <alpha-value>)",
+        // shadcn primitives (components/ui/button.tsx) mapped onto the palette.
+        primary: {
+          DEFAULT: "rgb(var(--accent-rgb) / <alpha-value>)",
+          foreground: "rgb(var(--carbon-rgb) / <alpha-value>)",
+        },
+        secondary: {
+          DEFAULT: "rgb(var(--elevated-rgb) / <alpha-value>)",
+          foreground: "rgb(var(--text-rgb) / <alpha-value>)",
+        },
+        destructive: "var(--danger)",
+        input: "var(--border-strong)",
         ok: "var(--ok)",
       },
       borderColor: {
         DEFAULT: "var(--border)",
+        // shadcn `border-ring`; kept out of `colors` so it can't collide with
+        // the `shadow-ring` box-shadow token.
+        ring: "rgb(var(--accent-rgb) / <alpha-value>)",
+      },
+      ringColor: {
+        ring: "rgb(var(--accent-rgb) / <alpha-value>)",
       },
       borderRadius: {
         xl: "12px",

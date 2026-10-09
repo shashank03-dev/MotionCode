@@ -189,7 +189,7 @@ const FRAG = /* glsl */ `
     if (a <= 0.001) discard;
 
     vec3 silver = vec3(0.62, 0.66, 0.72);
-    vec3 accent = vec3(0.0, 0.6, 1.0);
+    vec3 accent = vec3(1.0, 0.357, 0.122);
     vec3 col = mix(silver, accent, vAccent);
 
     gl_FragColor = vec4(col * vGlow, a * vGlow);

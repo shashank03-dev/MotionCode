@@ -317,7 +317,7 @@ export function AnalyzeStudio({
     <div className="relative flex h-full min-h-0 flex-col">
       {/* Studio header — wraps on small screens; labels collapse to icons
           below sm so the cluster never pushes the title out. */}
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline bg-[#0a0b0d]/80 px-4 py-2.5">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline bg-[#121210]/80 px-4 py-2.5">
         <div className="flex min-w-0 items-center gap-3">
           <span
             className="inline-flex size-2 shrink-0 rounded-full"
@@ -515,7 +515,7 @@ export function AnalyzeStudio({
       {/* Spec & audit drawer — full-screen fixed sheet on mobile with
           safe-area padding, docked absolute panel on sm+. */}
       {drawerOpen ? (
-        <div id="spec-audit-drawer" role="dialog" aria-label="Spec and audit" className="fixed inset-0 z-30 flex w-full flex-col overflow-y-auto border-hairline bg-[#0a0b0d] pb-[env(safe-area-inset-bottom)] shadow-[0_0_60px_rgba(0,0,0,0.5)] sm:absolute sm:inset-y-0 sm:right-0 sm:left-auto sm:w-full sm:max-w-md sm:border-l sm:pb-0">
+        <div id="spec-audit-drawer" role="dialog" aria-label="Spec and audit" className="fixed inset-0 z-30 flex w-full flex-col overflow-y-auto border-hairline bg-[#121210] pb-[env(safe-area-inset-bottom)] shadow-[0_0_60px_rgba(0,0,0,0.5)] sm:absolute sm:inset-y-0 sm:right-0 sm:left-auto sm:w-full sm:max-w-md sm:border-l sm:pb-0">
           <div className="flex min-h-[44px] items-center justify-between border-b border-hairline px-4 py-2.5">
             <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-3">
               Spec &amp; audit

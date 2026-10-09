@@ -25,11 +25,11 @@
 }
 
 .success {
-  color: #0099ff;
+  color: #ff5b1f;
 }
 
 .error {
-  color: #ef7d73;
+  color: #f0506e;
 }
 
 .statusDot {
@@ -38,8 +38,8 @@
   width: 7px;
   height: 7px;
   border-radius: 999px;
-  background: #0099ff;
-  box-shadow: 0 0 12px rgba(0, 153, 255, 0.3);
+  background: #ff5b1f;
+  box-shadow: 0 0 12px rgba(255, 91, 31, 0.3);
   animation: statusPulse 900ms ease-in-out infinite;
 }
 

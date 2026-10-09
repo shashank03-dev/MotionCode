@@ -777,7 +777,7 @@ function SaveStatePill({ saveState }: { saveState: SaveState }) {
   return (
     <span
       title={saveState.message}
-      className="inline-flex h-8 items-center rounded-md border border-[#f58f7c]/40 px-2.5 font-mono text-[11px] text-[#f58f7c]"
+      className="inline-flex h-8 items-center rounded-md border border-[#f0506e]/40 px-2.5 font-mono text-[11px] text-[#f0506e]"
     >
       Not saved
     </span>
@@ -795,26 +795,26 @@ function AnalyzeStudioLoading() {
         <div className="flex min-w-0 items-center gap-3">
           <span className="inline-flex size-2 shrink-0 rounded-full bg-accent/50" aria-hidden="true" />
           <div className="space-y-1.5">
-            <div className="h-2 w-24 rounded bg-white/[0.08]" />
-            <div className="h-3 w-32 rounded bg-white/[0.06]" />
+            <div className="h-2 w-24 rounded bg-bone/[0.08]" />
+            <div className="h-3 w-32 rounded bg-bone/[0.06]" />
           </div>
         </div>
-        <div className="h-8 w-24 rounded-md border border-hairline bg-white/[0.03]" />
+        <div className="h-8 w-24 rounded-md border border-hairline bg-bone/[0.03]" />
       </div>
       <div className="grid min-h-0 flex-1 grid-cols-2">
         <div className="min-w-0 border-r border-hairline">
           <div className="flex h-10 items-center border-b border-hairline px-3">
-            <div className="h-2.5 w-28 rounded bg-white/[0.07]" />
+            <div className="h-2.5 w-28 rounded bg-bone/[0.07]" />
           </div>
           <div className="space-y-3 p-4">
-            <div className="h-2 w-4/5 rounded bg-white/[0.06]" />
-            <div className="h-2 w-3/5 rounded bg-white/[0.05]" />
-            <div className="h-2 w-2/3 rounded bg-white/[0.05]" />
+            <div className="h-2 w-4/5 rounded bg-bone/[0.06]" />
+            <div className="h-2 w-3/5 rounded bg-bone/[0.05]" />
+            <div className="h-2 w-2/3 rounded bg-bone/[0.05]" />
           </div>
         </div>
         <div className="min-w-0">
           <div className="flex h-10 items-center border-b border-hairline px-3">
-            <div className="h-2.5 w-24 rounded bg-white/[0.07]" />
+            <div className="h-2.5 w-24 rounded bg-bone/[0.07]" />
           </div>
         </div>
       </div>

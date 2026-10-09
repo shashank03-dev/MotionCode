@@ -179,10 +179,10 @@ export function LoginForm({
           googleProviderState !== "enabled"
         }
         onClick={handleGoogleSignIn}
-        className="group inline-flex h-12 w-full items-center justify-center gap-3 border border-ink-2/14 bg-[#0f1115] px-4 text-sm font-medium text-ink transition-[background-color,border-color,transform,box-shadow] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:border-accent/40 hover:bg-elevated focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-accent active:translate-y-px disabled:pointer-events-none disabled:opacity-50"
+        className="group inline-flex h-12 w-full items-center justify-center gap-3 border border-ink-2/14 bg-[#151513] px-4 text-sm font-medium text-ink transition-[background-color,border-color,transform,box-shadow] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:border-accent/40 hover:bg-elevated focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-accent active:translate-y-px disabled:pointer-events-none disabled:opacity-50"
       >
         <span
-          className="grid size-5 place-items-center rounded-full bg-ink text-[13px] font-bold text-[#0a0b0d]"
+          className="grid size-5 place-items-center rounded-full bg-ink text-[13px] font-bold text-[#121210]"
           style={monoFont}
           aria-hidden="true"
         >
@@ -207,7 +207,7 @@ export function LoginForm({
       <div className="flex items-center gap-3" aria-hidden="true">
         <div className="h-px flex-1 bg-[var(--ink-2)]/12" />
         <span
-          className="text-[10px] uppercase tracking-[0.22em] text-[#8a9099]"
+          className="text-[10px] uppercase tracking-[0.22em] text-[#8a877e]"
           style={monoFont}
         >
           or
@@ -217,14 +217,14 @@ export function LoginForm({
 
       <form onSubmit={handlePasswordSignIn} className="space-y-4">
         <label
-          className="block text-[11px] uppercase tracking-[0.16em] text-[#8a9099]"
+          className="block text-[11px] uppercase tracking-[0.16em] text-[#8a877e]"
           style={monoFont}
           htmlFor="email"
         >
           Email
         </label>
-        <div className="flex min-h-12 items-center border border-ink-2/14 bg-[#0f1115] px-3 transition-[border-color,box-shadow,background-color] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] focus-within:border-accent/55 focus-within:bg-[#0f1115] focus-within:shadow-[0_0_0_3px_rgba(0, 153, 255, 0.12)]">
-          <Mail className="mr-2 size-4 text-[#8a9099]" />
+        <div className="flex min-h-12 items-center border border-ink-2/14 bg-[#151513] px-3 transition-[border-color,box-shadow,background-color] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] focus-within:border-accent/55 focus-within:bg-[#151513] focus-within:shadow-[0_0_0_3px_rgba(255,91,31,0.12)]">
+          <Mail className="mr-2 size-4 text-[#8a877e]" />
           <input
             id="email"
             name="email"
@@ -238,14 +238,14 @@ export function LoginForm({
           />
         </div>
         <label
-          className="block text-[11px] uppercase tracking-[0.16em] text-[#8a9099]"
+          className="block text-[11px] uppercase tracking-[0.16em] text-[#8a877e]"
           style={monoFont}
           htmlFor="password"
         >
           Password
         </label>
-        <div className="flex min-h-12 items-center border border-ink-2/14 bg-[#0f1115] px-3 transition-[border-color,box-shadow,background-color] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] focus-within:border-accent/55 focus-within:bg-[#0f1115] focus-within:shadow-[0_0_0_3px_rgba(0, 153, 255, 0.12)]">
-          <Lock className="mr-2 size-4 text-[#8a9099]" />
+        <div className="flex min-h-12 items-center border border-ink-2/14 bg-[#151513] px-3 transition-[border-color,box-shadow,background-color] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] focus-within:border-accent/55 focus-within:bg-[#151513] focus-within:shadow-[0_0_0_3px_rgba(255,91,31,0.12)]">
+          <Lock className="mr-2 size-4 text-[#8a877e]" />
           <input
             id="password"
             name="password"
@@ -260,7 +260,7 @@ export function LoginForm({
             type="button"
             onClick={() => setShowPassword((value) => !value)}
             aria-label={showPassword ? "Hide password" : "Show password"}
-            className="ml-2 flex min-h-[44px] min-w-[44px] items-center justify-center p-2 text-[#8a9099] transition-colors hover:text-ink"
+            className="ml-2 flex min-h-[44px] min-w-[44px] items-center justify-center p-2 text-[#8a877e] transition-colors hover:text-ink"
           >
             {showPassword ? (
               <EyeOff className="size-4" />
@@ -278,7 +278,7 @@ export function LoginForm({
             email.trim().length === 0 ||
             password.length === 0
           }
-          className="inline-flex h-11 w-full items-center justify-center gap-2 border border-ink/10 bg-[#eef0f2] px-4 text-xs font-semibold uppercase tracking-[0.1em] text-[#0a0b0d] transition-[background-color,transform,box-shadow] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:bg-ink hover:shadow-[0_0_24px_rgba(0, 153, 255, 0.18)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-accent active:translate-y-px disabled:pointer-events-none disabled:opacity-50"
+          className="inline-flex h-11 w-full items-center justify-center gap-2 border border-ink/10 bg-[#edebe4] px-4 text-xs font-semibold uppercase tracking-[0.1em] text-[#121210] transition-[background-color,transform,box-shadow] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:bg-ink hover:shadow-[0_0_24px_rgba(255,91,31,0.18)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-accent active:translate-y-px disabled:pointer-events-none disabled:opacity-50"
           style={monoFont}
         >
           <Lock className="size-4" />
@@ -293,7 +293,7 @@ export function LoginForm({
             state === "authenticating" ||
             email.trim().length === 0
           }
-          className="inline-flex h-11 w-full items-center justify-center gap-2 border border-ink-2/12 bg-transparent px-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#8a9099] transition-colors duration-200 hover:border-accent/40 hover:text-ink disabled:pointer-events-none disabled:opacity-50"
+          className="inline-flex h-11 w-full items-center justify-center gap-2 border border-ink-2/12 bg-transparent px-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#8a877e] transition-colors duration-200 hover:border-accent/40 hover:text-ink disabled:pointer-events-none disabled:opacity-50"
           style={monoFont}
         >
           <Send className="size-3.5" />
@@ -304,7 +304,7 @@ export function LoginForm({
             className={
               state === "error"
                 ? "border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-300"
-                : "border border-accent/30 bg-accent/10 px-3 py-2 text-xs text-[#5fa0e6]"
+                : "border border-accent/30 bg-accent/10 px-3 py-2 text-xs text-[#ff8a5c]"
             }
             style={monoFont}
           >

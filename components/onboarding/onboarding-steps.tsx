@@ -36,10 +36,10 @@ export function OnboardingSteps() {
         return (
           <article
             key={step.title}
-            className="rounded-[8px] border border-white/10 bg-elevated p-5"
+            className="rounded-[8px] border border-bone/10 bg-elevated p-5"
           >
             <div className="flex items-center justify-between gap-3">
-              <div className="flex size-10 items-center justify-center rounded-[8px] bg-[#f58f7c]/10 text-[#f58f7c]">
+              <div className="flex size-10 items-center justify-center rounded-[8px] bg-[#f0506e]/10 text-[#f0506e]">
                 <Icon className="size-5" aria-hidden="true" />
               </div>
               <span className="font-mono text-xs text-[#ffd166]">
