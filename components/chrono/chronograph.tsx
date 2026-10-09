@@ -10,6 +10,7 @@ import {
   formatBezier,
   type Bezier,
 } from "@/lib/chrono/bezier";
+import { detectDeviceTier } from "@/lib/device-tier";
 import { useHydratedReducedMotion } from "@/lib/hooks/use-hydrated-reduced-motion";
 import { canUseWebGL } from "@/lib/webgl";
 import { cn } from "@/lib/utils";
@@ -302,18 +303,17 @@ const Readout = React.forwardRef<ReadoutHandle, { initial: Bezier; label: string
 
 /* ------------------------------------------------------------------------ */
 
-function StaticPlate() {
-  // SSR-safe still: the same exposure, frozen at rest, drawn in SVG.
-  const l = layoutFor(1440, 900);
+function PlateSvg({ w, h, className }: { w: number; h: number; className?: string }) {
+  const l = layoutFor(w, h);
   const frame = exposeFrame(l, EASING_PRESETS[0].curve, 0.7);
   const path = Array.from({ length: PATH_SEGMENTS + 1 }, (_, i) =>
     pathPoint(l, i / PATH_SEGMENTS),
   );
   return (
     <svg
-      viewBox="0 0 1440 900"
+      viewBox={`0 0 ${w} ${h}`}
       preserveAspectRatio="xMidYMid slice"
-      className="absolute inset-0 h-full w-full max-lg:opacity-40"
+      className={cn("absolute inset-0 h-full w-full", className)}
       aria-hidden
     >
       <polyline
@@ -343,6 +343,16 @@ function StaticPlate() {
   );
 }
 
+/** SSR-safe still: the same exposure frozen at rest, composed per breakpoint. */
+function StaticPlate() {
+  return (
+    <>
+      <PlateSvg w={1440} h={900} className="hidden lg:block" />
+      <PlateSvg w={390} h={844} className="lg:hidden" />
+    </>
+  );
+}
+
 /** Reads an `R G B` channel token (e.g. `--accent-rgb`) as GL floats. */
 function channels(value: string, fallback: [number, number, number]): [number, number, number] {
   const parts = value.trim().split(/[\s,]+/).map(Number);
@@ -358,12 +368,23 @@ export function Chronograph({ className }: { className?: string }) {
 
   React.useEffect(() => {
     const host = hostRef.current;
-    if (!host || reduce || !canUseWebGL()) return;
+    // Read the media query directly as well: the hydrated hook flips a render
+    // later, and the plate must never start animating for a reduced-motion
+    // visitor in that gap. Low-tier devices keep the static plate too.
+    if (
+      !host ||
+      reduce ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      detectDeviceTier() === "low" ||
+      !canUseWebGL()
+    ) {
+      return;
+    }
 
     let renderer: Renderer;
     try {
       renderer = new Renderer({
-        dpr: Math.min(window.devicePixelRatio || 1, window.innerWidth < 768 ? 1.25 : 1.6),
+        dpr: Math.min(window.devicePixelRatio || 1, window.innerWidth < 768 ? 1.25 : 1.5),
         alpha: false,
         antialias: false,
         powerPreference: "low-power",
@@ -372,6 +393,15 @@ export function Chronograph({ className }: { className?: string }) {
       return;
     }
     const gl = renderer.gl;
+    // A software rasteriser (SwiftShader / llvmpipe — blocklisted GPUs,
+    // headless browsers, some VMs) would run this per-pixel loop on the CPU
+    // every frame. The still plate is the better experience there.
+    const debug = gl.getExtension("WEBGL_debug_renderer_info");
+    const gpu = debug ? String(gl.getParameter(debug.UNMASKED_RENDERER_WEBGL)) : "";
+    if (/swiftshader|llvmpipe|software/i.test(gpu)) {
+      gl.getExtension("WEBGL_lose_context")?.loseContext();
+      return;
+    }
     const canvas = gl.canvas as HTMLCanvasElement;
     canvas.className = "absolute inset-0 h-full w-full";
     canvas.setAttribute("aria-hidden", "true");

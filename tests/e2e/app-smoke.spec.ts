@@ -47,7 +47,7 @@ test.describe("application smoke", () => {
     await expect(hero).toContainText("Motion,");
     await expect(hero).toContainText("decoded.");
 
-    await page.getByRole("link", { name: /Start analyzing/i }).first().click();
+    await page.getByRole("link", { name: /Analyze a motion/i }).first().click();
     await expect(page).toHaveURL(/\/app$/, { timeout: 20_000 });
     // Anonymous /app renders the shell inside div[inert], which removes the
     // subtree from the accessibility tree - so assert the brand h1 and the

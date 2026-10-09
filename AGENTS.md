@@ -14,8 +14,8 @@ Rules:
 ## Ported Claude Code memory (full files in `.opencode/memory/` - read on a need-to-know basis)
 
 - Product: motion reference → spec + CSS/GSAP/Framer code (`motioncode-product.md`).
-- Design system: ONE app-wide language - accent `#0099ff` for CTAs/focus/active/live-signal only, no green, compose from `components/ui/kit.tsx`, PP Neue Montreal display headings (`motioncode-design-system.md`, `theme-unification.md`).
-- Brand bar: premium product-defining visuals (Easing Studio); no generic/abstract art (`motioncode-design-bar.md`).
+- Design system: ONE app-wide language, **Chronograph** (`docs/design/chronograph.md` — supersedes the old blue-accent memory files): warm carbon/bone palette, single safelight accent `#ff5b1f` for CTAs/focus/active/live-signal only, Geist + Instrument Serif italic accent + Geist Mono; compose marketing from `components/chrono/*`, product from `components/ui/kit.tsx`.
+- Brand bar: premium product-defining visuals built on the chronophotograph idea (exposure spacing = easing curve); no generic/abstract art (`motioncode-design-bar.md`).
 - `/app` progress is a WebGL particle morph, not status blocks - keep e2e test hooks (`motioncode-analyze-particle-field.md`).
 - Monetization: workspaces are paid (free=0, BILLING_REQUIRED→UpgradeDialog), `/app` requires login (AppAuthGate), single contextual billing button (`motioncode-monetization-gates.md`).
 - Pricing is USD ($18 Pro / $49 Team); internal id `studio` displays as "Team"; UNLIMITED_QUOTA sentinel; Razorpay MCP has no create-plan tool (`motioncode-plan-labels-usd.md`).

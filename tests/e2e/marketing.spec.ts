@@ -18,38 +18,13 @@ test.describe("marketing surface", () => {
   }) => {
     await page.goto("/");
 
-    const nav = page.locator("nav").first();
+    const header = page.locator("header").first();
+    const nav = header.getByRole("navigation", { name: "Primary navigation" });
     await expect(nav).toBeVisible();
-    const navClassName = await nav.getAttribute("class");
-    expect(navClassName).toContain("glass-pill");
-    expect(navClassName).toMatch(/\brounded-full\b/);
-
-    // Retry the computed-style read: on a cold dev server the glass styles
-    // can land a beat after first paint, so a one-shot read may see 0.
-    await expect(async () => {
-      const navChrome = await nav.evaluate((node) => {
-        const styles = getComputedStyle(node);
-        const radiusValues = styles.borderRadius
-          .match(/[\d.]+px/g)
-          ?.map((value) => Number.parseFloat(value)) ?? [0];
-
-        return {
-          backdropFilter: styles.backdropFilter,
-          borderRadius: Math.max(...radiusValues),
-        };
-      });
-
-      expect(navChrome.borderRadius).toBeGreaterThanOrEqual(24);
-      expect(navChrome.backdropFilter).toMatch(/blur\((?!0px)/);
-    }).toPass();
-
-    // Capture the resting nav height only after the glass-nav styling above has
-    // resolved; on a cold dev server the first paint can lag, and measuring too
-    // early yields a null or partially-styled box.
     const initialNavHeight = await stableHeight(nav);
 
-    // Section links collapse into the hamburger below md; their hrefs are
-    // still wired (mobile-nav.spec.ts covers the open menu).
+    // Section links collapse into the menu below md; their hrefs are still
+    // wired (mobile-nav.spec.ts covers the open menu).
     await expect(
       nav.getByRole("link", { name: /^Features$/i, includeHidden: true }),
     ).toHaveAttribute("href", "#features");
@@ -62,9 +37,10 @@ test.describe("marketing surface", () => {
     await expect(
       nav.getByRole("link", { name: /^Support$/i, includeHidden: true }),
     ).toHaveAttribute("href", "/support");
-    await expect(
-      nav.getByRole("link", { name: /Start analyzing/i }),
-    ).toHaveAttribute("href", "/app");
+    await expect(nav.getByRole("link", { name: /^Try Free$/i })).toHaveAttribute(
+      "href",
+      "/app",
+    );
 
     const hero = page.locator("section#top");
     const heroHeading = hero.getByRole("heading", { level: 1 });
@@ -74,7 +50,6 @@ test.describe("marketing surface", () => {
       hero.getByText("Motion reference → production code"),
     ).toBeVisible();
     await expect(hero.getByText(/Drop in a video or GIF/)).toBeVisible();
-
     await expect(
       hero.getByRole("link", { name: /Analyze a motion/i }),
     ).toHaveAttribute("href", "/app");
@@ -82,9 +57,8 @@ test.describe("marketing surface", () => {
       hero.getByRole("link", { name: /See it work/i }),
     ).toHaveAttribute("href", "#playground");
 
-    // Pinned horizontal sequence: only the first beat is in view on load,
-    // the rest live offscreen in the 300%-wide track, so assert the first
-    // beat visible and the others present.
+    // How it works: the first act's caption is the one shown on load (pinned
+    // stage on desktop, stacked on small screens); the others are present.
     const how = page.locator("#how");
     await expect(
       how.getByRole("heading", { name: "Drop a motion reference" }),
@@ -108,14 +82,24 @@ test.describe("marketing surface", () => {
     await expect(pricing.getByRole("link", { name: /^Go Pro$/i })).toBeVisible();
     await expect(pricing.getByRole("link", { name: /^Go Team$/i })).toBeVisible();
 
-    // CTA eyebrow is a mono label (span), not a heading: the section's
-    // real h2 is "Ship motion with confidence." (see components/site/cta.tsx).
+    // CTA eyebrow is a mono label (span), not a heading: the closing plate's
+    // real h2 is "Ship motion with confidence." (components/chrono/finale.tsx).
     await expect(page.getByText("Ready when you are", { exact: true })).toBeVisible();
     const ctaHeading = page.getByRole("heading", {
       name: /Ship motion with confidence/i,
     });
     await expect(ctaHeading).toBeVisible();
 
+    // Scrolled: the bar picks up its frosted carbon surface without changing
+    // height.
+    await page.evaluate(() => window.scrollTo(0, 1600));
+    await expect(header).toHaveAttribute("data-scrolled", "true");
+    await expect(async () => {
+      const backdrop = await header.evaluate(
+        (node) => getComputedStyle(node).backdropFilter,
+      );
+      expect(backdrop).toMatch(/blur\((?!0px)/);
+    }).toPass();
     const scrolledNavHeight = await stableHeight(nav);
     expect(Math.abs(scrolledNavHeight - initialNavHeight)).toBeLessThanOrEqual(2);
 
@@ -131,20 +115,17 @@ test.describe("marketing surface", () => {
   test("process section respects reduced motion for decorative effects", async ({
     page,
   }) => {
-    // Reduced-motion and small-screen users get the stacked fallback instead
-    // of the pinned horizontal scroll-jack: the same three steps laid out
+    // Reduced-motion and small-screen users get the stacked sequence instead
+    // of the pinned, scroll-scrubbed stage: the same three acts laid out
     // statically, with no scroll-driven transforms.
     await page.setViewportSize({ width: 375, height: 900 });
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/#how");
 
     const fallback = page.locator("section", {
-      has: page.getByRole("heading", { name: "From reference to shipped" }),
+      has: page.getByRole("heading", { name: "From reference to shipped", exact: true }),
     });
     await expect(fallback).toBeVisible();
-    await expect(
-      fallback.getByRole("heading", { name: "From reference to shipped" }),
-    ).toBeVisible();
     for (const title of [
       "Drop a motion reference",
       "Frames extracted, motion read",
@@ -157,14 +138,27 @@ test.describe("marketing surface", () => {
     for (const kicker of ["01 — Reference", "02 — Analyze", "03 — Ship"]) {
       await expect(fallback.getByText(kicker, { exact: true })).toBeVisible();
     }
+    // The pinned stage is not rendered at all under reduced motion.
+    await expect(page.locator("[data-how-pinned]")).toBeHidden();
   });
 
-  test("landing uses real partner logos and readable footer links", async ({
+  test("reduced motion on desktop also drops the pinned sequence", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/");
+
+    await expect(page.locator("[data-how-pinned]")).toBeHidden();
+    await expect(page.locator("[data-how-stacked]")).toBeVisible();
+  });
+
+  test("landing ticker and readable footer links", async ({
     page,
   }) => {
     await page.goto("/");
 
-    // Credibility strip: a caption plus a marquee of role marks (each mark
+    // Credibility strip: a caption plus a reel of role marks (each mark
     // rendered twice for a seamless loop).
     const strip = page.locator("section", {
       hasText: "Built for the people who ship motion",
@@ -194,7 +188,7 @@ test.describe("marketing surface", () => {
       footer.getByText(/From motion reference to production animation code/),
     ).toBeVisible();
     // Pricing and Support each appear twice in the footer (column + bottom
-    // utility bar, same hrefs in components/site/footer.tsx), so pin the
+    // utility bar, same hrefs in components/chrono/footer.tsx), so pin the
     // first match; Contact/Privacy/Terms appear once.
     await expect(
       footer.getByRole("link", { name: /^Pricing$/i }).first(),
@@ -234,13 +228,12 @@ test.describe("marketing surface", () => {
     ).toBeVisible();
   });
 
-  test("landing hero renders the ambient artifact panel", async ({
+  test("landing hero renders the chronograph plate and its readout", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
-    // The hero's intro is gated on prefers-reduced-motion; with motion on,
-    // the copy is still settling when measured, which makes visibility reads
-    // flaky. Emulate the reduced-motion state so the hero is measured settled.
+    // Reduced motion: the plate is the static SVG still and the intro is
+    // settled, so visibility reads are deterministic.
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/");
 
@@ -252,23 +245,62 @@ test.describe("marketing surface", () => {
     await expect(heroHeading).toContainText("Motion,");
     await expect(heroHeading).toContainText("decoded.");
 
-    // Live artifact beside the copy: reference viewport, analysis state,
-    // and the extracted-frames readout.
+    // One still per breakpoint; exactly one is shown.
+    await expect(
+      hero.locator("[data-chronograph='still'] svg").filter({ visible: true }),
+    ).toHaveCount(1);
+    // Readout beside the plate: source clip, frame rate, and the live curve.
     await expect(hero.getByText("reference.mp4")).toBeVisible();
-    await expect(hero.getByText("Analyzing")).toBeVisible();
-    await expect(hero.getByText("extracted frames")).toBeVisible();
+    await expect(hero.getByText("24 fps")).toBeVisible();
+    await expect(hero.getByText("cubic-bezier(0.16, 1, 0.3, 1)")).toBeVisible();
+    await expect(hero.getByRole("button", { name: "Copy" })).toBeVisible();
   });
 
-  test("capability cards render their titles", async ({
+  test("bench regenerates code from the chosen curve and target", async ({
+    page,
+  }) => {
+    await page.goto("/#playground");
+
+    const bench = page.locator("#playground");
+    await expect(
+      bench.getByRole("heading", { name: /One spec\. Every format\./ }),
+    ).toBeVisible();
+
+    const code = bench.locator("pre");
+    await expect(code).toContainText("@keyframes mc-motion");
+    await expect(code).toContainText("cubic-bezier(0.16, 1, 0.3, 1)");
+
+    await bench.getByRole("button", { name: /Back out/i }).click();
+    await expect(code).toContainText("cubic-bezier(0.34, 1.56, 0.64, 1)");
+
+    await bench.getByRole("tab", { name: "GSAP" }).click();
+    await expect(code).toContainText('gsap.fromTo(".card"');
+    await expect(code).toContainText('ease: "back.out(1.7)"');
+
+    await bench.getByRole("button", { name: /Standard/i }).click();
+    await expect(code).toContainText('import { CustomEase } from "gsap/CustomEase";');
+
+    await bench.getByRole("tab", { name: "Framer Motion" }).click();
+    await expect(code).toContainText("ease: [0.2, 0, 0, 1]");
+
+    await bench.locator("input[type='range']").evaluate((input: HTMLInputElement) => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
+      setter.call(input, "800");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await expect(code).toContainText("duration: 0.8,");
+  });
+
+  test("capability index renders its titles", async ({
     page,
   }) => {
     await page.goto("/");
 
     const section = page.locator("#features");
     await expect(section).toBeVisible();
-    await expect(section.getByText("Capabilities")).toBeVisible();
+    await expect(section.getByText("Capabilities", { exact: true })).toBeVisible();
     await expect(
-      section.getByText("Everything between a clip and clean code"),
+      section.getByRole("heading", { name: "Everything between a clip and clean code" }),
     ).toBeVisible();
 
     const cards = section.locator("h3");

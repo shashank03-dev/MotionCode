@@ -16,7 +16,7 @@ function trigger(page: Page) {
 }
 
 function menu(page: Page) {
-  return page.locator("header nav div.glass-card");
+  return page.locator("header [data-nav-menu]");
 }
 
 function backdrop(page: Page) {

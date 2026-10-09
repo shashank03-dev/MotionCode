@@ -11,10 +11,10 @@ ready-to-ship **CSS**, **GSAP**, and **Framer Motion** code in seconds.
 
 <br />
 
-[![Live](https://img.shields.io/badge/live-motioncode.live-0099ff?style=for-the-badge&labelColor=000000)](https://motioncode.live)
-[![Next.js](https://img.shields.io/badge/Next.js-16-0099ff?style=for-the-badge&logo=next.js&logoColor=white&labelColor=000000)](https://nextjs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-0099ff?style=for-the-badge&logo=typescript&logoColor=white&labelColor=000000)](https://www.typescriptlang.org)
-[![License](https://img.shields.io/badge/license-MIT-0099ff?style=for-the-badge&labelColor=000000)](LICENSE)
+[![Live](https://img.shields.io/badge/live-motioncode.live-ff5b1f?style=for-the-badge&labelColor=0b0b0a)](https://motioncode.live)
+[![Next.js](https://img.shields.io/badge/Next.js-16-ff5b1f?style=for-the-badge&logo=next.js&logoColor=white&labelColor=0b0b0a)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-ff5b1f?style=for-the-badge&logo=typescript&logoColor=white&labelColor=0b0b0a)](https://www.typescriptlang.org)
+[![License](https://img.shields.io/badge/license-MIT-ff5b1f?style=for-the-badge&labelColor=0b0b0a)](LICENSE)
 
 </div>
 
@@ -126,21 +126,26 @@ The analysis pipeline lives in `lib/` - `extractFrames.ts` pulls frames, the
 `app/api/analyze` route runs the model, and `lib/exporters` turns the resulting
 spec into per-framework code.
 
-## Brand
+## Brand — Chronograph
 
 <table>
   <tr>
-    <td align="center"><code>#000000</code><br/>Canvas</td>
-    <td align="center"><code>#0a0b0d</code><br/>Surface</td>
-    <td align="center"><code>#0099ff</code><br/>Electric blue</td>
+    <td align="center"><code>#0b0b0a</code><br/>Carbon</td>
+    <td align="center"><code>#edebe4</code><br/>Bone</td>
+    <td align="center"><code>#e8e4d8</code><br/>Paper</td>
+    <td align="center"><code>#ff5b1f</code><br/>Safelight</td>
   </tr>
 </table>
 
-A single electric-blue accent on a near-black canvas - reserved for calls to
-action, focus, and active state. Typefaces: **PP Neue Montreal** (display),
-**SF Pro** (UI), **JetBrains Mono** (code). The mark is the same one used across
-the app and landing page: three sampled frames easing into a curve - motion,
-captured and read.
+MotionCode is an instrument that photographs time. The design language borrows
+from Marey's geometric chronophotography — dots, lines, exposures — plus the
+darkroom and the lab bench: a warm carbon canvas, bone ink, one inverted paper
+plate per page, and a single safelight accent reserved for signal (CTAs,
+playheads, focus, live state). Typefaces: **Geist** (UI and display),
+**Instrument Serif** italic (one accent word per headline), **Geist Mono**
+(timecodes, labels, code). The mark is a chronophotographic exposure: five
+samples of one point easing out, the resting sample lit. Full rules in
+[`docs/design/chronograph.md`](docs/design/chronograph.md).
 
 ## License
 

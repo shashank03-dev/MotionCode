@@ -1,14 +1,28 @@
 import { ImageResponse } from "next/og";
 
+import { bezierAt } from "@/lib/chrono/bezier";
+
 export const runtime = "edge";
-export const alt = "MotionCode product preview";
+export const alt = "MotionCode — motion, decoded.";
 export const size = {
   width: 1200,
   height: 630,
 };
 export const contentType = "image/png";
 
+const CARBON = "#0b0b0a";
+const BONE = "#edebe4";
+const SAFELIGHT = "#ff5b1f";
+const EXPOSURES = 12;
+
+/** Plate 01 as a still: the chronophotograph from the hero, frozen at rest. */
 export default function Image() {
+  const box = 54;
+  const x0 = 560;
+  const x1 = 1110;
+  const y0 = 130;
+  const y1 = 470;
+
   return new ImageResponse(
     (
       <div
@@ -16,96 +30,78 @@ export default function Image() {
           width: "100%",
           height: "100%",
           display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          background: "#151513",
-          color: "#edebe4",
-          padding: "64px",
-          fontFamily: "monospace",
+          background: CARBON,
+          color: BONE,
           position: "relative",
           overflow: "hidden",
+          fontFamily: "sans-serif",
         }}
       >
         <div
           style={{
             position: "absolute",
-            width: 540,
-            height: 540,
-            borderRadius: 540,
-            background: "rgba(158,240,192,.18)",
-            right: -120,
-            top: -160,
+            width: 520,
+            height: 520,
+            borderRadius: 520,
+            background: "radial-gradient(circle, rgba(255,91,31,0.22), rgba(255,91,31,0) 70%)",
+            right: -180,
+            top: -200,
           }}
         />
-        <div
-          style={{
-            position: "absolute",
-            width: 460,
-            height: 460,
-            borderRadius: 460,
-            background: "rgba(245,143,124,.16)",
-            left: -120,
-            bottom: -180,
-          }}
-        />
-        <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-          <div
-            style={{
-              width: 54,
-              height: 54,
-              border: "2px solid rgba(158,240,192,.8)",
-              borderRadius: 8,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#ff5b1f",
-              fontSize: 28,
-            }}
-          >
-            {"{}"}
-          </div>
-          <div
-            style={{
-              fontSize: 28,
-              letterSpacing: 5,
-              color: "#ff5b1f",
-              textTransform: "uppercase",
-            }}
-          >
-            MotionCode
-          </div>
-        </div>
-
-        <div style={{ maxWidth: 900, zIndex: 1 }}>
-          <div
-            style={{
-              display: "inline-flex",
-              color: "#ffd166",
-              fontSize: 24,
-              letterSpacing: 4,
-              textTransform: "uppercase",
-              marginBottom: 28,
-            }}
-          >
-            Motion reference to starter code
-          </div>
-          <div style={{ fontSize: 76, lineHeight: 0.98, fontWeight: 700 }}>
-            Reviewable motion specs and starter snippets.
-          </div>
-        </div>
+        {Array.from({ length: EXPOSURES }, (_, i) => {
+          const t = i / (EXPOSURES - 1);
+          const u = bezierAt([0.16, 1, 0.3, 1], t);
+          const x = x0 + (x1 - x0) * u;
+          const y = y1 + (y0 - y1) * u - Math.sin(u * Math.PI) * 50;
+          const last = i === EXPOSURES - 1;
+          return (
+            <div
+              key={i}
+              style={{
+                position: "absolute",
+                left: x - box / 2,
+                top: y - box / 2,
+                width: box,
+                height: box,
+                borderRadius: 14,
+                border: last ? "none" : `1.5px solid rgba(237,235,228,${0.25 + t * 0.45})`,
+                background: last ? SAFELIGHT : "transparent",
+              }}
+            />
+          );
+        })}
 
         <div
           style={{
-            zIndex: 1,
             display: "flex",
-            gap: 20,
-            color: "#a5a297",
-            fontSize: 24,
+            flexDirection: "column",
+            justifyContent: "space-between",
+            padding: 72,
+            width: "100%",
           }}
         >
-          <span>CSS</span>
-          <span>GSAP</span>
-          <span>Framer Motion</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, fontSize: 26 }}>
+            <div style={{ width: 12, height: 12, borderRadius: 12, background: SAFELIGHT }} />
+            MotionCode
+          </div>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{ fontSize: 132, letterSpacing: -7, lineHeight: 0.9 }}>Motion,</div>
+            <div style={{ fontSize: 132, letterSpacing: -6, lineHeight: 0.95, fontStyle: "italic" }}>
+              decoded.
+            </div>
+            <div
+              style={{
+                marginTop: 28,
+                fontSize: 22,
+                letterSpacing: 4,
+                textTransform: "uppercase",
+                color: "rgba(237,235,228,0.6)",
+                fontFamily: "monospace",
+              }}
+            >
+              Video → spec → CSS · GSAP · Framer Motion
+            </div>
+          </div>
         </div>
       </div>
     ),
