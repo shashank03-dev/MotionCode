@@ -707,6 +707,40 @@ describe("POST /api/analyze", () => {
     expect(deps.generateOpenAiAnalysis).not.toHaveBeenCalled();
   });
 
+  it.each(["free", "pro", "studio"] as const)("accepts %s frame limits and rejects excess frames", async (planTier) => {
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
+    const deps = createDeps({ planTier });
+    const maxFrames = PLAN_ENTITLEMENTS[planTier].maxFramesPerAnalysis;
+    const model = planTier === "free" ? "gemini-2.5-flash" : "gemini-2.5-pro";
+    const body = requestBody({ model, frameGrid: { columns: 4, rows: 4, frameCount: maxFrames } });
+    const response = await handleAnalyzeRequest(makeRequest(body), { ...deps, isOpenAiAnalysisEnabled: () => false });
+    expect(response.status).toBe(200);
+    expect((await response.json()).data.frameCount).toBe(maxFrames);
+    const rejected = await handleAnalyzeRequest(makeRequest({ ...body, frameGrid: { columns: 5, rows: 4, frameCount: maxFrames + 1 } }), deps);
+    expect(rejected.status).toBe(planTier === "studio" ? 400 : 429);
+    expect((await rejected.json()).code).toBe(planTier === "studio" ? "INVALID_REQUEST" : "QUOTA_EXCEEDED");
+    expect(deps.generateAnalysis).toHaveBeenCalledTimes(1);
+  });
+
+  it("lets Free retry after a provider failure and counts only the successful analysis", async () => {
+    const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
+    const deps = createDeps({ planTier: "free" });
+    let used = 0;
+    deps.reserveDailyAnalysisUsage.mockImplementation(async () => {
+      if (used >= 1) return false;
+      used += 1;
+      return true;
+    });
+    deps.releaseDailyAnalysisUsage.mockImplementation(async () => { used -= 1; return true; });
+    deps.generateAnalysis.mockRejectedValueOnce(new ApiError("MODEL_FAILED", "Busy", 503));
+    expect((await handleAnalyzeRequest(makeRequest(requestBody()), deps)).status).toBe(503);
+    expect(used).toBe(0);
+    expect((await handleAnalyzeRequest(makeRequest(requestBody()), deps)).status).toBe(200);
+    expect(used).toBe(1);
+    expect((await handleAnalyzeRequest(makeRequest(requestBody()), deps)).status).toBe(429);
+    expect(deps.generateAnalysis).toHaveBeenCalledTimes(2);
+  });
+
   it("records usage and audit events with the authorized project workspace when the client omits it", async () => {
     const { handleAnalyzeRequest } = await import("@/app/api/analyze/handler");
     const deps = createDeps();
@@ -1360,7 +1394,7 @@ describe("Gemini upstream models", () => {
     );
 
     expect(fetcher).toHaveBeenCalledWith(
-      expect.stringContaining("/gemini-3.8-flash:generateContent"),
+      expect.stringContaining("/gemini-2.5-flash-lite:generateContent"),
       expect.anything(),
     );
   });
@@ -1395,7 +1429,7 @@ describe("Gemini upstream models", () => {
     expect(result.spec.intent).toBe("entrance");
     expect(fetcher.mock.calls.map(([url]) => url)).toEqual([
       expect.stringContaining("/gemini-3.1-pro-preview:"),
-      expect.stringContaining("/gemini-3.8-flash:"),
+      expect.stringContaining("/gemini-2.5-flash-lite:"),
     ]);
   });
 

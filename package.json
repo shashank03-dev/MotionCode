@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "vendor:preview": "node scripts/build-preview-vendor.mjs",
-    "check": "npm run typecheck && npm run lint && npm test && npm run build"
+    "check": "npm run typecheck && npm run lint && npm test && npm run build",
+    "postbuild": "node scripts/verify-analysis-build.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",

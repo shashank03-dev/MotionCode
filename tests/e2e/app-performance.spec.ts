@@ -163,7 +163,7 @@ test.describe("application performance baseline", () => {
     );
   });
 
-  test("pauses the particle RAF while hidden or outside the viewport", async ({ page }) => {
+  test("pauses particle rendering while hidden or outside the viewport", async ({ page }) => {
     await mockSupabaseBrowserRequests(page);
     await page.addInitScript(() => {
       const NativeIntersectionObserver = window.IntersectionObserver;
@@ -202,12 +202,24 @@ test.describe("application performance baseline", () => {
     await page.evaluate(() => {
       let count = 0;
       let lastAt = performance.now();
-      const nativeRequestAnimationFrame = window.requestAnimationFrame.bind(window);
-      window.requestAnimationFrame = (callback) => {
-        count += 1;
-        lastAt = performance.now();
-        return nativeRequestAnimationFrame(callback);
-      };
+      // Count this field's actual draw calls. Global requestAnimationFrame also
+      // includes navigation/scroll animations, which can continue offscreen.
+      const prototypes = [WebGLRenderingContext.prototype];
+      if (typeof WebGL2RenderingContext !== "undefined") {
+        prototypes.push(WebGL2RenderingContext.prototype);
+      }
+      for (const prototype of prototypes) {
+        for (const method of ["drawArrays", "drawElements"] as const) {
+          const native = prototype[method];
+          Object.defineProperty(prototype, method, { configurable: true, writable: true, value: function (this: WebGLRenderingContext, ...args: number[]) {
+            if (this.canvas instanceof HTMLCanvasElement && this.canvas.closest('[data-testid="process-field"]')) {
+              count += 1;
+              lastAt = performance.now();
+            }
+            return Reflect.apply(native, this, args);
+          } });
+        }
+      }
       Object.defineProperty(window, "__motioncodeRafCount", {
         configurable: true,
         get: () => count,

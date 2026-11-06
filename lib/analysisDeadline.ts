@@ -1,10 +1,11 @@
 // The browser deadline includes frame preparation, the API call, and body reads.
-// Leave time beyond the server's 50-second model budget for auth and transport.
+// Leave time beyond each plan's server model budget for auth and transport.
 export const ANALYSIS_TIMEOUT_MS = 65_000;
 
 export async function withAnalysisDeadline<T>(
   operation: (signal: AbortSignal) => Promise<T>,
   signal?: AbortSignal,
+  timeoutMs = ANALYSIS_TIMEOUT_MS,
 ): Promise<T> {
   const controller = new AbortController();
   if (signal?.aborted) {
@@ -17,7 +18,7 @@ export async function withAnalysisDeadline<T>(
     timer = setTimeout(() => {
       reject(new Error("Analysis took too long. Please retry; your frames are still ready."));
       controller.abort();
-    }, ANALYSIS_TIMEOUT_MS);
+    }, timeoutMs);
     onAbort = () => {
       reject(new DOMException("Analysis cancelled.", "AbortError"));
       controller.abort();

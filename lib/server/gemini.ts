@@ -11,6 +11,7 @@ import {
   type OutputFramework,
 } from "@/lib/contracts/motion";
 
+import { MOTION_ANALYSIS_SCHEMA } from "./motionAnalysisSchema";
 import { ApiError } from "./apiErrors";
 import { getServerEnv } from "./env";
 import { serverLogger } from "./logger";
@@ -26,7 +27,7 @@ export const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"] as const;
 // stay put while GEMINI_FLASH_MODEL / GEMINI_PRO_MODEL can swap the upstream
 // model without code changes.
 const DEFAULT_UPSTREAM_MODELS: Record<GeminiModel, string> = {
-  "gemini-2.5-flash": "gemini-3.8-flash",
+  "gemini-2.5-flash": "gemini-2.5-flash-lite",
   "gemini-2.5-pro": "gemini-3.1-pro-preview",
 };
 
@@ -171,6 +172,7 @@ Use this exact shape:
 }
 
 Code requirements (each snippet must run on its own in a live preview):
+- Keep each snippet concise: at most 40 lines, with no external media or long embedded data.
 - Target the animated element with the class "element" in every snippet.
 - css: complete rules plus @keyframes; bind the animation (or a transition with its :hover/state rule) to .element.
 - gsap: ES module that imports gsap from "gsap" and animates ".element" at the top level.
@@ -203,16 +205,23 @@ export async function analyzeFramesWithGemini(
 ): Promise<GeminiAnalysis> {
   const apiKey = deps.apiKey ?? getServerEnv().geminiApiKey;
   const fetcher = deps.fetch ?? fetch;
-  const deadline = Date.now() + 50_000;
+  const deadline = Date.now() + (input.model === "gemini-2.5-pro" ? 90_000 : 75_000);
   const primary = resolveUpstreamGeminiModel(input.model);
-  const fallback = resolveUpstreamGeminiModel("gemini-2.5-flash");
+  const flash = resolveUpstreamGeminiModel("gemini-2.5-flash");
+  const fallback = primary === flash
+    ? process.env.GEMINI_FLASH_FALLBACK_MODEL?.trim() || "gemini-3.1-flash-lite"
+    : flash;
 
   try {
-    return await requestGeminiWithRetries(input, primary, apiKey, fetcher, deadline);
+    // Reserve time for a different model rather than spending the entire
+    // request budget retrying an overloaded primary.
+    const primaryDeadline = Math.min(deadline, Date.now() + (input.model === "gemini-2.5-pro" ? 60_000 : 45_000));
+    return await requestGeminiWithRetries(input, primary, apiKey, fetcher, primaryDeadline);
   } catch (error) {
     // Pro models are often unavailable to a key (preview access, free-tier
     // quota); answer with Flash rather than failing the paid analysis.
-    if (primary === fallback || !(error instanceof ApiError)) {
+    if (primary === fallback || !(error instanceof ApiError) ||
+      (input.model === "gemini-2.5-flash" && error.status !== 503)) {
       throw error;
     }
 
@@ -245,7 +254,7 @@ async function requestGeminiWithRetries(
     }
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), Math.min(15_000, remainingMs));
+    const timeout = setTimeout(() => controller.abort(), Math.min(30_000, remainingMs));
     try {
       return await requestGeminiAnalysis(input, model, apiKey, fetcher, controller.signal);
     } catch (error) {
@@ -295,6 +304,8 @@ async function requestGeminiAnalysis(
         ],
         generationConfig: {
           maxOutputTokens: 8192,
+          responseMimeType: "application/json",
+          responseJsonSchema: MOTION_ANALYSIS_SCHEMA,
           temperature: 0.1,
         },
       }),

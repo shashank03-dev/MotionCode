@@ -424,6 +424,7 @@ export function AppShell({
       const analyzed = await withAnalysisDeadline(
         (signal) => analyzeViaApi({ frames, planTier: userPlan, signal }),
         controller.signal,
+        userPlan === "free" ? 90_000 : 105_000,
       );
 
       if (operationId !== operationIdRef.current) return;

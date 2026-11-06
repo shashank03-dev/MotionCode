@@ -14,6 +14,7 @@ beforeEach(() => {
   vi.useFakeTimers();
   vi.stubEnv("GEMINI_FLASH_MODEL", "test-flash");
   vi.stubEnv("GEMINI_PRO_MODEL", "test-pro");
+  vi.stubEnv("GEMINI_FLASH_FALLBACK_MODEL", "test-lite-backup");
 });
 afterEach(() => {
   vi.useRealTimers();
@@ -34,14 +35,14 @@ describe("Gemini transient failures", () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it("stops after three failures and returns a temporary-unavailability error", async () => {
+  it("stops after bounded failures across both lightweight models and returns a temporary-unavailability error", async () => {
     const fetcher = vi.fn(async () => busy());
     const assertion = expect(run(fetcher)).rejects.toMatchObject({
       code: "MODEL_FAILED", status: 503, message: expect.stringContaining("temporarily busy"),
     });
     await vi.runAllTimersAsync();
     await assertion;
-    expect(fetcher).toHaveBeenCalledTimes(3);
+    expect(fetcher).toHaveBeenCalledTimes(6);
   });
 
   it.each([400, 401, 403, 404, 429])("does not retry HTTP %s for Flash", async (status) => {
@@ -60,7 +61,7 @@ describe("Gemini transient failures", () => {
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
-  it("aborts stalled requests and bounds primary plus fallback to 50 seconds", async () => {
+  it("aborts stalled requests and bounds primary plus fallback to 90 seconds", async () => {
     const started = Date.now();
     const fetcher = vi.fn((_url: unknown, options?: RequestInit) => new Promise<Response>((_resolve, reject) => {
       options?.signal?.addEventListener("abort", () => reject(new DOMException("Timed out", "AbortError")), { once: true });
@@ -68,8 +69,8 @@ describe("Gemini transient failures", () => {
     const assertion = expect(run(fetcher, "gemini-2.5-pro")).rejects.toMatchObject({ code: "MODEL_FAILED", status: 503 });
     await vi.runAllTimersAsync();
     await assertion;
-    expect(Date.now() - started).toBeLessThanOrEqual(50_000);
-    expect(fetcher).toHaveBeenCalledTimes(4);
+    expect(Date.now() - started).toBeLessThanOrEqual(90_000);
+    expect(fetcher).toHaveBeenCalledTimes(3);
     expect(vi.getTimerCount()).toBe(0);
   });
 

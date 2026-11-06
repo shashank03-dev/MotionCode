@@ -1,3 +1,4 @@
+import { MOTION_ANALYSIS_SCHEMA } from "./motionAnalysisSchema";
 import { ApiError } from "./apiErrors";
 import {
   buildGeminiPrompt,
@@ -52,7 +53,7 @@ export async function analyzeFramesWithOpenAI(
       text: {
         format: {
           name: "motion_analysis",
-          schema: OPENAI_MOTION_ANALYSIS_SCHEMA,
+          schema: MOTION_ANALYSIS_SCHEMA,
           strict: true,
           type: "json_schema",
         },
@@ -75,61 +76,7 @@ export async function analyzeFramesWithOpenAI(
   return normalizeGeminiGeneratedAnalysis(parsed);
 }
 
-const OPENAI_MOTION_ANALYSIS_SCHEMA = {
-  additionalProperties: false,
-  properties: {
-    accessibility_note: { type: "string" },
-    css: { type: "string" },
-    delay_ms: { type: "integer" },
-    description: { type: "string" },
-    duration_ms: { type: "integer" },
-    easing: { type: "string" },
-    element: { type: "string" },
-    framer_motion: { type: "string" },
-    gpu_accelerated: { type: "boolean" },
-    gsap: { type: "string" },
-    implementation_notes: {
-      items: { type: "string" },
-      type: "array",
-    },
-    intent: {
-      enum: [
-        "entrance",
-        "exit",
-        "hover",
-        "loading",
-        "loop",
-        "morph",
-        "scroll",
-        "unknown",
-      ],
-      type: "string",
-    },
-    keyframes_detected: { type: "integer" },
-    loops: { type: "boolean" },
-    performance_score: { type: "number" },
-    react_spring: { type: "string" },
-  },
-  required: [
-    "intent",
-    "element",
-    "duration_ms",
-    "delay_ms",
-    "easing",
-    "loops",
-    "description",
-    "keyframes_detected",
-    "performance_score",
-    "gpu_accelerated",
-    "accessibility_note",
-    "implementation_notes",
-    "css",
-    "gsap",
-    "framer_motion",
-    "react_spring",
-  ],
-  type: "object",
-} as const;
+
 
 function extractOpenAIText(payload: unknown) {
   const directText = getRecord(payload).output_text;
