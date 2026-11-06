@@ -12,6 +12,8 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { withAnalysisDeadline } from "@/lib/analysisDeadline";
+
 import { AppStatusBar } from "@/components/app/AppStatusBar";
 import {
   DEFAULT_INTENT_COLOR,
@@ -61,10 +63,10 @@ const FREE_SAVE_ACK_SESSION_KEY = "motioncode_free_save_ack_session";
 const FREE_SAVE_ACK_DISMISSED_KEY = "motioncode_free_save_ack_dismissed";
 
 const STATUS_MESSAGES = [
-  "Analyzing motion patterns...",
-  "Reading easing curves...",
-  "Detecting transform paths...",
-  "Almost there...",
+  "Waiting for the analysis service...",
+  "The model is still processing your frames...",
+  "Your frames are ready; waiting for generated code...",
+  "Still waiting. You can cancel and retry.",
 ];
 
 type SaveState =
@@ -419,11 +421,10 @@ export function AppShell({
     setStatusMessage("Analyzing with server model...");
 
     try {
-      const analyzed = await analyzeViaApi({
-        frames,
-        planTier: userPlan,
-        signal: controller.signal,
-      });
+      const analyzed = await withAnalysisDeadline(
+        (signal) => analyzeViaApi({ frames, planTier: userPlan, signal }),
+        controller.signal,
+      );
 
       if (operationId !== operationIdRef.current) return;
 

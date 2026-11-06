@@ -189,8 +189,8 @@ export function ProcessCanvas({
           <h2 className={styles.title}>{heading}</h2>
           <p className={styles.message}>{message}</p>
           <div className={styles.headerMeta} aria-label="Current processing context">
-            <span>{currentPhase.title}</span>
-            <span>{currentPhase.description}</span>
+            <span>{stage === "analyzing" ? "Model response" : currentPhase.title}</span>
+            <span>{stage === "analyzing" ? "Waiting for the analysis service to return code." : currentPhase.description}</span>
           </div>
         </div>
 
@@ -205,7 +205,7 @@ export function ProcessCanvas({
           <div className={styles.progressTopline}>
             <span className={styles.progressValue}>{Math.round(safeProgress)}%</span>
             <span className={styles.progressPhase}>
-              {completedPhases}/{PHASES.length} phases
+              {stage === "analyzing" ? "Estimated progress" : `${completedPhases}/${PHASES.length} phases`}
             </span>
           </div>
           <span className={styles.progressTrack}>
@@ -214,7 +214,7 @@ export function ProcessCanvas({
               style={{ "--progress": `${safeProgress}%` } as StyleVars}
             />
           </span>
-          <span className={styles.progressCaption}>{getProgressCaption(stage, safeActiveStep)}</span>
+          <span className={styles.progressCaption}>{getProgressCaption(stage)}</span>
         </div>
       </header>
 
@@ -233,9 +233,9 @@ export function ProcessCanvas({
         />
 
         <div className={styles.stageOverlay}>
-          <span className={styles.stageFormation}>{getFormationLabel(fieldProgress)}</span>
+          <span className={styles.stageFormation}>{stage === "analyzing" ? "analysis · awaiting response" : getFormationLabel(fieldProgress)}</span>
           <span className={styles.stageReadout}>
-            {currentPhase.metric} · {getPhaseLabel(currentPhase.key, stage, safeActiveStep)}
+            {stage === "analyzing" ? "model · pending" : `${currentPhase.metric} · ${getPhaseLabel(currentPhase.key, stage, safeActiveStep)}`}
           </span>
         </div>
 
@@ -392,12 +392,12 @@ function getCurrentPhase(stage: AnalysisStage, activeStep: number) {
   );
 }
 
-function getProgressCaption(stage: AnalysisStage, activeStep: number) {
+function getProgressCaption(stage: AnalysisStage) {
   switch (stage) {
     case "extracting":
       return "Frame buffer warming";
     case "analyzing":
-      return `Step ${activeStep + 1} in progress`;
+      return "Waiting for model response";
     case "error":
       return "Interrupted";
     case "idle":
