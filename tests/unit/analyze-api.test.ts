@@ -1394,7 +1394,7 @@ describe("Gemini upstream models", () => {
     );
 
     expect(fetcher).toHaveBeenCalledWith(
-      expect.stringContaining("/gemini-2.5-flash-lite:generateContent"),
+      expect.stringContaining("/gemini-3.5-flash-lite:generateContent"),
       expect.anything(),
     );
   });
@@ -1429,7 +1429,7 @@ describe("Gemini upstream models", () => {
     expect(result.spec.intent).toBe("entrance");
     expect(fetcher.mock.calls.map(([url]) => url)).toEqual([
       expect.stringContaining("/gemini-3.1-pro-preview:"),
-      expect.stringContaining("/gemini-2.5-flash-lite:"),
+      expect.stringContaining("/gemini-3.5-flash-lite:"),
     ]);
   });
 

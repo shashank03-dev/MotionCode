@@ -27,7 +27,7 @@ export const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"] as const;
 // stay put while GEMINI_FLASH_MODEL / GEMINI_PRO_MODEL can swap the upstream
 // model without code changes.
 const DEFAULT_UPSTREAM_MODELS: Record<GeminiModel, string> = {
-  "gemini-2.5-flash": "gemini-2.5-flash-lite",
+  "gemini-2.5-flash": "gemini-3.5-flash-lite",
   "gemini-2.5-pro": "gemini-3.1-pro-preview",
 };
 
@@ -221,7 +221,7 @@ export async function analyzeFramesWithGemini(
     // Pro models are often unavailable to a key (preview access, free-tier
     // quota); answer with Flash rather than failing the paid analysis.
     if (primary === fallback || !(error instanceof ApiError) ||
-      (input.model === "gemini-2.5-flash" && error.status !== 503)) {
+      (input.model === "gemini-2.5-flash" && error.status !== 503 && error.status !== 404)) {
       throw error;
     }
 
@@ -337,7 +337,7 @@ async function requestGeminiAnalysis(
     if (RETRYABLE_STATUSES.has(response.status)) {
       throw new RetryableGeminiError("MODEL_FAILED", TEMPORARY_FAILURE_MESSAGE, response.status);
     }
-    throw new ApiError("MODEL_FAILED", "Gemini analysis failed.");
+    throw new ApiError("MODEL_FAILED", "Gemini analysis failed.", response.status === 404 ? 404 : 502);
   }
 
   const payload = (await response.json()) as unknown;

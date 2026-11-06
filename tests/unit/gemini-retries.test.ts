@@ -45,11 +45,20 @@ describe("Gemini transient failures", () => {
     expect(fetcher).toHaveBeenCalledTimes(6);
   });
 
-  it.each([400, 401, 403, 404, 429])("does not retry HTTP %s for Flash", async (status) => {
+  it.each([400, 401, 403, 429])("does not retry HTTP %s for Flash", async (status) => {
     const fetcher = vi.fn(async () => Response.json({ error: { message: "rejected" } }, { status }));
     await expect(run(fetcher)).rejects.toMatchObject({ code: status === 429 ? "QUOTA_EXCEEDED" : "MODEL_FAILED" });
     expect(fetcher).toHaveBeenCalledTimes(1);
     expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("uses a compatible lightweight backup when the primary model is retired", async () => {
+    const fetcher = vi.fn().mockResolvedValueOnce(Response.json({ error: { message: "retired" } }, { status: 404 }))
+      .mockImplementation(async () => success());
+    await expect(run(fetcher)).resolves.toHaveProperty("spec");
+    expect(fetcher.mock.calls.map(([url]) => url)).toEqual([
+      expect.stringContaining("/test-flash:"), expect.stringContaining("/test-lite-backup:"),
+    ]);
   });
 
   it("retries a failed network connection", async () => {
