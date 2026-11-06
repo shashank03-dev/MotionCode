@@ -203,11 +203,12 @@ export async function analyzeFramesWithGemini(
 ): Promise<GeminiAnalysis> {
   const apiKey = deps.apiKey ?? getServerEnv().geminiApiKey;
   const fetcher = deps.fetch ?? fetch;
+  const deadline = Date.now() + 50_000;
   const primary = resolveUpstreamGeminiModel(input.model);
   const fallback = resolveUpstreamGeminiModel("gemini-2.5-flash");
 
   try {
-    return await requestGeminiAnalysis(input, primary, apiKey, fetcher);
+    return await requestGeminiWithRetries(input, primary, apiKey, fetcher, deadline);
   } catch (error) {
     // Pro models are often unavailable to a key (preview access, free-tier
     // quota); answer with Flash rather than failing the paid analysis.
@@ -220,8 +221,52 @@ export async function analyzeFramesWithGemini(
     }
 
     serverLogger.warn("gemini.model_fallback", { fallback, model: primary });
-    return requestGeminiAnalysis(input, fallback, apiKey, fetcher);
+    return requestGeminiWithRetries(input, fallback, apiKey, fetcher, deadline);
   }
+}
+
+const RETRYABLE_STATUSES = new Set([500, 502, 503, 504]);
+class RetryableGeminiError extends ApiError {}
+
+const TEMPORARY_FAILURE_MESSAGE =
+  "Analysis service is temporarily busy. Please try again shortly.";
+
+async function requestGeminiWithRetries(
+  input: GeminiAnalyzeInput,
+  model: string,
+  apiKey: string,
+  fetcher: typeof fetch,
+  deadline: number,
+): Promise<GeminiAnalysis> {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const remainingMs = deadline - Date.now();
+    if (remainingMs <= 0) {
+      break;
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), Math.min(15_000, remainingMs));
+    try {
+      return await requestGeminiAnalysis(input, model, apiKey, fetcher, controller.signal);
+    } catch (error) {
+      const retryable = controller.signal.aborted || error instanceof TypeError ||
+        error instanceof RetryableGeminiError;
+      if (!retryable) {
+        throw error;
+      }
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    const delayMs = 1_000 * 2 ** attempt + Math.floor(Math.random() * 250);
+    if (attempt === 2 || Date.now() + delayMs >= deadline) {
+      break;
+    }
+    serverLogger.warn("gemini.request_retry", { attempt: attempt + 1, delayMs, model });
+    await new Promise<void>((resolve) => setTimeout(resolve, delayMs));
+  }
+
+  throw new ApiError("MODEL_FAILED", TEMPORARY_FAILURE_MESSAGE, 503);
 }
 
 async function requestGeminiAnalysis(
@@ -229,6 +274,7 @@ async function requestGeminiAnalysis(
   upstreamModel: string,
   apiKey: string,
   fetcher: typeof fetch,
+  signal: AbortSignal,
 ): Promise<GeminiAnalysis> {
   const response = await fetcher(
     `${GEMINI_ENDPOINT_ROOT}/${upstreamModel}:generateContent`,
@@ -257,6 +303,7 @@ async function requestGeminiAnalysis(
         "x-goog-api-key": apiKey,
       },
       method: "POST",
+      signal,
     },
   );
 
@@ -276,6 +323,9 @@ async function requestGeminiAnalysis(
       );
     }
 
+    if (RETRYABLE_STATUSES.has(response.status)) {
+      throw new RetryableGeminiError("MODEL_FAILED", TEMPORARY_FAILURE_MESSAGE, response.status);
+    }
     throw new ApiError("MODEL_FAILED", "Gemini analysis failed.");
   }
 
